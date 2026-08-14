@@ -1,0 +1,106 @@
+import type { Metadata } from 'next';
+import { PrivateEventForm } from '@/components/forms/PrivateEventForm';
+import { Asset } from '@/components/media/Asset';
+import { Band, Frame } from '@/components/primitives/Band';
+import { PageHeader } from '@/components/primitives/PageHeader';
+import { Eyebrow } from '@/components/primitives/Type';
+import { birthdayCelebration, privateEventTypes } from '@/content/catering';
+import { pageCopy, seo } from '@/content/pages';
+import { site } from '@/content/site';
+import { formatPrice } from '@/lib/format';
+import { buildMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = buildMetadata({
+  ...seo.privateEvents!,
+  path: '/private-events',
+});
+
+/**
+ * Private events.
+ *
+ * The ONLY verified private-event content Oasis publishes is the Birthday
+ * Celebration, sold on the cocktail menu. Capacity, room names, buyout pricing,
+ * and food-and-beverage minimums are not published anywhere and are NOT invented.
+ * See docs/CONTENT-QUESTIONS.md §8.
+ */
+export default function PrivateEventsPage() {
+  return (
+    <>
+      <PageHeader
+        surface="sand"
+        eyebrow={pageCopy.privateEvents.eyebrow}
+        heading={pageCopy.privateEvents.heading}
+        body={pageCopy.privateEvents.body}
+      />
+
+      <Band surface="cream">
+        <Frame wide>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+            <div className="lg:col-span-5">
+              <Asset
+                id="birthdayCelebration"
+                className="aspect-4/5 w-full"
+                sizes="(min-width: 1024px) 40vw, 100vw"
+              />
+            </div>
+
+            <div className="lg:col-span-6 lg:col-start-7">
+              <Eyebrow tone="orange">The Birthday Celebration</Eyebrow>
+              <h2 className="mt-4 text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+                We do birthdays properly.
+              </h2>
+              <ul className="mt-7 space-y-3 border-t border-brown/15 pt-6">
+                {birthdayCelebration.includes.map((line) => (
+                  <li key={line} className="flex gap-3 text-[0.9375rem] leading-relaxed text-brown">
+                    <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-orange" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+
+              <dl className="mt-7 border-t border-brown/15 pt-6">
+                <dt className="eyebrow text-brown-soft">Add champagne</dt>
+                <dd className="mt-3 space-y-2">
+                  {birthdayCelebration.addOns.map((addOn) => (
+                    <span key={addOn.label} className="flex justify-between gap-4 text-[0.9375rem]">
+                      <span className="text-brown">{addOn.label}</span>
+                      <span className="tabular font-semibold text-brown">
+                        {formatPrice(addOn.priceCents)}
+                      </span>
+                    </span>
+                  ))}
+                </dd>
+              </dl>
+
+              <p className="measure mt-6 text-[0.875rem] leading-relaxed text-brown-soft">
+                Ask your server when you book and the team will set it up.
+              </p>
+            </div>
+          </div>
+        </Frame>
+      </Band>
+
+      <Band surface="linen" id="inquiry">
+        <Frame>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+            <div className="lg:col-span-5">
+              <Eyebrow>Event enquiry</Eyebrow>
+              <h2 className="mt-4 text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+                Send us the details.
+              </h2>
+              <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">
+                We do not publish room capacities or minimums online because they depend on the
+                night and the size of your group. Tell us what you are planning and someone from
+                Oasis will come back to you with what is possible.
+              </p>
+            </div>
+
+            <div className="lg:col-span-7">
+              <PrivateEventForm phone={site.phone.value} eventTypes={privateEventTypes} />
+            </div>
+          </div>
+        </Frame>
+      </Band>
+    </>
+  );
+}
