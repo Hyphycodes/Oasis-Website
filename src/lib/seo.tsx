@@ -3,14 +3,10 @@ import { allMenus } from '@/content/menu';
 import { site } from '@/content/site';
 import type { ResolvedEvent } from '@/content/types';
 import { toSchemaHours } from './hours';
+import { absoluteUrl, SITE_URL } from './site-url';
 
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.oasismexicankitchenbar.com'
-).replace(/\/$/, '');
+export { absoluteUrl, SITE_URL };
 
-export function absoluteUrl(path = '/'): string {
-  return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
-}
 
 export function buildMetadata({
   title,

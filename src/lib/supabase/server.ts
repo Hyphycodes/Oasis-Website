@@ -12,9 +12,31 @@ import { cookies } from 'next/headers';
  * browser bundle. Hiding it behind a naming convention would not.
  */
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+/**
+ * `env()` returns undefined for a variable that is missing, blank, or
+ * whitespace-only. A hosting provider will happily hand you a defined-but-empty
+ * variable, and treating that as configured is how you get a runtime throw
+ * instead of a clean fallback.
+ */
+function env(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+/** Rejects a value that is set but not actually a usable http(s) URL. */
+function validUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = new global.URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const URL = validUrl(env('NEXT_PUBLIC_SUPABASE_URL'));
+const ANON = env('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+const SERVICE = env('SUPABASE_SERVICE_ROLE_KEY');
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(URL && ANON);

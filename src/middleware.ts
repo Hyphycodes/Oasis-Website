@@ -10,11 +10,19 @@ import { NextResponse, type NextRequest } from 'next/server';
  * enforces access. See supabase/migrations/0001_init.sql.
  */
 export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   // With no backend configured, /admin renders its own "not configured" state.
+  // A blank-but-defined variable counts as not configured — and a malformed URL
+  // would make createServerClient throw on every single /admin request, so it is
+  // validated here rather than trusted.
   if (!url || !anon) return NextResponse.next();
+  try {
+    new URL(url);
+  } catch {
+    return NextResponse.next();
+  }
 
   let response = NextResponse.next({ request });
 

@@ -13,10 +13,36 @@ on the admin area, stored enquiries, and owner editing.
 
 | Name | Required | Secret | Purpose |
 |---|---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | Recommended | No | The canonical origin, e.g. `https://www.oasismexicankitchenbar.com`. Used for canonical URLs, the sitemap, and Open Graph URLs. Defaults to the production domain, so a preview deployment without it will emit production canonicals. |
+| `NEXT_PUBLIC_SITE_URL` | Recommended | No | The canonical origin, e.g. `https://www.oasismexicankitchenbar.com`. Used for canonical URLs, the sitemap, and Open Graph URLs. See the resolution order below. |
 | `NEXT_PUBLIC_SUPABASE_URL` | For admin | No | Supabase project URL, e.g. `https://abcdefgh.supabase.co`. Public by design — it is in the browser bundle. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | For admin | No | Supabase anon/publishable key. Public by design; it is constrained by Row Level Security, which is where access is actually enforced. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional | **YES** | Bypasses RLS. Used only for server-side reads of published content during SSR. **Never** prefix this with `NEXT_PUBLIC_`. If omitted, the anon key is used instead and everything still works, because published content is readable by `anon` under RLS. |
+
+### How the site URL is resolved
+
+`src/lib/site-url.ts` tries these in order and uses the first one that parses as a real `http(s)`
+URL:
+
+1. `NEXT_PUBLIC_SITE_URL`
+2. `NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL` (Vercel supplies it; a bare host, so `https://` is added)
+3. `NEXT_PUBLIC_VERCEL_URL` / `VERCEL_URL` — the specific deployment
+4. `https://www.oasismexicankitchenbar.com`
+
+A value that is **blank, whitespace-only, malformed, or not http(s) is skipped**, not used. This
+matters more than it looks: the origin feeds `metadataBase: new URL(...)` at module scope in the
+root layout, so a throw there fails the entire production build during "Collecting page data" — it
+does not just degrade one page.
+
+> **This is a fixed bug, not a hypothetical.** A production deploy failed with
+> `TypeError: Invalid URL … input: ''` because `NEXT_PUBLIC_SITE_URL` was defined in the hosting
+> project but empty, and the old code used `??`, which only falls back on `null`/`undefined`.
+> `src/lib/site-url.test.ts` locks the behaviour in with 12 cases.
+
+Because Vercel's own variables are in the chain, a preview deployment emits its own canonical URLs
+rather than claiming to be production, even if you never set `NEXT_PUBLIC_SITE_URL` for previews.
+
+**Either set it to a full origin with the scheme, or delete the variable entirely. Do not leave it
+present and blank** — that now falls back safely, but it also silently discards your intent.
 
 ### Why `NEXT_PUBLIC_*` keys are safe to expose
 
