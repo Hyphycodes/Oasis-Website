@@ -1,7 +1,14 @@
 import { ImageResponse } from 'next/og';
 import { site } from '@/content/site';
 
-export const runtime = 'edge';
+/**
+ * Runs on the default Node.js runtime, not edge.
+ *
+ * `runtime = 'edge'` forced a separate edge bundle at build time and printed
+ * "Using edge runtime on a page currently disables static generation". The card
+ * is generated once and cached; there is nothing to gain from edge here, and the
+ * extra bundling step is a build-time failure mode we do not need.
+ */
 export const alt = `${site.name} — ${site.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';

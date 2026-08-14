@@ -75,6 +75,27 @@ verify` catches compile and content errors; it does not catch a layout that has 
 `npm audit` reporting **high** or **critical** in a runtime dependency — patch within a week.
 Anything in `devDependencies` only is far less urgent; those never reach a visitor.
 
+#### Known remaining advisories
+
+`npm audit` currently reports **3 high** findings, all of which resolve only by moving to Next 16:
+
+| Package | Issue | Assessment |
+|---|---|---|
+| `postcss` 8.4.31, bundled inside `next` | XSS via unescaped `</style>` in stringify output (CVSS 6.1) | Build-time only. It processes our own stylesheets, never visitor input, so there is no path to exploitation here. |
+| `sharp` 0.34.5, bundled inside `next` | libvips CVEs | Used by Next's image optimiser. All images are first-party files committed to this repo; no user upload path exists. |
+| `next` | Inherits the two above | — |
+
+The project's **direct** `sharp` dependency is on the patched 0.35.3.
+
+These are worth clearing at the next planned maintenance window by upgrading to Next 16 — a major
+version, so do it deliberately with a full browser pass, not alongside a content change.
+
+#### Node version
+
+`engines.node` is pinned to `22.x` and `.nvmrc` says `22`. This is deliberate: an open-ended
+`>=20.0.0` lets the host silently jump to a new Node major and turns a working build into a broken
+one with no change on our side.
+
 ---
 
 ## Rolling back a bad deployment
