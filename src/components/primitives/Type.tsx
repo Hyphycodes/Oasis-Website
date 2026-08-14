@@ -35,13 +35,14 @@ export function Display({
   id,
 }: DisplayProps) {
   const sizing = {
-    xl: 'text-[length:var(--text-display-xl)] leading-[0.92] tracking-[-0.035em] [font-variation-settings:"wdth"_108]',
-    lg: 'text-[length:var(--text-display-lg)] leading-[0.95] tracking-[-0.03em] [font-variation-settings:"wdth"_106]',
-    md: 'text-[length:var(--text-display-md)] leading-none tracking-[-0.025em] [font-variation-settings:"wdth"_104]',
+    xl: 'text-[clamp(2.75rem,8vw,5.5rem)]',
+    lg: 'text-[clamp(2.25rem,5.5vw,4rem)]',
+    md: 'text-[clamp(1.75rem,3.5vw,2.5rem)]',
   }[size];
 
+  // `display` supplies the Anton voice, uppercase, and its tighter leading.
   return (
-    <Tag id={id} className={`font-semibold ${sizing} ${className}`}>
+    <Tag id={id} className={`display ${sizing} ${className}`}>
       {children}
     </Tag>
   );

@@ -106,8 +106,11 @@ describe('event series', () => {
     }
   });
 
-  it('points at an artwork asset that is never allowed to contain a date', () => {
+  it('never uses artwork that could carry a baked-in date', () => {
     for (const series of eventSeries) {
+      // null = the poster is composed from event data, so a stale date is
+      // structurally impossible. Any real artwork must be tagged 'none'/'brand'.
+      if (series.artworkAssetId === null) continue;
       const asset = assets[series.artworkAssetId];
       expect(asset, `${series.slug} artwork missing`).toBeDefined();
       expect(asset?.containsText, `${series.slug} artwork may not contain a date`).not.toBe('date');

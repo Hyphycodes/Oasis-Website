@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo } from 'next/font/google';
+import { Anton, Archivo } from 'next/font/google';
 import { site } from '@/content/site';
 import { seo } from '@/content/pages';
 import { SITE_URL } from '@/lib/seo';
@@ -18,6 +18,20 @@ const archivo = Archivo({
   axes: ['wdth'],
   display: 'swap',
   variable: '--font-archivo',
+});
+
+/**
+ * Anton — the display voice. Condensed, heavy, poster-scale.
+ *
+ * One weight, used only for marquee statements, event posters and After Dark,
+ * so it stays a deliberate voice rather than a second body font. `display: swap`
+ * means a slow font never blocks the headline from rendering.
+ */
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-anton',
 });
 
 export const metadata: Metadata = {
@@ -49,7 +63,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={archivo.variable}>
+    <html lang="en" className={`${archivo.variable} ${anton.variable}`}>
       <body>{children}</body>
     </html>
   );

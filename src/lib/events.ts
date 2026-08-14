@@ -63,6 +63,38 @@ function venueDateParts(date: Date) {
   };
 }
 
+/**
+ * Builds the ticket URL for a SPECIFIC night.
+ *
+ * The ticketing pages are per-occurrence and their slug carries the date:
+ *   /event-details/oasis-fridays-2026-08-21-22-00
+ *
+ * A slug without the date suffix does NOT 404 — it silently resolves to a
+ * different event. `/event-details/oasis-fridays` served a page titled "Oasis
+ * Latin Saturdays", so an Oasis Fridays ticket button sold Saturday tickets.
+ * Composing the suffix from the occurrence makes every button land on its own
+ * night, and the series can no longer carry one hard-coded link.
+ */
+export function ticketUrlForOccurrence(seriesSlug: string, startsAt: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(startsAt));
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '00';
+  // Intl renders midnight as "24" in some engines; the slug needs "00".
+  const hour = get('hour') === '24' ? '00' : get('hour');
+
+  const stamp = `${get('year')}-${get('month')}-${get('day')}-${hour}-${get('minute')}`;
+  return `https://www.oasismexicankitchenbar.com/event-details/${seriesSlug}-${stamp}`;
+}
+
 export function generateOccurrences(
   series: EventSeries,
   from: Date,
@@ -101,7 +133,8 @@ export function generateOccurrences(
       startsAt,
       endsAt,
       status: override?.status ?? series.status,
-      ticketUrl: override?.ticketUrl ?? series.ticketUrl,
+      // Composed per night. `series.ticketUrl` is only a manual override.
+      ticketUrl: override?.ticketUrl ?? series.ticketUrl ?? ticketUrlForOccurrence(series.slug, startsAt),
       priceCents: override?.priceCents !== undefined ? override.priceCents : series.priceCents,
       feeCents: series.feeCents,
     });

@@ -35,7 +35,19 @@ export default async function CocktailsPage() {
           </>
         }
         aside={
-          <Asset id="backBar" className="aspect-4/5 w-full" sizes="(min-width: 1024px) 30vw, 100vw" />
+          <div className="grid grid-cols-2 gap-4">
+            <Asset
+              id="cocktailPair"
+              className="aspect-4/5 w-full"
+              sizes="(min-width: 1024px) 15vw, 45vw"
+              priority
+            />
+            <Asset
+              id="backBar"
+              className="mt-8 aspect-4/5 w-full"
+              sizes="(min-width: 1024px) 15vw, 45vw"
+            />
+          </div>
         }
       />
 

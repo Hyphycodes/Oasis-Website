@@ -38,6 +38,15 @@ export function Asset({
   const asset = getAsset(id);
   const radius = rounded ? 'rounded-(--radius-lg)' : '';
 
+  // An unknown ID is a programming error, but it must not take a whole page
+  // down in production — render nothing and let the checker catch it in CI.
+  if (!asset) {
+    if (process.env.NODE_ENV !== 'production') {
+      throw new Error(`Unknown asset id: "${id}". Add it to src/content/assets.ts.`);
+    }
+    return null;
+  }
+
   if (!asset.path) {
     return (
       <Placeholder

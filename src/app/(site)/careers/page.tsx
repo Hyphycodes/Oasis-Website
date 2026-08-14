@@ -46,12 +46,17 @@ export default function CareersPage() {
                 View openings
               </a>
             </div>
-            <div className="lg:col-span-5 lg:col-start-8">
+            <div className="grid grid-cols-2 gap-4 lg:col-span-5 lg:col-start-8">
               <Asset
                 id="teamEnergy"
-                className="aspect-3/2 w-full"
+                className="col-span-2 aspect-3/2 w-full"
                 sizes="(min-width: 1024px) 40vw, 100vw"
                 priority
+              />
+              <Asset
+                id="roomAtmosphere"
+                className="col-span-2 aspect-3/2 w-full"
+                sizes="(min-width: 1024px) 40vw, 100vw"
               />
             </div>
           </div>
@@ -67,7 +72,7 @@ export default function CareersPage() {
                 {pageCopy.careers.perks.map((perk) => (
                   <li
                     key={perk}
-                    className="text-[length:var(--text-display-md)] font-semibold leading-tight tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]"
+                    className="display text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown"
                   >
                     {perk}
                   </li>
@@ -89,7 +94,7 @@ export default function CareersPage() {
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
               <Eyebrow>Apply</Eyebrow>
-              <h2 className="mt-4 text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+              <h2 className="display mt-4 text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
                 Join the familia.
               </h2>
               <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">

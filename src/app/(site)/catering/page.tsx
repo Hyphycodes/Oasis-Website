@@ -42,7 +42,7 @@ export default async function CateringPage() {
               <li key={pkg.id} className="border-b border-brown/15">
                 <div className="grid gap-x-8 gap-y-3 py-7 sm:grid-cols-12">
                   <div className="sm:col-span-4">
-                    <h2 className="text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+                    <h2 className="display text-[clamp(1.5rem,3vw,2.125rem)] text-brown">
                       {pkg.name}
                     </h2>
                     {pkg.servesMin ? (
@@ -98,7 +98,7 @@ export default async function CateringPage() {
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
               <Eyebrow>Catering enquiry</Eyebrow>
-              <h2 className="mt-4 text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+              <h2 className="display mt-4 text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
                 Tell us what you need.
               </h2>
               <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-brown">

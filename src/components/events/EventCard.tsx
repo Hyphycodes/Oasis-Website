@@ -1,18 +1,18 @@
 import Link from 'next/link';
-import { Asset } from '@/components/media/Asset';
-import type { AssetId } from '@/content/assets';
+import { EventPoster } from '@/components/media/EventPoster';
 import type { ResolvedEvent } from '@/content/types';
-import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 import { STATUS_LABEL } from '@/lib/events';
+import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 
 /**
  * Event card.
  *
- * The date is rendered as HTML text from `event.startsAt` and composited over the
- * artwork — it is never read from, or baked into, the flyer image. That is the
- * structural fix for the current site's stale-flyer problem. See PLAN.md §4.1.
+ * The visual is a generated poster built from live event data, so the date shown
+ * on the card and the date the guest turns up for are the same value by
+ * construction — there is no flyer image that can drift out of date, and no
+ * empty frame where artwork has not been supplied.
  *
- * Status is carried by TEXT plus a border treatment, never by color alone.
+ * Status is carried by text plus a border, never by colour alone.
  */
 export function EventCard({
   event,
@@ -35,13 +35,7 @@ export function EventCard({
     <article className={muted ? 'opacity-70' : undefined}>
       <Link href={`/events/${series.slug}`} className="group block">
         <div className="relative">
-          <Asset
-            id={series.artworkAssetId as AssetId}
-            className="aspect-4/5 w-full"
-            sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-            alt={`${series.title} artwork`}
-            tone={tone}
-          />
+          <EventPoster series={series} className="aspect-4/5 w-full rounded-(--radius-lg)" compact />
 
           {/* Live date chip. Always HTML, always from the occurrence. */}
           <div className="absolute left-4 top-4 rounded-(--radius-sm) bg-cream px-3 py-2 text-center">

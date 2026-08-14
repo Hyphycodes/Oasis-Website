@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Asset } from '@/components/media/Asset';
 import { MenuView } from '@/components/menu/MenuView';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink, ButtonLink } from '@/components/primitives/Button';
@@ -33,6 +34,14 @@ export default async function MenuPage() {
               Brunch
             </ButtonLink>
           </>
+        }
+        aside={
+          <Asset
+            id="plateTorta"
+            className="aspect-4/5 w-full"
+            sizes="(min-width: 1024px) 30vw, 100vw"
+            priority
+          />
         }
       />
 

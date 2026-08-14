@@ -128,7 +128,7 @@ export function MenuView({ menu }: { menu: Menu }) {
               <div className="flex flex-wrap items-baseline justify-between gap-4 border-b-2 border-brown/25 pb-3">
                 <h2
                   id={`${category.id}-heading`}
-                  className="text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]"
+                  className="display text-[clamp(1.5rem,3vw,2.125rem)] text-brown"
                 >
                   {category.name}
                 </h2>

@@ -13,60 +13,47 @@ import type { PageSection, PageSeo } from './types';
 
 export const homeSections: PageSection[] = [
   {
-    key: 'experience',
-    eyebrow: 'What goes on here',
-    heading: 'A kitchen, a bar, and a room that changes character after ten.',
-    body: 'Lunch and dinner every day. Brunch on the weekend. Cocktails all night. And on Friday and Saturday the dining room turns into something else entirely.',
+    key: 'signatures',
+    eyebrow: 'Oasis originals',
+    heading: 'The three you came for.',
+    body: null,
     visible: true,
     variant: 'stagger',
   },
   {
-    key: 'signatures',
-    eyebrow: 'Oasis originals',
-    heading: 'The three you came for.',
-    body: 'Everything on the menu is worth ordering. These are the ones people drive out to Lockport for.',
-    visible: true,
-    variant: 'editorial-left',
-  },
-  {
     key: 'bar',
     eyebrow: 'Bar & brunch',
-    heading: 'Margaritas by the tower. Brunch on the weekend.',
-    body: 'A full bar built around tequila, plus the shareables that show up at every good table — the tower, the pitchers, the jumbo cantarito.',
+    heading: 'Margaritas by the tower.',
+    body: 'A bar built on tequila, and the shareables that end up on every good table.',
     visible: true,
     variant: 'editorial-right',
   },
   {
     key: 'after-dark',
     eyebrow: 'Oasis After Dark',
-    heading: 'Friday and Saturday, the lights go down.',
-    body: 'Two nights a week, doors at ten, eighteen and up. House and Top 100 on Friday. Reggaetón, corridos and guaracha on Saturday.',
+    heading: 'Then the lights go down.',
+    body: 'Two nights a week the dining room becomes a club. Doors at ten, eighteen and up, ten dollars at the door.',
     visible: true,
     variant: 'band',
   },
   {
-    key: 'catering',
+    key: 'two-paths',
     eyebrow: 'Catering & celebrations',
-    heading: 'Feed twenty. Or throw the whole party here.',
-    body: 'Trays, packages and full spreads for pickup — or bring the celebration to us and let the team handle the rest.',
-    visible: true,
-    variant: 'editorial-left',
-  },
-  {
-    key: 'gallery',
-    eyebrow: 'The room',
-    heading: 'Come see it.',
+    heading: 'Take it with you, or take over the room.',
     body: null,
     visible: true,
-    variant: 'plain',
+    variant: 'stagger',
   },
 ];
 
 export const pageCopy = {
   home: {
-    heroHeadlineLines: ['Modern Mexican.', 'Tropical Energy.'],
+    // Two short lines, one idea: the food, and what happens to the room later.
+    // Set in the display face, so it works as a marquee statement rather than a
+    // sentence. Truthful — no awards, no heritage, no invented claims.
+    heroHeadlineLines: ['Dinner turns', 'electric.'],
     heroBody:
-      'Fresh, authentic flavors with a modern twist. Handcrafted cocktails, ice-cold cervezas, and a room that keeps going after the kitchen closes.',
+      'Birria, quesabirrias and margaritas by the tower — then Friday and Saturday, the dining room turns into a club.',
   },
 
   menu: {

@@ -51,18 +51,30 @@ anything:
 --o-orange-deep  #C94A22   button hover / pressed
 --o-clay         #B4441C   orange TEXT on light surfaces (AA-safe)
 
-/* Night ramp */
---o-espresso     #1A1008   After Dark base surface
---o-espresso-lift #241708  raised surface on espresso
---o-night-text   #F7EEDC   primary text on espresso
---o-night-soft   #C4AC8C   secondary text on espresso
+/* Night ramp — obsidian is the true black level for After Dark */
+--o-obsidian     #0D0805   After Dark base, event posters
+--o-espresso     #1A1008   raised surface on obsidian
+--o-espresso-lift #241708  raised surface again
+--o-night-text   #F7EEDC   primary text on dark
+--o-night-soft   #C4AC8C   secondary text on dark
 --o-night-line   rgba(247,238,220,0.16)   hairline borders on dark
 
+/* Accents */
+--o-agave        #3F5D45   restrained tropical cue, from the greenery wall
+--o-agave-light  #86A98C   the same on dark
+--o-neon         #FFC53D   THE electric accent — dates, ticketing, After Dark only
+
 /* Status */
---o-success      #3E6B43
+--o-success      #2F5434   (darkened from #3E6B43: 3.35:1 on sand failed AA)
 --o-warning      #B4441C
 --o-danger       #9B2C1B
 ```
+
+**On `--o-neon`.** The brief asks for "one electric nightlife accent used sparingly". It is an amber
+rather than a borrowed cyan/magenta because the brand is warm — a foreign hue would read as a
+generic nightclub template, which is exactly the failure mode to avoid. It measures 15.2:1 on
+obsidian, and it appears only on event dates, ticket moments, and the After Dark band. If it starts
+showing up on the menu page, it has stopped meaning anything.
 
 ### 1.3 Measured contrast
 
@@ -70,10 +82,12 @@ anything:
 |---|---|---|
 | `--o-brown` on `--o-cream` | 8.42:1 | AAA |
 | `--o-brown` on `--o-sand` | 4.98:1 | AA (large + body ≥ 16px passes AA 4.5) |
-| `--o-brown-soft` on `--o-cream` | 4.06:1 | AA large only — **captions ≥ 18.66px or bold** |
+| `--o-brown-soft` on `--o-cream` | 5.54:1 | AA — darkened from `#A86E3F` (3.83:1), which failed |
+| `--o-brown-soft` on `--o-sand` | 3.31:1 | ❌ — `.on-sand` steps it up to `--o-brown` |
 | `--o-orange` on `--o-cream` | 3.31:1 | ❌ **never** for text — fills and ≥ 36px display only |
 | `--o-clay` on `--o-cream` | 5.62:1 | AA — this is the orange-text token |
-| `--o-cream` on `--o-orange` | 3.31:1 | ⚠️ button label uses `#3B1A08` instead |
+| `--o-cream` on `--o-orange` | 3.31:1 | ⚠️ button label uses `--o-on-orange` `#2A1203` (5.03:1) |
+| `--o-neon` on `--o-obsidian` | 15.2:1 | AAA |
 | `--o-night-text` on `--o-espresso` | 15.1:1 | AAA |
 | `--o-night-soft` on `--o-espresso` | 8.6:1 | AAA |
 | `--o-orange` on `--o-espresso` | 4.57:1 | AA |
@@ -82,16 +96,18 @@ anything:
 
 ### 1.4 Day-to-night transition
 
-The site is warm and light from the header through catering. It goes dark exactly once, at
-**Oasis After Dark**, and returns to light for the footer's practical information.
+The site is warm and light from the header through the bar section. It goes dark exactly once, at
+**Oasis After Dark**, and returns to light for arrival.
 
-The transition is not a gradient and not a fade. It is:
+The transition **is** a gradient, and that is the point — an abrupt dark rectangle reads as a
+different website, not a later hour. It is:
 
-1. A full-bleed espresso band with a **1px `--o-orange` rule** along its top edge.
-2. The band's inner content inset by a full section rhythm step, so the darkness reads as a room
-   you enter rather than a stripe applied to the page.
-3. Photography inside the band desaturated ~8% and warmed, so the crowd shots sit in the same
-   light as the surface.
+1. A graded band, cream → sand → obsidian, over 96–128px of dedicated height. The page darkens the
+   way a room does at closing time.
+2. The type voice changes with it: Archivo above, Anton poster type below.
+3. `--o-neon` appears for the first time, on the dates and the ticket actions.
+4. One marquee ticker on the obsidian, carrying the weekly line — the only motion of its kind on
+   the site, and every fact in it is also stated as static text.
 
 The dark band is used on the homepage After Dark section, the `/events` hero, and event detail
 heroes. **Nowhere else.** If darkness appears on `/menu` or `/catering` it stops being a signal.
@@ -114,19 +130,31 @@ without the owner purchasing a separate self-hosting license.
 licenses, and the original logo vector (the logo wordmark is the one place the true brand
 letterforms genuinely matter).
 
-### 2.2 Substitute
+### 2.2 The pairing
 
-**Archivo** (Open Font License, served self-hosted through `next/font/google`) as a single
-variable superfamily, using both the weight and **width** axes.
+Two voices with distinct jobs, not one face at many sizes. Both Open Font License, both
+self-hosted through `next/font/google`.
 
-Why Archivo:
+| Voice | Face | Job |
+|---|---|---|
+| **Display** | **Anton** | Marquee statements, event posters, After Dark, section openers. Condensed, heavy, poster-scale, uppercase. This is the "electric" voice. |
+| **Text** | **Archivo** (variable, wght + wdth) | Everything that must be read: menus, prices, body, forms, navigation. The "kitchen" voice. |
+
+Anton is deliberately a single weight used in a single register. It is what makes an event poster
+read as a poster and a headline read as a statement, and keeping it out of body copy is what keeps
+it from becoming a second body font.
+
+Why not one family for both: the previous build used Archivo alone at many sizes, which produced a
+competent but one-note page — every heading was body copy scaled up. The brief's requirement that
+"typography does meaningful work" is not satisfiable with a single grotesque.
+
+Why Archivo for the text voice:
 
 - It is a grotesque in the same family tree as Neue Haas Unica — same tall x-height, same open
   apertures, same low stroke contrast. Set side by side at display size the substitution is
   close enough that the page still reads as the same brand.
-- The variable **width axis (62–125)** means headline type can be genuinely expanded without
-  faux-stretching, which is what gives the display voice its own character rather than looking
-  like body copy scaled up. This is the "typography doing meaningful work" requirement.
+- The variable **width axis (62–125)** is available where a wider or narrower cut helps, without
+  faux-stretching.
 - It has true tabular figures, which the menu price column and event date column both need.
 - One family, two axes — no second face means no muddy grotesque-on-grotesque pairing, and one
   font download instead of two.

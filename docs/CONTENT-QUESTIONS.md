@@ -97,14 +97,34 @@ These items show modifier upcharges but no base price on [W] `/menus`.
 | All wine (7 SKUs) | no prices | |
 | Fountain soda | no prices | $3.00 on [T-ORDER] |
 
-- **Provisional treatment:** the site renders these as **"Market price — ask your server"** rather
-  than silently omitting the price row or inventing a number. Toast prices are **not** copied onto
-  the marketing menu, because Toast prices are takeout prices and may legitimately differ from
-  dine-in (see §4).
-- **Question for owner:** please supply dine-in base prices for every item above, or confirm the
-  Toast price applies to dine-in too.
+- **Treatment:** the eight FOOD items now carry the Toast price — see §3b. The bar list is still
+  genuinely unpriced by every Oasis system and renders "Ask your server" rather than a $0 or a
+  silently missing row.
+- **Question for owner:** please supply dine-in bar prices, and confirm the food prices in §3b.
 
 ---
+
+## 3b. Prices adopted from Toast — CONFIRM DINE-IN
+
+Eight food items were published with **no price at all** on the marketing menu. They now show the
+price Oasis publishes on its own Toast ordering page, because "Ask your server" across a third of
+the menu reads as unfinished and Toast is a first-party Oasis system — this is quoting the
+restaurant, not inventing a number.
+
+| Item | Price now shown | Source |
+|---|---|---|
+| Taco Dinner | $14 | Toast |
+| Fajitas | $26 | Toast |
+| Quesadilla | $10 | Toast |
+| Loaded Nachos | $12 | Toast |
+| Oasis Fries | $12 | Toast |
+| Caesar Salad | $12 | Toast |
+| Taco Salad | $16 | Toast |
+| Oasis Alfredo Pasta | $20 | Toast |
+
+- **Question for owner:** are these the correct **dine-in** prices, or is Toast takeout-only pricing?
+- Still genuinely unpriced, because no Oasis system publishes them: **margaritas, the margarita
+  tower, margarita pitchers, all beer, all wine, fountain soda.** These render "Ask your server".
 
 ## 4. Website vs Toast price conflicts — CONFLICT ⚠️
 
@@ -124,6 +144,30 @@ These items show modifier upcharges but no base price on [W] `/menus`.
 - **Provisional values used:** the [W] website prices.
 - **Question for owner:** is the difference intentional (dine-in vs takeout pricing), or is one
   surface stale? If pricing is intentionally different, the website should say so once, clearly.
+
+### Not a conflict: the burrito
+
+An earlier audit flagged the website burrito at $14 against Toast at $13. Toast lists **two**
+different burritos:
+
+| Toast section | Item | Price |
+|---|---|---|
+| ENTREES | Burrito Dinner | **$14.00** |
+| A LA CARTE | BURRITO | $13.00 |
+
+The website's "Burrito Dinner $14" matches Toast exactly. The $13 item is the à-la-carte burrito,
+which the marketing menu does not carry. No change needed — recorded so the comparison is not
+repeated.
+
+### Ordering was switched off during the audit
+
+`Currently not accepting online orders` was displayed on the Toast ordering page on 2026-08-14 at
+both 16:0x and 17:0x — a Thursday afternoon, inside published opening hours, more than an hour
+apart. That does not look like a scheduled pause.
+
+- **Question for owner:** is online ordering deliberately paused? If not, it is a Toast
+  configuration problem and every "Order online" button on this website leads to a page that
+  cannot take an order. This is Toast's setting, not something the website controls.
 
 ### Items on Toast but absent from the public menu
 
@@ -166,6 +210,17 @@ One is wrong. `Oasis Fridays` has no such conflict (prose and structured data bo
 | Music | House, Top 100, some Hip-Hop | Reggaetón, Corridos, Guaracha |
 | Ticket | $10.00 GA + $0.25 service fee | $10.00 GA + $0.25 service fee |
 | Dates published | 21 dates | 21 dates |
+
+### 5.2b Ticket destinations — FIXED
+
+`/event-details/oasis-fridays` (no date suffix) does **not** 404 — it silently served a page titled
+**"Oasis Latin Saturdays"**, so an Oasis Fridays ticket button sold Saturday tickets. Verified
+2026-08-14.
+
+The ticketing pages are per-occurrence and their slug carries the date:
+`…/event-details/oasis-fridays-2026-08-21-22-00`. The site now composes that suffix from each
+occurrence, so every ticket button lands on its own night. Verified against four dates including
+2026-12-25, all resolving to the correct event.
 
 ### 5.3 Unverified event questions
 

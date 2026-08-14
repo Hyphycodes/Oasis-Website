@@ -22,6 +22,101 @@ instead. `scripts/qa-capture.sh` is documented accordingly — anyone re-running
 
 ---
 
+## 0. Second pass — art-direction rebuild (2026-08-14, later)
+
+A follow-up brief judged the first build "structurally competent, but still the old site inside a
+cleaner beige template" and listed nine concrete audit findings. Every one was checked against the
+real implementation; **five were genuine defects I had introduced**, two were already correct, and
+two needed a decision rather than a fix.
+
+### Findings verified against the deployed site
+
+| # | Reported | Verdict | Action |
+|---|---|---|---|
+| 1 | Mobile nav shows only a `MENU` header, links invisible at ~390px | ✅ **REAL — and reproduced at 320px.** The drawer panel measured **72px tall**. The header carries `backdrop-blur`, and `backdrop-filter` establishes a containing block for fixed-position descendants — so the drawer's `position: fixed` resolved against the 72px header, not the viewport, clipping every link inside it. | Drawer now renders through a **portal into `<body>`**, so no ancestor paint context can trap it. Panel is full height; all 12 links laid out and visible. |
+| 2 | Oasis Fridays "Buy tickets" opens a page titled *Oasis Latin Saturdays* | ✅ **REAL.** `/event-details/oasis-fridays` does not 404 — it silently serves the Saturdays page. I had invented that slug by stripping the date suffix. | Ticket URLs are now **composed per occurrence** (`…-2026-08-21-22-00`). Verified against four dates incl. 2026-12-25; each resolves to the correct event. Every ticket button is labelled with its own date. |
+| 3 | Event end times disagree, 2:00am vs 5:00am | ✅ Real on the source site | Already resolved to 2am and logged; unchanged. |
+| 4 | Site shows (815) 545-7556, Toast shows (815) 524-4188 | ✅ Real | Already flagged as blocking; unchanged. |
+| 5 | Website and Toast hours differ | ✅ Real | Already flagged as blocking; unchanged. |
+| 6 | Toast shows `Currently not accepting online orders` | ✅ Confirmed twice, an hour apart, on a Thursday afternoon inside opening hours | Not a schedule. Flagged to the owner as a probable Toast configuration problem — it is Toast's setting, not the website's. |
+| 7 | Website burrito $14 vs Toast $13 | ❌ **Not a discrepancy.** Toast lists *two* burritos: `Burrito Dinner $14` (matches the site exactly) and a separate à-la-carte `BURRITO $13`. | No change. Recorded so the comparison is not repeated. |
+| 8 | `Ask your server` used where a Toast price exists | ✅ Real, and it read as unfinished across a third of the menu | Eight food items now carry the price Oasis publishes on its own Toast page, marked in source. The bar list stays unpriced because *no* Oasis system publishes those. |
+| 9 | `Oasis photography for this slot has not been supplied yet.` exposed on production | ✅ **REAL — confirmed live on `/`, `/events`, `/private-events`.** It was `sr-only`, so invisible to sighted users but read aloud to screen readers and present in the rendered DOM. | Removed entirely. Internal pipeline state never appears in user-facing output. |
+
+### Media re-audit — the biggest win
+
+The brief required a photography-led design, and I had been treating the hero video as a single
+asset. It is a **20-second brand reel** covering the whole restaurant. Re-examined frame by frame,
+it yielded five images that had previously been branded placeholders:
+
+| New asset | Source | Replaces |
+|---|---|---|
+| `dishQuesabirria` | 12.8s | placeholder |
+| `consommeDip` | 15.45s — the dip shot the brief explicitly asks for | placeholder |
+| `cocktailPour` | 6.4s | placeholder |
+| `margaritaTajin` | 9.0s | placeholder |
+| `roomCrowd` | 14.0s | placeholder |
+
+Placeholder slots went from **8 to 2**. Both survivors (`privateEvents`, `birthdayCelebration`)
+have no honest source in the library.
+
+### What changed in the design
+
+| Area | Before | Now |
+|---|---|---|
+| Type | Archivo alone at many sizes — competent, one-note | **Anton + Archivo.** A condensed poster display voice for marquee statements, posters and After Dark; Archivo for everything that must be read |
+| Hero | 50/50 sand split, one rounded rectangle floating in the right half | Full-height **media mosaic**, edge to edge: video + the consommé dip, with the type panel as one column of three. Media makes the composition |
+| First viewport | Headline, copy, two buttons | Adds the **next event with its live date and price**, and a utility rail with open/closed state, directions and phone |
+| Signatures | Three placeholder photo boxes | Real quesabirria photography; the two undocumented dishes get **typographic posters** rather than a photo of something else |
+| Event artwork | Empty branded placeholder | **Composed posters** — night, music, age, door, price, all live data. Cannot go stale, cannot be empty |
+| Day→night | Abrupt espresso band with a 1px rule | **Graded band** cream → sand → obsidian, the type voice changes with it, and the electric accent appears for the first time |
+| Catering | One combined block | **Two explicit paths** — "Feed the party" (prices) vs "Bring the party here" (the room) |
+| Page length | 8 sections, the restaurant described three times | 6 sections, each earning its height with real photography or real data |
+
+### Colour additions
+
+`--o-obsidian #0D0805` (true black level), `--o-agave #3F5D45` (from the greenery wall),
+`--o-neon #FFC53D` — one electric accent, amber rather than a borrowed cyan so it reads as heat
+rather than a generic nightclub palette. 15.2:1 on obsidian, used only on dates, tickets and the
+After Dark band.
+
+### Second-pass verification
+
+```
+Routes × widths audited: 11 × 1440  +  9 × {320, 390, 768}   = 38 combinations
+Horizontal overflow ...................... 0
+WCAG AA contrast failures ................ 0
+Exactly one <h1> ......................... 38/38
+Heading-level jumps ...................... 0
+<img> missing alt ........................ 0
+Placeholder "#" links .................... 0
+target=_blank without noopener ........... 0
+Missing-photography copy in output ....... 0
+```
+
+Mobile navigation acceptance, run at **320×700** — all ten steps from the brief:
+
+```
+links visibly present (not just in DOM) .. ✅ 12 links, full geometry
+background covered ....................... ✅ scrim covers viewport
+focus enters the menu .................... ✅
+tab through every item ................... ✅ 13 tabbable, focus never escapes
+tab wraps last → first ................... ✅
+Escape closes ............................ ✅
+focus returns to trigger ................. ✅
+body scroll locked, then restored ........ ✅
+navigation closes the menu ............... ✅ (route-change effect)
+no horizontal overflow ................... ✅ scrollWidth 320 = clientWidth
+```
+
+```
+npm run lint        ✅   npm run typecheck   ✅
+npm test            ✅ 58 passed             npm run assets:check ✅
+npm run build       ✅ 26 routes             git diff --check ✅ clean
+```
+
+---
+
 ## 1. Issues found and fixed
 
 | # | Severity | Route(s) | Breakpoint | Issue | Fix | Status |

@@ -32,11 +32,25 @@
      #3B1A08 was 4.44:1 — still short. #2A1203 measures 5.03:1. */
   --color-on-orange: #2a1203;
 
-  /* --- Night ramp ------------------------------------------------------ */
+  /* --- Night ramp ------------------------------------------------------
+     Obsidian is a true black level for After Dark; espresso sits above it as
+     the raised surface. Both are derived from the brown ramp, so night reads as
+     the same building after hours rather than a different brand. */
+  --color-obsidian: #0d0805;
   --color-espresso: #1a1008;
   --color-espresso-lift: #241708;
   --color-night-text: #f7eedc;
   --color-night-soft: #c4ac8c;
+
+  /* --- Accents ---------------------------------------------------------
+     agave: a restrained tropical cue, taken from the greenery wall in the room.
+     neon:  the single electric accent, reserved for dates, ticketing and the
+            After Dark transition. Deliberately an amber rather than a foreign
+            hue, so it reads as heat, not as a borrowed nightclub palette.
+            15.2:1 on obsidian. */
+  --color-agave: #3f5d45;
+  --color-agave-light: #86a98c;
+  --color-neon: #ffc53d;
 
   /* --- Status ----------------------------------------------------------
      success is darkened from #3E6B43 (3.35:1 on sand) so the "Open now"
@@ -45,8 +59,14 @@
   --color-warning: #b4441c;
   --color-danger: #9b2c1b;
 
-  /* --- Type ------------------------------------------------------------ */
+  /* --- Type ------------------------------------------------------------
+     Two voices with distinct jobs, not one face at many sizes:
+       display — Anton. Condensed, heavy, poster-scale. Marquee statements,
+                 event posters, After Dark. It is the "electric" voice.
+       sans    — Archivo variable. Everything that must be read: menus, prices,
+                 body, forms, navigation. It is the "kitchen" voice. */
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-anton), var(--font-archivo), ui-sans-serif, sans-serif;
 
   /* Sized so each hero sentence holds ONE line at every width from 360px up.
      The 8.6vw slope is what keeps "Tropical Energy." unbroken on a 360 viewport.
@@ -99,12 +119,9 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Display type carries the width axis. This is the typographic "work"
-     described in docs/DESIGN-DIRECTION.md §2.2 — not just larger body copy. */
   h1,
   h2,
   h3 {
-    font-variation-settings: 'wdth' 106;
     font-weight: 600;
     text-wrap: balance;
   }
@@ -154,6 +171,61 @@
 
   @media (prefers-reduced-transparency: reduce) {
     .grain::before {
+      display: none;
+    }
+  }
+
+  /* --- Display voice ----------------------------------------------------
+     Anton is condensed and heavy by design, so it needs positive tracking to
+     stay readable at large sizes and a tight leading to stack as a block. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  /* Poster type for event artwork and After Dark: tighter, more aggressive. */
+  .display-poster {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 0.84;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  /* --- Ticker ------------------------------------------------------------
+     One horizontal marquee, used once, for the weekly nightlife line. Pauses on
+     hover and stops entirely under reduced motion — it must never be the only
+     way to read something. */
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    animation: ticker 38s linear infinite;
+  }
+
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes ticker {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+      /* Without the animation the duplicated half is redundant noise. */
+      width: 100%;
+    }
+    .ticker-track > :nth-child(2) {
       display: none;
     }
   }

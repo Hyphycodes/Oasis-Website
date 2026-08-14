@@ -71,7 +71,7 @@ async function main() {
     .filter((f) => /\.(tsx?|css)$/.test(f) && !f.endsWith(path.join('content', 'assets.ts')))
     .map((f) => readFile(f, 'utf8'));
   const allSource = (await Promise.all(componentSource)).join('\n');
-  const dynamicIds = new Set(eventSeries.map((s) => s.artworkAssetId));
+  const dynamicIds = new Set(eventSeries.map((s) => s.artworkAssetId).filter(Boolean) as string[]);
   // A poster is rendered by AssetVideo via `asset.poster`, never by its own ID.
   const posterPaths = new Set(entries.map(([, a]) => a.poster).filter(Boolean) as string[]);
 
@@ -177,6 +177,10 @@ async function main() {
 
   // ---- recurring artwork must never carry a date -------------------------
   for (const series of eventSeries) {
+    // No artwork ID means the poster is composed from event data, which cannot
+    // contain a baked-in date by construction. Nothing to check.
+    if (!series.artworkAssetId) continue;
+
     const artwork = assets[series.artworkAssetId as keyof typeof assets] as AssetRecord | undefined;
     if (!artwork) {
       fail(`Event series "${series.slug}" points at unknown asset "${series.artworkAssetId}".`);

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { primaryNav, secondaryNav } from './nav';
 
 const FOCUSABLE =
@@ -16,17 +17,19 @@ export function MobileDrawer({
   orderUrl: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
 
+  useEffect(() => setMounted(true), []);
+
   const close = useCallback(() => {
     setOpen(false);
-    // Return focus to where it came from, not to the top of the document.
     triggerRef.current?.focus();
   }, []);
 
-  // Route change closes the drawer — otherwise back/forward leaves it stranded open.
+  // Route change closes the drawer — otherwise back/forward strands it open.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -73,6 +76,118 @@ export function MobileDrawer({
     };
   }, [open, close]);
 
+  /**
+   * Rendered through a portal into <body>, NOT inline in the header.
+   *
+   * The header carries `backdrop-blur`, and `backdrop-filter` establishes a
+   * containing block for fixed-position descendants. Rendered inline, the
+   * drawer's `position: fixed` resolved against the 72px-tall header instead of
+   * the viewport, so it collapsed to a strip showing only its own title bar
+   * while every link sat clipped inside it. The portal removes that dependency
+   * entirely — the dialog cannot be trapped by an ancestor's paint context.
+   */
+  const drawer =
+    open && mounted
+      ? createPortal(
+          <div className="fixed inset-0 z-[100] lg:hidden">
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={close}
+              className="absolute inset-0 h-full w-full bg-obsidian/70"
+            />
+            <div
+              id="mobile-drawer"
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Site menu"
+              className="absolute inset-y-0 right-0 flex h-full w-full max-w-sm flex-col overflow-y-auto overscroll-contain bg-cream"
+            >
+              <div className="flex shrink-0 items-center justify-between border-b border-brown/15 px-5 py-4">
+                <span className="eyebrow text-brown-soft">Menu</span>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="inline-flex size-11 items-center justify-center rounded-(--radius-md) text-brown"
+                >
+                  <span className="sr-only">Close menu</span>
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="size-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  >
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </button>
+              </div>
+
+              <nav className="flex-1 px-5 py-6" aria-label="Primary">
+                <ul className="space-y-1">
+                  {primaryNav.map((item) => (
+                    <li key={item.href}>
+                      <Link href={item.href} className="display block py-2 text-[1.75rem] text-brown">
+                        {item.label}
+                      </Link>
+                      {item.children ? (
+                        <ul className="mb-2 ml-1 space-y-0.5 border-l border-brown/15 pl-4">
+                          {item.children.map((child) => (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                className="flex min-h-11 items-center text-[0.9375rem] text-brown-soft"
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  ))}
+                  {secondaryNav.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="flex min-h-11 items-center text-[0.9375rem] text-brown-soft"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="grid shrink-0 gap-2 border-t border-brown/15 px-5 py-5">
+                <a
+                  href={reservationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-orange px-5 font-semibold text-on-orange"
+                >
+                  Reserve a table
+                  <span className="sr-only">(opens Toast in a new tab)</span>
+                </a>
+                <a
+                  href={orderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border-2 border-brown px-5 font-semibold text-brown"
+                >
+                  Order online
+                  <span className="sr-only">(opens Toast in a new tab)</span>
+                </a>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <>
       <button
@@ -84,100 +199,19 @@ export function MobileDrawer({
         className="inline-flex size-11 items-center justify-center rounded-(--radius-md) text-brown lg:hidden"
       >
         <span className="sr-only">Open menu</span>
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="size-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        >
           <path d="M3.5 7h17M3.5 12h17M3.5 17h17" />
         </svg>
       </button>
-
-      {open ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={close}
-            className="absolute inset-0 bg-espresso/50"
-          />
-          <div
-            id="mobile-drawer"
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Site menu"
-            className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col overflow-y-auto bg-cream shadow-none"
-          >
-            <div className="flex items-center justify-between border-b border-brown/15 px-5 py-4">
-              <span className="eyebrow text-brown-soft">Menu</span>
-              <button
-                type="button"
-                onClick={close}
-                className="inline-flex size-11 items-center justify-center rounded-(--radius-md) text-brown"
-              >
-                <span className="sr-only">Close menu</span>
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
-            </div>
-
-            <nav className="flex-1 px-5 py-6" aria-label="Primary">
-              <ul className="space-y-1">
-                {primaryNav.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="block py-2.5 text-[1.5rem] font-semibold tracking-[-0.02em] [font-variation-settings:'wdth'_104]"
-                    >
-                      {item.label}
-                    </Link>
-                    {item.children ? (
-                      <ul className="mb-2 ml-1 space-y-0.5 border-l border-brown/15 pl-4">
-                        {item.children.map((child) => (
-                          <li key={child.href}>
-                            <Link
-                              href={child.href}
-                              className="block py-1.5 text-[0.9375rem] text-brown-soft"
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-                {secondaryNav.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="block py-2.5 text-[0.9375rem] text-brown-soft">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-            <div className="grid gap-2 border-t border-brown/15 px-5 py-5">
-              <a
-                href={reservationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center justify-center rounded-(--radius-md) bg-orange px-5 py-3 font-semibold text-on-orange"
-              >
-                Reserve a table
-                <span className="sr-only">(opens Toast in a new tab)</span>
-              </a>
-              <a
-                href={orderUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center justify-center rounded-(--radius-md) border border-brown/25 px-5 py-3 font-semibold text-brown"
-              >
-                Order online
-                <span className="sr-only">(opens Toast in a new tab)</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {drawer}
     </>
   );
 }

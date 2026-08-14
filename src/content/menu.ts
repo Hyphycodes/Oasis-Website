@@ -4,10 +4,15 @@ import type { Menu, MenuItem } from './types';
  * Menu content captured 2026-08-14 from https://www.oasismexicankitchenbar.com/menus
  *
  * Rules applied:
- *  - Prices are the FIRST-PARTY website prices. Where Toast disagrees, the website
- *    wins and the conflict is logged (docs/CONTENT-QUESTIONS.md §4).
- *  - `priceCents: null` means the base price is not published anywhere first-party.
- *    It is NOT filled in from Toast, and it is NOT rendered as $0 or hidden.
+ *  - Where the marketing menu published a price, that price wins and any Toast
+ *    difference is logged (docs/CONTENT-QUESTIONS.md §4).
+ *  - Where the marketing menu published NO price, the price Oasis publishes on
+ *    its own Toast ordering page is used, marked with a comment. Toast is a
+ *    first-party Oasis system, so this is quoting the restaurant, not inventing
+ *    a number — and "Ask your server" on a third of the menu reads as unfinished.
+ *    The owner still confirms dine-in vs takeout in CLIENT-CONTENT-SIGNOFF.md.
+ *  - `priceCents: null` survives only where NO Oasis system publishes a price
+ *    (the bar list). It renders as `priceNote`, never as $0 and never hidden.
  *  - Spelling normalized only where the intended meaning is certain (§13).
  *  - Nothing here is invented: no ingredients, no allergens, no dietary claims
  *    beyond what the restaurant itself states.
@@ -99,7 +104,7 @@ export const foodMenu: Menu = {
           available: true,
           featured: false,
         },
-        unpriced({
+        {
           id: 'quesadilla',
           name: 'Quesadilla',
           description:
@@ -110,8 +115,16 @@ export const foodMenu: Menu = {
             { label: 'Upgrade to dinner', priceCents: 200 },
           ],
           dietary: ['vegetarian'],
-        }),
-        unpriced({
+          priceCents: 1000,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          available: true,
+
+          featured: false,
+
+        },
+        {
           id: 'loaded-nachos',
           name: 'Loaded Nachos',
           description:
@@ -119,8 +132,16 @@ export const foodMenu: Menu = {
           modifierGroupLabel: 'Add',
           modifiers: [{ label: 'Meat', priceCents: 400 }],
           dietary: ['vegetarian'],
-        }),
-        unpriced({
+          priceCents: 1200,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          available: true,
+
+          featured: false,
+
+        },
+        {
           id: 'oasis-fries',
           name: 'Oasis Fries',
           description:
@@ -128,7 +149,15 @@ export const foodMenu: Menu = {
           modifierGroupLabel: 'Add',
           modifiers: [{ label: 'Meat', priceCents: 400 }],
           dietary: ['vegetarian'],
-        }),
+          priceCents: 1200,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          available: true,
+
+          featured: false,
+
+        },
         {
           id: 'guacamole',
           name: 'Guacamole',
@@ -142,7 +171,7 @@ export const foodMenu: Menu = {
           available: true,
           featured: false,
         },
-        unpriced({
+        {
           id: 'caesar-salad',
           name: 'Caesar Salad',
           description:
@@ -153,7 +182,15 @@ export const foodMenu: Menu = {
             { label: 'Shrimp', priceCents: 600 },
           ],
           dietary: ['vegetarian'],
-        }),
+          priceCents: 1200,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          available: true,
+
+          featured: false,
+
+        },
       ],
     },
 
@@ -162,7 +199,7 @@ export const foodMenu: Menu = {
       name: 'Entrees',
       note: null,
       items: [
-        unpriced({
+        {
           id: 'taco-dinner',
           name: 'Taco Dinner',
           description:
@@ -181,15 +218,35 @@ export const foodMenu: Menu = {
             { label: 'Guacamole', priceCents: 50 },
             { label: 'Avocado Slices', priceCents: 50 },
           ],
-        }),
-        unpriced({
+          priceCents: 1400,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          dietary: [],
+
+          available: true,
+
+          featured: false,
+
+        },
+        {
           id: 'taco-salad',
           name: 'Taco Salad',
           description:
             'Crisp lettuce layered with seasoned beans, shredded cheese, fresh tomato, and sour cream, topped with your choice of meat and served in a golden crispy tortilla bowl.',
           modifierGroupLabel: 'Add',
           modifiers: [{ label: 'Upgrade to Fajita Salad', priceCents: 200 }],
-        }),
+          priceCents: 1600,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          dietary: [],
+
+          available: true,
+
+          featured: false,
+
+        },
         {
           id: 'birria-ramen',
           name: 'Birria Ramen',
@@ -259,15 +316,25 @@ export const foodMenu: Menu = {
           available: true,
           featured: false,
         },
-        unpriced({
+        {
           id: 'oasis-alfredo',
           name: 'Oasis Alfredo Pasta',
           description:
             'Creamy alfredo pasta tossed with a hint of Mexican spice, topped with grilled chicken and fresh Parmesan. Shrimp substitution available.',
           modifierGroupLabel: null,
           modifiers: [],
-        }),
-        unpriced({
+          priceCents: 2000,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          dietary: [],
+
+          available: true,
+
+          featured: false,
+
+        },
+        {
           id: 'fajitas',
           name: 'Fajitas',
           description:
@@ -279,7 +346,17 @@ export const foodMenu: Menu = {
             { label: 'Shrimp', priceCents: null },
             { label: 'Combo', priceCents: 400 },
           ],
-        }),
+          priceCents: 2600,
+          priceNote: null,
+          // Price published by Oasis on Toast; the marketing menu never carried one.
+
+          dietary: [],
+
+          available: true,
+
+          featured: false,
+
+        },
         {
           id: 'carne-asada',
           name: 'Carne Asada',
@@ -537,6 +614,8 @@ export const cocktailMenu: Menu = {
             { label: 'Spicy', priceCents: null },
           ],
           featured: true,
+          dietary: [],
+          available: true,
         }),
         {
           id: 'blood-orange-paloma',
@@ -675,6 +754,8 @@ export const cocktailMenu: Menu = {
             { label: 'Peach', priceCents: null },
           ],
           featured: true,
+          dietary: [],
+          available: true,
         }),
         unpriced({
           id: 'pitchers',
@@ -691,6 +772,9 @@ export const cocktailMenu: Menu = {
             { label: 'Peach', priceCents: null },
             { label: 'Cucumber', priceCents: null },
           ],
+          dietary: [],
+          available: true,
+          featured: false,
         }),
         {
           id: 'jumbo-cantarito',
@@ -724,6 +808,8 @@ export const cocktailMenu: Menu = {
             { label: 'Moët 750ml', priceCents: 15000 },
           ],
           featured: true,
+          dietary: [],
+          available: true,
         }),
       ],
     },

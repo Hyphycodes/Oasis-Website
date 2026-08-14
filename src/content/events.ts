@@ -22,8 +22,11 @@ export const eventSeries: EventSeries[] = [
     ageNote: 'Drinks 21+ with valid ID.',
     musicFormats: ['House', 'Top 100', 'Hip-Hop'],
     venueName: 'Oasis Mexican Kitchen & Bar',
-    artworkAssetId: 'eventFridays',
-    ticketUrl: 'https://www.oasismexicankitchenbar.com/event-details/oasis-fridays',
+    artworkAssetId: null,
+    // null = compose the correct per-night URL. A single series-level link cannot
+    // be right for every date, and the date-less slug resolved to the WRONG
+    // event entirely. See ticketUrlForOccurrence in src/lib/events.ts.
+    ticketUrl: null,
     priceCents: 1000,
     feeCents: 25,
     status: 'scheduled',
@@ -45,8 +48,8 @@ export const eventSeries: EventSeries[] = [
     ageNote: 'Drinks 21+ with valid ID.',
     musicFormats: ['Reggaetón', 'Corridos', 'Guaracha'],
     venueName: 'Oasis Mexican Kitchen & Bar',
-    artworkAssetId: 'eventLatinSaturdays',
-    ticketUrl: 'https://www.oasismexicankitchenbar.com/event-details/oasis-latin-saturdays',
+    artworkAssetId: null,
+    ticketUrl: null,
     priceCents: 1000,
     feeCents: 25,
     status: 'scheduled',

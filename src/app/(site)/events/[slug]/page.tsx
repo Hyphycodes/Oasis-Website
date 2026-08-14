@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Asset } from '@/components/media/Asset';
+import { EventPoster } from '@/components/media/EventPoster';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
-import type { AssetId } from '@/content/assets';
 import { site } from '@/content/site';
 import {
   addToCalendarUrl,
@@ -105,13 +104,15 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
               </dl>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                {series.ticketUrl && next?.status !== 'sold-out' ? (
+                {/* The NEXT night's own ticket page, not a series-level link —
+                    a date-less slug resolves to the wrong event entirely. */}
+                {next?.ticketUrl && next.status !== 'sold-out' ? (
                   <ExternalButtonLink
-                    href={series.ticketUrl}
-                    destination="the ticketing page"
+                    href={next.ticketUrl}
+                    destination={`${series.title} tickets`}
                     size="lg"
                   >
-                    Buy tickets
+                    Tickets — {formatEventDateLong(next.startsAt)}
                   </ExternalButtonLink>
                 ) : (
                   <p className="rounded-(--radius-md) border border-danger px-4 py-3 text-[0.9375rem] font-semibold text-danger">
@@ -131,12 +132,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             </div>
 
             <div className="lg:col-span-4 lg:col-start-9">
-              <Asset
-                id={series.artworkAssetId as AssetId}
-                className="aspect-4/5 w-full"
-                sizes="(min-width: 1024px) 30vw, 100vw"
-                alt={`${series.title} artwork`}
-                tone="dark"
+              <EventPoster
+                series={series}
+                className="aspect-4/5 w-full rounded-(--radius-lg)"
               />
               <p className="mt-3 text-[0.8125rem] text-night-soft">
                 {series.venueName}, {site.street}, {site.locality}, {site.region}{' '}
@@ -149,7 +147,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       <Band surface="cream">
         <Frame>
-          <h2 className="text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
+          <h2 className="display text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
             Upcoming dates
           </h2>
           {/* Dates come from generated occurrences. Nothing here is read from the
@@ -171,9 +169,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   {statusLabel ? (
                     <p className="text-[0.875rem] font-semibold text-danger">{statusLabel}</p>
                   ) : (
-                    <p className="tabular text-[0.9375rem] font-semibold text-brown">
-                      {occurrence.priceCents != null ? formatPrice(occurrence.priceCents) : ''}
-                    </p>
+                    <span className="flex items-center gap-4">
+                      <span className="tabular text-[0.9375rem] font-semibold text-brown">
+                        {occurrence.priceCents != null ? formatPrice(occurrence.priceCents) : ''}
+                      </span>
+                      {occurrence.ticketUrl ? (
+                        <ExternalTextLink
+                          href={occurrence.ticketUrl}
+                          destination={`${series.title} tickets`}
+                          className="text-clay"
+                        >
+                          Tickets
+                        </ExternalTextLink>
+                      ) : null}
+                    </span>
                   )}
                 </li>
               );

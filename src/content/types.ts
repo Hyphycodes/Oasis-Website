@@ -168,7 +168,8 @@ export interface EventSeries {
   ageNote: string | null;
   musicFormats: string[];
   venueName: string;
-  artworkAssetId: string;
+  /** Optional. When absent the poster is composed from event data instead. */
+  artworkAssetId: string | null;
   ticketUrl: string | null;
   priceCents: number | null;
   feeCents: number | null;
