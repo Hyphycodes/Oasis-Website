@@ -14,7 +14,7 @@ export const eventSeries: EventSeries[] = [
     title: 'Oasis Fridays',
     summary: 'House, Top 100 and Hip-Hop. 18+, doors at 10.',
     description:
-      'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and a nightclub atmosphere.',
+      'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and late-night energy.',
     cadence: { kind: 'weekly', weekday: 5 },
     startMinutes: 22 * 60, // 10:00 PM
     endMinutes: 26 * 60, // 2:00 AM next day

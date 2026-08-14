@@ -35,9 +35,9 @@ export function Display({
   id,
 }: DisplayProps) {
   const sizing = {
-    xl: 'text-[clamp(2.75rem,8vw,5.5rem)]',
-    lg: 'text-[clamp(2.25rem,5.5vw,4rem)]',
-    md: 'text-[clamp(1.75rem,3.5vw,2.5rem)]',
+    xl: 'text-[clamp(2.25rem,5.5vw,3.75rem)]',
+    lg: 'text-[clamp(1.875rem,3.6vw,2.75rem)]',
+    md: 'text-[clamp(1.5rem,2.4vw,1.875rem)]',
   }[size];
 
   // `display` supplies the Anton voice, uppercase, and its tighter leading.

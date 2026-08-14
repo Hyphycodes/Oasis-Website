@@ -1,37 +1,56 @@
 import Link from 'next/link';
-import { Asset } from '@/components/media/Asset';
 import { AssetVideo } from '@/components/media/AssetVideo';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
 import { site } from '@/content/site';
 import type { ResolvedEvent } from '@/content/types';
-import { formatEventDate, formatEventTime, formatPrice } from '@/lib/format';
+import { formatEventDate, formatEventTime } from '@/lib/format';
 
 /**
- * Hero — media-led, edge to edge.
+ * Hero — ONE dominant visual.
  *
- * The previous hero was a 50/50 sand split with a rounded rectangle floating in
- * the right half: the media decorated the composition instead of creating it.
- * This is a full-height mosaic where photography is the structure.
+ * The previous version put the reel beside a static taco-dipping still: two
+ * near-identical food-action visuals splitting attention. This keeps only the
+ * reel, full-bleed behind the type, because it is the single strongest asset
+ * and it is native 9:16 on a phone.
  *
- * Resolution honesty drives the layout. The reel is 720×1280, which is native
- * on a phone and would be a 2× upscale stretched across a 1440px viewport. So
- * the media is used in PORTRAIT columns at close to native size rather than as
- * one full-bleed landscape wash — the composition is built around what the
- * assets can actually carry.
+ * Legibility never depends on the video. The scrim is a solid gradient over a
+ * poster that is always painted, so the headline holds the same contrast on the
+ * first frame, the last frame, under reduced motion, and on a dead connection.
+ * Height is bounded so the actions always sit inside the first viewport.
  */
 export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
   return (
-    <section className="relative isolate overflow-hidden bg-cream on-sand">
-      {/* Bounded `height`, not `min-height`: min-height beats max-height in CSS,
-          so a min-only rule would let a tall monitor stretch the hero and upscale
-          720px-wide media into mush. Bounds keep the crop honest at any height. */}
-      <div className="mx-auto grid max-w-[1600px] lg:h-[calc(100svh-8rem)] lg:max-h-[860px] lg:min-h-[620px] lg:grid-cols-12">
-        {/* ---------------------------------------------------------- type */}
-        <div className="relative z-10 flex flex-col justify-center bg-sand grain px-5 pb-12 pt-14 sm:px-8 lg:col-span-6 lg:px-12 lg:py-20 xl:col-span-5">
-          <p className="eyebrow text-brown">Lockport, Illinois</p>
+    <section className="relative isolate overflow-hidden bg-plum">
+      {/* Wrapped rather than positioned directly: AssetVideo sets `relative` on
+          its own root, which would fight an `absolute` passed through className
+          (same specificity — stylesheet order decides, not the class list). */}
+      <div className="absolute inset-0">
+        <AssetVideo
+          id="heroVideo"
+          mobileBelow={0}
+          className="size-full"
+          objectPosition="50% 42%"
+        />
+      </div>
 
-          <h1 className="display mt-5 text-[clamp(3rem,11vw,6.5rem)] text-brown lg:text-[clamp(3.5rem,5.2vw,6rem)]">
+      {/* Two scrims, tuned so the left column is effectively solid plum behind the
+          type while the right side stays legible as food. Contrast for the
+          headline therefore does not depend on which frame is showing. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-linear-to-t from-plum via-plum/55 to-plum/20"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 hidden bg-linear-to-r from-plum via-plum/75 to-transparent lg:block"
+      />
+
+      <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">
+        <div className="max-w-xl">
+          <p className="eyebrow text-amber">Lockport, Illinois</p>
+
+          <h1 className="display mt-4 text-[clamp(2rem,6vw,3.25rem)] text-night-text">
             {pageCopy.home.heroHeadlineLines.map((line) => (
               <span key={line} className="block">
                 {line}
@@ -39,16 +58,16 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
             ))}
           </h1>
 
-          <p className="measure-lead mt-6 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
+          <p className="mt-4 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
             {pageCopy.home.heroBody}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <a
               href={site.reservationUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-orange px-7 text-base font-semibold tracking-[0.02em] text-on-orange transition-colors hover:bg-orange-deep"
+              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-coral px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-on-orange transition-colors hover:bg-coral-deep"
             >
               Reserve a table
               <span className="sr-only">(opens Toast in a new tab)</span>
@@ -57,57 +76,26 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
               href={site.orderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border-2 border-brown px-7 text-base font-semibold tracking-[0.02em] text-brown transition-colors hover:bg-brown hover:text-cream"
+              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border border-night-text/45 px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-night-text transition-colors hover:bg-night-text/12"
             >
               Order online
               <span className="sr-only">(opens Toast in a new tab)</span>
             </a>
-          </div>
 
-          {/* Next event, inside the first viewport. Answers "what's happening?"
-              without a scroll, and the date is live data, never artwork. */}
-          {nextEvent ? (
-            <Link
-              href="/events"
-              className="group mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-brown/25 pt-5 text-brown"
-            >
-              <span className="inline-flex items-center gap-2 bg-obsidian px-2.5 py-1.5">
-                <span className="size-1.5 rounded-full bg-neon" aria-hidden="true" />
-                <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-night-text">
-                  Next up
+            {nextEvent ? (
+              <Link
+                href="/events"
+                className="group inline-flex min-h-12 flex-wrap items-center gap-x-2 text-[0.9375rem] text-night-text/85"
+              >
+                <span className="tabular text-amber">
+                  {nextEvent.series.title.replace('Oasis ', '')} ·{' '}
+                  {formatEventDate(nextEvent.startsAt)} · {formatEventTime(nextEvent.startsAt)}
                 </span>
-              </span>
-              <span className="text-[0.9375rem] font-semibold">{nextEvent.series.title}</span>
-              <span className="tabular text-[0.9375rem]">
-                {formatEventDate(nextEvent.startsAt)} · {formatEventTime(nextEvent.startsAt)}
-                {nextEvent.priceCents != null ? ` · ${formatPrice(nextEvent.priceCents)}` : ''}
-              </span>
-              <span className="text-[0.9375rem] underline underline-offset-4 group-hover:underline-offset-[6px]">
-                See events
-              </span>
-            </Link>
-          ) : null}
-        </div>
-
-        {/* --------------------------------------------------------- media */}
-        {/* Two portrait panels, edge to edge, no radius, no gap. On mobile the
-            video runs full-bleed at its native 9:16 — the best it ever looks. */}
-        <div className="relative lg:col-span-6 xl:col-span-7">
-          <div className="grid h-full grid-cols-1 sm:grid-cols-2">
-            <AssetVideo
-              id="heroVideo"
-              mobileBelow={0}
-              className="aspect-4/5 w-full sm:aspect-auto sm:h-full sm:min-h-[420px] lg:min-h-full"
-            />
-            <div className="hidden sm:block">
-              <Asset
-                id="consommeDip"
-                className="h-full min-h-[420px] w-full lg:min-h-full"
-                sizes="(min-width: 1024px) 30vw, 50vw"
-                rounded={false}
-                priority
-              />
-            </div>
+                <span className="underline underline-offset-4 group-hover:underline-offset-[6px]">
+                  Events
+                </span>
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
@@ -116,13 +104,13 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
 }
 
 /**
- * Utility rail — the four things people actually open a restaurant site for.
- * Sits immediately under the hero so it is reachable on a phone without hunting.
+ * Utility rail — open state, directions, phone. The things people open a
+ * restaurant site for, one line, immediately under the hero.
  */
 export function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
   return (
-    <div className="border-y border-brown/15 bg-linen">
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 gap-y-3 px-5 py-3.5 text-[0.9375rem] sm:px-8 lg:px-12">
+    <div className="border-b border-brown/12 bg-ivory-deep">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">
         <span className="inline-flex items-center gap-2 font-semibold">
           <span
             aria-hidden="true"

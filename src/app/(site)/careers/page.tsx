@@ -72,7 +72,7 @@ export default function CareersPage() {
                 {pageCopy.careers.perks.map((perk) => (
                   <li
                     key={perk}
-                    className="display text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown"
+                    className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown"
                   >
                     {perk}
                   </li>
@@ -94,7 +94,7 @@ export default function CareersPage() {
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
               <Eyebrow>Apply</Eyebrow>
-              <h2 className="display mt-4 text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
+              <h2 className="display mt-4 text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
                 Join the familia.
               </h2>
               <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">

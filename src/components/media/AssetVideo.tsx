@@ -19,10 +19,13 @@ export function AssetVideo({
   id,
   className = '',
   mobileBelow = 768,
+  objectPosition,
 }: {
   id: AssetId;
   className?: string;
   mobileBelow?: number;
+  /** Overrides the registry focal point for this placement. */
+  objectPosition?: string;
 }) {
   const asset = getAsset(id);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,7 +58,7 @@ export function AssetVideo({
           alt=""
           aria-hidden="true"
           className="absolute inset-0 size-full object-cover"
-          style={{ objectPosition: asset.focal }}
+          style={{ objectPosition: objectPosition ?? asset.focal }}
         />
       ) : null}
 
@@ -63,7 +66,7 @@ export function AssetVideo({
         <video
           ref={videoRef}
           className="absolute inset-0 size-full object-cover"
-          style={{ objectPosition: asset.focal }}
+          style={{ objectPosition: objectPosition ?? asset.focal }}
           src={asset.path}
           poster={poster}
           autoPlay

@@ -9,7 +9,7 @@ import { site } from '@/content/site';
 
 const LINKS = [
   { href: '/menu', label: 'Food menu' },
-  { href: '/menu/cocktails', label: 'Cocktails & bar' },
+  { href: '/menu#cocktails', label: 'Cocktails & bar' },
   { href: '/events', label: 'Events' },
   { href: '/catering', label: 'Catering' },
   { href: '/private-events', label: 'Private events' },

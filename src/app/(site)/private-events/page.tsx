@@ -46,7 +46,7 @@ export default function PrivateEventsPage() {
 
             <div className="lg:col-span-6 lg:col-start-7">
               <Eyebrow tone="orange">The Birthday Celebration</Eyebrow>
-              <h2 className="display mt-4 text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
+              <h2 className="display mt-4 text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
                 We do birthdays properly.
               </h2>
               <ul className="mt-7 space-y-3 border-t border-brown/15 pt-6">
@@ -85,7 +85,7 @@ export default function PrivateEventsPage() {
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-5">
               <Eyebrow>Event enquiry</Eyebrow>
-              <h2 className="display mt-4 text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
+              <h2 className="display mt-4 text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
                 Send us the details.
               </h2>
               <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">

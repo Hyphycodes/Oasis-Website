@@ -367,6 +367,12 @@ Applied only where the intended meaning is certain:
 | `Tampiquena` (Toast) | `Tampiqueña` |
 | `1/2 CONSOMME GALON` | `½ Gallon Consommé` |
 | `1250 e. 9th St.` | `1250 E. 9th St.` |
+| Oasis Fridays: `a nightclub atmosphere` | `late-night energy` |
+
+> The nightclub wording is the restaurant's own, taken from the Wix event page.
+> It is softened here because Oasis is a restaurant and bar that goes late, and
+> describing the venue as a nightclub changes what it is — with licensing and
+> expectation consequences. **Owner: confirm or restore.**
 
 **Deliberately not corrected** (brand names / uncertain intent):
 

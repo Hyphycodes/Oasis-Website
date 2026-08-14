@@ -1,7 +1,6 @@
 import { Frame } from '@/components/primitives/Band';
 import type { Menu, MenuItem } from '@/content/types';
 import { formatPrice } from '@/lib/format';
-import { CategoryNav } from './CategoryNav';
 
 const DIETARY_LABEL: Record<string, string> = {
   vegetarian: 'Vegetarian',
@@ -34,7 +33,7 @@ function Item({ item }: { item: MenuItem }) {
 
   return (
     <li
-      className={`border-b border-brown/12 py-6 last:border-b-0 ${
+      className={`border-b border-brown/12 py-4 last:border-b-0 ${
         item.available ? '' : 'opacity-60'
       }`}
     >
@@ -51,13 +50,13 @@ function Item({ item }: { item: MenuItem }) {
       </div>
 
       {item.description ? (
-        <p className="measure mt-2 text-[0.9375rem] leading-relaxed text-brown-soft">
+        <p className="measure mt-1 text-[0.875rem] leading-relaxed text-brown-soft">
           {item.description}
         </p>
       ) : null}
 
       {item.dietary.length > 0 ? (
-        <ul className="mt-3 flex flex-wrap gap-2">
+        <ul className="mt-2 flex flex-wrap gap-1.5">
           {item.dietary.map((tag) => (
             <li
               key={tag}
@@ -70,7 +69,7 @@ function Item({ item }: { item: MenuItem }) {
       ) : null}
 
       {choices.length > 0 ? (
-        <p className="mt-3 text-[0.875rem] text-brown-soft">
+        <p className="mt-2 text-[0.8125rem] text-brown-soft">
           {item.modifierGroupLabel ? (
             <span className="font-medium text-brown">{item.modifierGroupLabel}: </span>
           ) : null}
@@ -79,7 +78,7 @@ function Item({ item }: { item: MenuItem }) {
       ) : null}
 
       {priced.length > 0 ? (
-        <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[0.875rem] text-brown-soft">
+        <ul className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[0.8125rem] text-brown-soft">
           {priced.map((m) => (
             <li key={m.label} className="tabular">
               {m.label} <span className="text-brown">+{formatPrice(m.priceCents!)}</span>
@@ -92,19 +91,16 @@ function Item({ item }: { item: MenuItem }) {
 }
 
 /**
- * Editorial menu.
+ * The categories and rows for one menu. Rendered inside a tab panel by MenuTabs.
  *
- * Two things the current site gets wrong that are fixed structurally here:
- *  1. Modifiers render as compressed inline runs, not as full-width rows with the
- *     same weight as dishes — so a 40-item menu reads as 40 items, not 90.
- *  2. Category navigation sticks, so switching sections does not mean scrolling
- *     back to the top of a 12-screen page on a phone.
+ * Modifiers render as compressed inline runs rather than full-width rows with the
+ * same weight as dishes, so a 40-item menu reads as 40 items and not as 90.
  */
-export function MenuView({ menu }: { menu: Menu }) {
+export function MenuSections({ menu }: { menu: Menu }) {
   if (menu.categories.length === 0) {
     return (
       <Frame>
-        <div className="border-y border-brown/15 py-16 text-center">
+        <div className="border-y border-brown/15 py-12 text-center">
           <p className="measure mx-auto text-[length:var(--text-body-lg)] leading-relaxed text-brown-soft">
             {menu.emptyState}
           </p>
@@ -115,20 +111,19 @@ export function MenuView({ menu }: { menu: Menu }) {
 
   return (
     <>
-      <CategoryNav categories={menu.categories.map((c) => ({ id: c.id, name: c.name }))} />
       <Frame>
-        <div className="pb-(--spacing-band)">
+        <div className="pb-(--spacing-band) pt-2">
           {menu.categories.map((category) => (
             <section
               key={category.id}
               id={category.id}
               aria-labelledby={`${category.id}-heading`}
-              className="pt-14 first:pt-10"
+              className="pt-8 first:pt-5"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-4 border-b-2 border-brown/25 pb-3">
                 <h2
                   id={`${category.id}-heading`}
-                  className="display text-[clamp(1.5rem,3vw,2.125rem)] text-brown"
+                  className="display text-[clamp(1.375rem,2vw,1.625rem)] text-brown"
                 >
                   {category.name}
                 </h2>

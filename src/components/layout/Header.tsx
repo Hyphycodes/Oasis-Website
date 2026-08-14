@@ -8,18 +8,20 @@ import { primaryNav } from './nav';
 /**
  * Header.
  *
- * Two deliberate departures from the current site:
- *  1. Reserve and Order are given DIFFERENT visual weight. On the live site they
- *     are identical plain nav links, so neither reads as the primary action.
- *  2. The Wix cart badge and "Log In" control are gone. Nothing was ever sold
- *     through Wix Stores; both controls only ever created confusion.
+ * Completely flat: every item is a plain link that navigates on click. There is
+ * no hover menu, no flyout and no disclosure anywhere in this component, so
+ * clicking `Menu` goes to /menu and clicking `Catering` goes to /catering —
+ * which is what a visitor expects a top-level nav item to do.
+ *
+ * Reserve and Order keep different visual weight; on the live Wix site they are
+ * identical plain links, so neither reads as the primary action.
  */
 export function Header() {
   const logo = getAsset('brandLogo');
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brown/12 bg-cream/95 backdrop-blur-[2px]">
-      <div className="mx-auto flex h-(--o-header-h) max-w-[1440px] items-center gap-6 px-5 sm:px-8 lg:px-12">
+    <header className="sticky top-0 z-40 border-b border-brown/12 bg-ivory/95 backdrop-blur-[2px]">
+      <div className="mx-auto flex h-(--o-header-h) max-w-[1600px] items-center gap-6 px-5 sm:px-8 lg:px-12">
         <Link
           href="/"
           className="flex min-h-11 shrink-0 items-center"
@@ -27,8 +29,7 @@ export function Header() {
         >
           {/* Fixed-size, so width/height are the RENDERED size at 2x — not the
               intrinsic 1200px. Passing `sizes` here would make the browser pull
-              the 3840px variant for a 70px slot, which is the exact defect the
-              current Wix site has. */}
+              the 3840px variant for a 70px slot. */}
           <Image
             src={logo.path!}
             alt={site.name}
@@ -40,32 +41,15 @@ export function Header() {
         </Link>
 
         <nav aria-label="Primary" className="hidden flex-1 lg:block">
-          <ul className="flex items-center gap-7">
+          <ul className="flex items-center gap-8">
             {primaryNav.map((item) => (
-              <li key={item.href} className="group relative">
+              <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="inline-flex h-(--o-header-h) items-center text-[0.9375rem] font-medium tracking-[0.01em] text-brown transition-colors hover:text-clay"
+                  className="inline-flex h-(--o-header-h) items-center text-[0.9375rem] font-medium tracking-[0.01em] text-brown transition-colors hover:text-coral"
                 >
                   {item.label}
                 </Link>
-
-                {item.children ? (
-                  <div className="invisible absolute left-0 top-full z-10 min-w-48 border border-brown/12 bg-linen py-2 opacity-0 transition-opacity duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-                    <ul>
-                      {item.children.map((child) => (
-                        <li key={child.href}>
-                          <Link
-                            href={child.href}
-                            className="flex min-h-11 items-center px-4 text-[0.9375rem] text-brown-soft transition-colors hover:bg-cream-deep hover:text-brown"
-                          >
-                            {child.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
               </li>
             ))}
           </ul>
@@ -76,7 +60,7 @@ export function Header() {
             href={site.orderUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden min-h-11 items-center rounded-(--radius-md) px-3 text-[0.9375rem] font-medium text-brown transition-colors hover:text-clay sm:inline-flex"
+            className="hidden min-h-11 items-center rounded-(--radius-md) px-3 text-[0.9375rem] font-medium text-brown transition-colors hover:text-coral sm:inline-flex"
           >
             Order online
             <span className="sr-only">(opens Toast in a new tab)</span>
@@ -85,7 +69,7 @@ export function Header() {
             href={site.reservationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden min-h-11 items-center rounded-(--radius-md) bg-orange px-5 text-[0.9375rem] font-semibold tracking-[0.02em] text-on-orange transition-colors hover:bg-orange-deep sm:inline-flex"
+            className="hidden min-h-11 items-center rounded-(--radius-md) bg-coral px-5 text-[0.9375rem] font-semibold tracking-[0.02em] text-on-orange transition-colors hover:bg-coral-deep sm:inline-flex"
           >
             Reserve
             <span className="sr-only">(opens Toast in a new tab)</span>

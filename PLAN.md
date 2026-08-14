@@ -47,9 +47,7 @@ fails, or it times out, the resolver returns the typed static content instead. C
 | Route | File | Rendering | Notes |
 |---|---|---|---|
 | `/` | `src/app/(site)/page.tsx` | Static + revalidate | Homepage |
-| `/menu` | `src/app/(site)/menu/page.tsx` | Static + revalidate | Food menu |
-| `/menu/cocktails` | `src/app/(site)/menu/cocktails/page.tsx` | Static + revalidate | Bar |
-| `/menu/brunch` | `src/app/(site)/menu/brunch/page.tsx` | Static + revalidate | Honest empty state |
+| `/menu` | `src/app/(site)/menu/page.tsx` | Static + revalidate | **All three menus.** Food / Cocktails & Bar / Brunch are in-page tabs keyed to the hash, not separate routes. `/menu/cocktails` and `/menu/brunch` 308 to `/menu#cocktails` and `/menu#brunch`. |
 | `/events` | `src/app/(site)/events/page.tsx` | `revalidate = 300` | Upcoming occurrences |
 | `/events/[slug]` | `src/app/(site)/events/[slug]/page.tsx` | `generateStaticParams` + revalidate | Series detail |
 | `/catering` | `src/app/(site)/catering/page.tsx` | Static | Toast packages + inquiry form |
@@ -78,6 +76,8 @@ Admin is a **separate route group** with its own layout, so admin code never ent
 | Current | New | Handling |
 |---|---|---|
 | `/menus` | `/menu` | 301 in `next.config.ts` |
+| `/menu/cocktails` | `/menu#cocktails` | 308 — menus consolidated |
+| `/menu/brunch` | `/menu#brunch` | 308 — menus consolidated |
 | `/event-list` | `/events` | 301 |
 | `/event-details/[wix-slug]` | `/events/[slug]` | 301 with slug normalization |
 | `/join-our-team` | `/careers` | 301 |

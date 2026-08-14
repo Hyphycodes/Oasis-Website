@@ -13,9 +13,9 @@ import type { PageSection, PageSeo } from './types';
 
 export const homeSections: PageSection[] = [
   {
-    key: 'signatures',
-    eyebrow: 'Oasis originals',
-    heading: 'The three you came for.',
+    key: 'known-for',
+    eyebrow: 'What we are known for',
+    heading: 'Birria, a torta, and a margarita.',
     body: null,
     visible: true,
     variant: 'stagger',
@@ -24,15 +24,17 @@ export const homeSections: PageSection[] = [
     key: 'bar',
     eyebrow: 'Bar & brunch',
     heading: 'Margaritas by the tower.',
-    body: 'A bar built on tequila, and the shareables that end up on every good table.',
+    body: 'A bar built on tequila, and the weekend brunch that fills the room by eleven.',
     visible: true,
     variant: 'editorial-right',
   },
   {
     key: 'after-dark',
     eyebrow: 'Oasis After Dark',
-    heading: 'Then the lights go down.',
-    body: 'Two nights a week the dining room becomes a club. Doors at ten, eighteen and up, ten dollars at the door.',
+    // Deliberately NOT "becomes a club" — Oasis is a restaurant and bar that
+    // goes late, and describing it as a nightclub misrepresents the business.
+    heading: 'The room changes after ten.',
+    body: 'Dinner first, music after. Friday and Saturday go later — eighteen and up, ten dollars at the door.',
     visible: true,
     variant: 'band',
   },
@@ -51,9 +53,9 @@ export const pageCopy = {
     // Two short lines, one idea: the food, and what happens to the room later.
     // Set in the display face, so it works as a marquee statement rather than a
     // sentence. Truthful — no awards, no heritage, no invented claims.
-    heroHeadlineLines: ['Dinner turns', 'electric.'],
+    heroHeadlineLines: ['Dinner first.', 'Music after.'],
     heroBody:
-      'Birria, quesabirrias and margaritas by the tower — then Friday and Saturday, the dining room turns into a club.',
+      'Modern Mexican in Lockport — birria, tortas and margaritas by the tower, in a room that keeps going after the kitchen closes.',
   },
 
   menu: {
@@ -76,8 +78,9 @@ export const pageCopy = {
 
   events: {
     eyebrow: 'Oasis After Dark',
-    heading: 'Two nights a week, this room turns into a club.',
-    body: 'Eighteen and up, doors at ten, tickets ten dollars. Drinks are 21+ with valid ID.',
+    // Restaurant-and-bar language. Not "turns into a club".
+    heading: 'Friday and Saturday go later.',
+    body: 'Dinner first, music after. Doors at ten, eighteen and up, ten dollars. Drinks are 21+ with valid ID.',
   },
 
   catering: {
@@ -127,18 +130,6 @@ export const seo: Record<string, PageSeo> = {
     title: 'Food Menu — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
       'Starters, entrees, specialty tacos and sides at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada and more.',
-    ogAssetId: null,
-  },
-  cocktails: {
-    title: 'Cocktails & Bar — Oasis Mexican Kitchen & Bar, Lockport IL',
-    description:
-      'Margaritas, palomas, cantaritos, margarita towers and pitchers, plus a full beer and wine list at Oasis in Lockport, IL.',
-    ogAssetId: null,
-  },
-  brunch: {
-    title: 'Weekend Brunch — Oasis Mexican Kitchen & Bar, Lockport IL',
-    description:
-      'Brunch served Saturday and Sunday, 10am to 3pm, at Oasis Mexican Kitchen & Bar in Lockport, IL.',
     ogAssetId: null,
   },
   events: {

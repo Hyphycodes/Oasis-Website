@@ -94,7 +94,7 @@ export function MobileDrawer({
               type="button"
               aria-label="Close menu"
               onClick={close}
-              className="absolute inset-0 h-full w-full bg-obsidian/70"
+              className="absolute inset-0 h-full w-full bg-plum/80"
             />
             <div
               id="mobile-drawer"
@@ -102,7 +102,7 @@ export function MobileDrawer({
               role="dialog"
               aria-modal="true"
               aria-label="Site menu"
-              className="absolute inset-y-0 right-0 flex h-full w-full max-w-sm flex-col overflow-y-auto overscroll-contain bg-cream"
+              className="absolute inset-y-0 right-0 flex h-full w-full max-w-sm flex-col overflow-y-auto overscroll-contain bg-ivory"
             >
               <div className="flex shrink-0 items-center justify-between border-b border-brown/15 px-5 py-4">
                 <span className="eyebrow text-brown-soft">Menu</span>
@@ -126,34 +126,26 @@ export function MobileDrawer({
                 </button>
               </div>
 
-              <nav className="flex-1 px-5 py-6" aria-label="Primary">
-                <ul className="space-y-1">
+              {/* A single flat list. No nested accordions and no duplicated
+                  labels — the previous drawer showed "Catering" as a heading
+                  and then "Catering" again as its own child. */}
+              <nav className="flex-1 px-5 py-5" aria-label="Primary">
+                <ul>
                   {primaryNav.map((item) => (
                     <li key={item.href}>
-                      <Link href={item.href} className="display block py-2 text-[1.75rem] text-brown">
+                      <Link
+                        href={item.href}
+                        className="display flex min-h-12 items-center border-b border-brown/12 text-[1.5rem] text-brown"
+                      >
                         {item.label}
                       </Link>
-                      {item.children ? (
-                        <ul className="mb-2 ml-1 space-y-0.5 border-l border-brown/15 pl-4">
-                          {item.children.map((child) => (
-                            <li key={child.href}>
-                              <Link
-                                href={child.href}
-                                className="flex min-h-11 items-center text-[0.9375rem] text-brown-soft"
-                              >
-                                {child.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
                     </li>
                   ))}
                   {secondaryNav.map((item) => (
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        className="flex min-h-11 items-center text-[0.9375rem] text-brown-soft"
+                        className="flex min-h-12 items-center border-b border-brown/12 text-[0.9375rem] text-brown-soft"
                       >
                         {item.label}
                       </Link>

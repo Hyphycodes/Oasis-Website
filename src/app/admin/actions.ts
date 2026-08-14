@@ -228,8 +228,6 @@ export async function saveMenuItem(_prev: ActionState, formData: FormData): Prom
     if (error) return { ok: false, message: error.message };
 
     revalidatePath('/menu');
-    revalidatePath('/menu/cocktails');
-    revalidatePath('/menu/brunch');
     revalidatePath('/');
     return { ok: true, message: `Saved “${value.name}”.` };
   } catch (error) {

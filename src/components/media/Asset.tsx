@@ -63,7 +63,10 @@ export function Asset({
   return (
     <div
       className={`relative overflow-hidden ${radius} ${className}`}
-      style={{ aspectRatio: ratioToCss(asset) }}
+      // The registry ratio is the default. A caller that sets its own height
+      // (`size-full`, `h-full`, `aspect-*`) overrides it, so a background layer
+      // is not forced to the asset's intrinsic shape.
+      style={/\b(size-full|h-full|aspect-)/.test(className) ? undefined : { aspectRatio: ratioToCss(asset) }}
     >
       <Image
         src={asset.path}

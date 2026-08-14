@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { site } from '@/content/site';
 import { formatPhoneHref } from '@/lib/format';
-import { groupHours } from '@/lib/hours';
 import { primaryNav, secondaryNav } from './nav';
 
 function SocialIcon({ platform }: { platform: string }) {
@@ -26,14 +25,13 @@ const PLATFORM_LABEL: Record<string, string> = {
 };
 
 export function Footer() {
-  const hours = groupHours(site.hours.value);
   // Computed, never typed. The live site still reads "© 2024".
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-espresso text-night-text on-dark">
-      <div className="mx-auto max-w-[1440px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+    <footer className="bg-plum text-night-text on-dark">
+      <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-8 lg:px-12 lg:py-14">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-1">
             <p className="eyebrow text-night-soft">Find us</p>
             <address className="mt-4 not-italic leading-relaxed">
@@ -57,18 +55,6 @@ export function Footer() {
             >
               {site.phone.value}
             </a>
-          </div>
-
-          <div>
-            <p className="eyebrow text-night-soft">Hours</p>
-            <dl className="mt-4 space-y-1.5 text-[0.9375rem]">
-              {hours.map((group) => (
-                <div key={group.label} className="flex justify-between gap-4">
-                  <dt className="text-night-soft">{group.label}</dt>
-                  <dd className="tabular text-right">{group.value}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
 
           <div>
@@ -132,7 +118,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-4 border-t border-night-text/15 pt-6 text-[0.8125rem] text-night-soft sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-night-text/15 pt-6 text-[0.8125rem] text-night-soft sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {site.name}. All rights reserved.
           </p>

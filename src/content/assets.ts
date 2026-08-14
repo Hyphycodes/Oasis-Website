@@ -127,7 +127,7 @@ export const assets = {
     ratio: '1069:1600',
     focal: '50% 45%',
     status: 'temp-wix',
-    usage: ['Homepage gallery', '/menu/cocktails'],
+    usage: ['Homepage gallery', '/menu#cocktails'],
     source: {
       url: 'https://static.wixstatic.com/media/75d74a_0ceee05515384b0b9ec2501681efd0b2~mv2.jpeg',
       retrieved: '2026-08-14',
@@ -257,7 +257,7 @@ export const assets = {
     ratio: '4:5',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage bar section', '/menu/cocktails'],
+    usage: ['Homepage bar section', '/menu#cocktails'],
     source: { url: 'Frame from the Oasis brand reel (see heroVideo)', retrieved: '2026-08-14' },
     maxBytes: 220_000,
   },
@@ -296,7 +296,7 @@ export const assets = {
     ratio: '4:5',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage bar & brunch section', '/menu/cocktails'],
+    usage: ['Homepage bar & brunch section', '/menu#cocktails'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',

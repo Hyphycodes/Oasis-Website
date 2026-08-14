@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
     return [
       // Legacy Wix routes -> new equivalents. See PLAN.md §2.
       { source: '/menus', destination: '/menu', permanent: true },
+      // The three menus are one page now. These keep every inbound link and
+      // indexed URL working, landing on the right tab via the hash.
+      { source: '/menu/cocktails', destination: '/menu#cocktails', permanent: true },
+      { source: '/menu/brunch', destination: '/menu#brunch', permanent: true },
+      { source: '/menu/food', destination: '/menu', permanent: true },
       { source: '/event-list', destination: '/events', permanent: true },
       { source: '/join-our-team', destination: '/careers', permanent: true },
       // Orphan Wix Stores route: nothing was ever sold through it.

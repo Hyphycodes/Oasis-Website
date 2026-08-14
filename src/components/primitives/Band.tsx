@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react';
 
-type Surface = 'cream' | 'linen' | 'sand' | 'espresso';
+type Surface = 'ivory' | 'ivory-deep' | 'cream' | 'linen' | 'sand' | 'teal' | 'plum' | 'espresso';
 
 const SURFACE: Record<Surface, string> = {
+  ivory: 'bg-ivory text-brown',
+  'ivory-deep': 'bg-ivory-deep text-brown',
   cream: 'bg-cream text-brown',
   linen: 'bg-linen text-brown',
   sand: 'bg-sand text-brown grain on-sand',
+  // Evening surfaces. teal = restaurant-and-bar atmosphere (Friday leans here),
+  // plum = warmer and later (Latin Saturday leans here).
+  teal: 'bg-teal text-night-text on-dark',
+  plum: 'bg-plum text-night-text on-dark',
   espresso: 'bg-espresso text-night-text on-dark',
 };
 

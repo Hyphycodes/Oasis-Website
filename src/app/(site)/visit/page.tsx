@@ -161,6 +161,30 @@ export default function VisitPage() {
           </div>
         </Frame>
       </Band>
+
+      {/* The room, before you arrive. */}
+      <Band surface="ivory-deep" size="sm">
+        <Frame wide>
+          <Eyebrow>The room</Eyebrow>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            <Asset
+              id="diningRoom"
+              className="aspect-3/4 w-full"
+              sizes="(min-width: 640px) 30vw, 50vw"
+            />
+            <Asset
+              id="backBar"
+              className="aspect-3/4 w-full"
+              sizes="(min-width: 640px) 30vw, 50vw"
+            />
+            <Asset
+              id="cocktailPair"
+              className="col-span-2 aspect-3/2 w-full sm:col-span-1 sm:aspect-3/4"
+              sizes="(min-width: 640px) 30vw, 100vw"
+            />
+          </div>
+        </Frame>
+      </Band>
     </>
   );
 }

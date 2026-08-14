@@ -22,6 +22,138 @@ instead. `scripts/qa-capture.sh` is documented accordingly — anyone re-running
 
 ---
 
+## 0. Third pass — cleaner, shorter, flatter (2026-08-14, later still)
+
+The second pass was rejected as too tall, too loud, and too close to the original
+site's palette. This pass restructures rather than shrinks.
+
+### Navigation — now completely flat
+
+| Check | Result |
+|---|---|
+| Desktop items | Menu · Events · Catering · Visit — four links, nothing else |
+| Nested `<ul>` inside any nav item | **0** |
+| Hidden/hover panels (`aria-haspopup`, `group-hover`, `invisible`) | **0** |
+| Anything revealed on hover | **No** — hovered all four, nothing appeared |
+| Links per nav item | 1 each — clicking navigates immediately |
+| Mobile drawer | Flat list, no nested accordions |
+| Duplicate labels in the drawer | **0** (previously "Catering" appeared as a heading *and* its own child) |
+
+Private Events and Careers moved to the drawer and footer, which is where the
+brief allows them.
+
+### Menu — one page, three tabs
+
+`/menu/cocktails` and `/menu/brunch` are gone as routes. Verified:
+
+```
+/menu/cocktails  →  308  →  /menu#cocktails
+/menu/brunch     →  308  →  /menu#brunch
+/menus           →  308  →  /menu
+```
+
+Behaviour, tested in a real viewport:
+
+```
+tabs .................... 3 — Food · Cocktails & Bar · Brunch
+initial ................. Food, panel-food, 33 rows
+click "Cocktails & Bar" . selected + panel-cocktails + 50 rows + hash #cocktails
+click "Brunch" .......... selected + honest empty state + hash #brunch
+ArrowLeft ............... moves selection AND focus to Cocktails & Bar
+deep link /menu#brunch .. opens on Brunch
+roving tabindex ......... exactly one tab focusable
+aria wiring ............. tablist labelled; every tab ↔ panel cross-referenced
+```
+
+### Spacing — measured, not eyeballed
+
+| Route | Before | After | Change |
+|---|---|---|---|
+| `/` | ~6,500px | **4,059px** | −38% |
+| `/events` | 3,645px | **2,685px** | −26% |
+| `/menu` intro block | ~950px | **401px** | −58% |
+| `/events` intro block | 1,196px | **236px** | −80% |
+
+Section rhythm token went from `clamp(4rem, 9vw, 10rem)` — up to **160px top and
+bottom**, so 320px between two sections — to `clamp(3rem, 5.5vw, 7rem)`, landing
+in the brief's 72–112px desktop band.
+
+Two layout bugs were found while measuring, both the same root cause: `Asset` and
+`AssetVideo` set `relative` (and `Asset` an aspect-ratio) on their own roots, so a
+caller passing `absolute inset-0` lost the fight — same specificity, stylesheet
+order decides. That silently sized the events hero to 3:2 of the full page width.
+Both call sites now wrap, and `Asset` skips its intrinsic ratio when the caller
+supplies a height.
+
+### Homepage — six movements
+
+1. Hero · 2. Action rail · 3. What we're known for · 4. Bar & brunch ·
+5. After Dark preview · 6. Catering, celebrations and arrival
+
+The hero is now **one** visual — the reel, full-bleed — instead of the reel beside
+a near-identical taco-dipping still. Arrival merged into the catering movement,
+and the footer no longer repeats the hours table.
+
+### Signature trio — one birria, not three
+
+| Slot | Item | Why |
+|---|---|---|
+| The signature | **Our Famous Quesabirrias** $16 | The one birria dish |
+| From the kitchen | **Torta** $14 | Non-birria savoury, and the only other plated dish with real photography |
+| From the bar | **Margarita** | The house cocktail; flavour list carries it because no Oasis system publishes a price |
+
+### Palette — beyond cream/tan/brown/black
+
+| Role | Token | Where |
+|---|---|---|
+| Warm ivory | `#FBF6EA` | Default page surface, replacing cream |
+| Deep plum / oxblood | `#2E1620` | Hero ground, footer, Latin Saturday |
+| Midnight teal / agave | `#0F2E2C` | After Dark, events intro, Friday |
+| Chile-coral | `#E1553A` | Every primary action |
+| Golden amber | `#E8A33D` | Dates, Friday accent, highlights |
+
+Friday leans **teal + amber**, Latin Saturday leans **plum + coral** — related, not
+identical, exactly as the brief specifies.
+
+Three contrast failures surfaced from the new palette and were fixed at token
+level rather than per component:
+
+| Pair | Before | After |
+|---|---|---|
+| Button label on coral | 4.41 ❌ | **4.72** ✅ (coral lightened to `#E1553A`) |
+| Coral type on teal | 3.61 ❌ | **5.93** ✅ (new `--color-coral-light`) |
+| Coral type on plum | 4.20 ❌ | **6.89** ✅ (same token) |
+
+### Language
+
+`turns into a club` → **`The room changes after ten.`**
+`Two nights a week this room turns into a club` → **`Dinner first, music after.`**
+The Oasis Fridays description said `a nightclub atmosphere` — the restaurant's own
+wording — now `late-night energy`, flagged in `CONTENT-QUESTIONS.md` §13 for the
+owner to confirm or restore.
+
+### Third-pass verification
+
+```
+Routes × widths: 8 @1440 · 7 @320 · 7 @390 · 3 @768   = 25 combinations
+Horizontal overflow ...................... 0
+WCAG AA contrast failures ................ 0
+Exactly one <h1> ......................... 25/25
+Heading-level jumps ...................... 0
+<img> missing alt ........................ 0
+"#" links / missing noopener ............. 0 / 0
+```
+
+Mobile nav at 320×700 — flat list, no duplicate labels, full-height panel, focus
+trap, Escape, focus restore, scroll lock and restore, no overflow: **all pass**.
+
+```
+npm run lint ✅   npm run typecheck ✅   npm test ✅ 58
+npm run assets:check ✅   npm run build ✅   git diff --check ✅
+```
+
+---
+
 ## 0. Second pass — art-direction rebuild (2026-08-14, later)
 
 A follow-up brief judged the first build "structurally competent, but still the old site inside a

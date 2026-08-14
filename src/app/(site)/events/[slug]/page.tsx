@@ -147,7 +147,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       <Band surface="cream">
         <Frame>
-          <h2 className="display text-[clamp(1.75rem,3.5vw,2.5rem)] text-brown">
+          <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
             Upcoming dates
           </h2>
           {/* Dates come from generated occurrences. Nothing here is read from the

@@ -1,67 +1,87 @@
 import type { Metadata } from 'next';
 import { Asset } from '@/components/media/Asset';
-import { MenuView } from '@/components/menu/MenuView';
-import { Band, Frame } from '@/components/primitives/Band';
-import { ExternalButtonLink, ButtonLink } from '@/components/primitives/Button';
-import { PageHeader } from '@/components/primitives/PageHeader';
+import { MenuTabs } from '@/components/menu/MenuTabs';
+import { Frame } from '@/components/primitives/Band';
+import { ExternalButtonLink } from '@/components/primitives/Button';
+import { Eyebrow } from '@/components/primitives/Type';
 import { pageCopy, seo } from '@/content/pages';
-import { getMenu } from '@/content/resolve';
+import { getAllMenus } from '@/content/resolve';
 import { site } from '@/content/site';
 import { buildMetadata, JsonLd, menuJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = buildMetadata({ ...seo.menu!, path: '/menu' });
 export const revalidate = 3600;
 
+/**
+ * The complete menu, in one place.
+ *
+ * Food, Cocktails & Bar and Brunch were three routes with three full-page
+ * introductions. They are now three tabs on this page, and the introduction is
+ * a single compact band — a strip of type beside one food image, not a
+ * near-empty screen the visitor has to scroll past to reach a price.
+ */
 export default async function MenuPage() {
-  const menu = await getMenu('food');
-  const unpriced = menu.categories.flatMap((c) => c.items).filter((i) => i.priceCents == null).length;
+  const menus = await getAllMenus();
+  const unpriced = menus
+    .flatMap((menu) => menu.categories.flatMap((c) => c.items))
+    .filter((item) => item.priceCents == null).length;
 
   return (
     <>
-      <PageHeader
-        eyebrow={pageCopy.menu.eyebrow}
-        heading={pageCopy.menu.heading}
-        body={pageCopy.menu.body}
-        actions={
-          <>
-            <ExternalButtonLink href={site.orderUrl} destination="Toast ordering">
-              Order online
-            </ExternalButtonLink>
-            <ButtonLink href="/menu/cocktails" variant="secondary">
-              Cocktails & bar
-            </ButtonLink>
-            <ButtonLink href="/menu/brunch" variant="secondary">
-              Brunch
-            </ButtonLink>
-          </>
-        }
-        aside={
-          <Asset
-            id="plateTorta"
-            className="aspect-4/5 w-full"
-            sizes="(min-width: 1024px) 30vw, 100vw"
-            priority
-          />
-        }
-      />
+      {/* Compact intro: fits well inside 420–620px, media included. */}
+      <section className="border-b border-brown/12 bg-ivory">
+        <Frame wide>
+          <div className="grid items-center gap-6 py-8 sm:grid-cols-12 sm:gap-8 lg:py-10">
+            <div className="sm:col-span-8">
+              <Eyebrow tone="orange">{pageCopy.menu.eyebrow}</Eyebrow>
+              <h1 className="display mt-3 text-[clamp(1.875rem,3.6vw,2.75rem)] text-brown">
+                {pageCopy.menu.heading}
+              </h1>
+              <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">
+                {pageCopy.menu.body}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <ExternalButtonLink href={site.orderUrl} destination="Toast ordering">
+                  Order online
+                </ExternalButtonLink>
+                <ExternalButtonLink
+                  href={site.reservationUrl}
+                  destination="Toast reservations"
+                  variant="secondary"
+                >
+                  Reserve a table
+                </ExternalButtonLink>
+              </div>
+            </div>
 
-      <Band surface="cream" size="flush">
-        <MenuView menu={menu} />
-      </Band>
+            <div className="sm:col-span-4">
+              <Asset
+                id="consommeDip"
+                className="aspect-3/2 w-full sm:aspect-4/3"
+                sizes="(min-width: 640px) 30vw, 100vw"
+                priority
+              />
+            </div>
+          </div>
+        </Frame>
+      </section>
+
+      <MenuTabs menus={menus} />
 
       {unpriced > 0 ? (
-        <Band surface="linen" size="sm">
+        <section className="border-t border-brown/12 bg-ivory-deep py-8">
           <Frame>
             <p className="measure text-[0.875rem] leading-relaxed text-brown-soft">
-              Some dishes are priced by the market or by your choice of protein. Where a price is
-              not listed, ask your server — we would rather tell you than print a number that
-              changes.
+              A few things on the bar list are priced by the pour or by the bottle. Where a price is
+              not shown, ask your server — we would rather tell you than print a number that moves.
             </p>
           </Frame>
-        </Band>
+        </section>
       ) : null}
 
-      <JsonLd data={menuJsonLd(menu)} />
+      {menus.map((menu) => (
+        <JsonLd key={menu.slug} data={menuJsonLd(menu)} />
+      ))}
     </>
   );
 }
