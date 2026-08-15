@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEventHandler } from 'react';
 import {
   canUploadDirectly,
+  DirectUploadNeedsSignIn,
   uploadMediaDirect,
   type DirectMediaUpload,
 } from '@/lib/supabase/browser';
@@ -43,6 +44,13 @@ export function useDirectMediaUpload(file: File | null) {
         setUpload(result);
       })
       .catch((cause: unknown) => {
+        if (cause instanceof DirectUploadNeedsSignIn) {
+          // Temporary open-admin previews have no staff session. Let the normal
+          // server upload handle the file until private sign-in is enabled.
+          ready.current = true;
+          form.current?.requestSubmit();
+          return;
+        }
         setError(cause instanceof Error ? cause.message : 'The upload did not finish. Please try again.');
       })
       .finally(() => setUploading(false));

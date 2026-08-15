@@ -11,6 +11,8 @@ export interface DirectMediaUpload {
   height: number;
 }
 
+export class DirectUploadNeedsSignIn extends Error {}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
@@ -24,7 +26,7 @@ export async function uploadMediaDirect(file: File): Promise<DirectMediaUpload> 
 
   const supabase = createBrowserClient(url, key);
   const { data } = await supabase.auth.getUser();
-  if (!data.user) throw new Error('Please sign in again, then retry the upload.');
+  if (!data.user) throw new DirectUploadNeedsSignIn('No signed-in upload session.');
 
   const safeName = file.name
     .toLowerCase()
