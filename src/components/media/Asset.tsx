@@ -1,15 +1,15 @@
 import Image from 'next/image';
-import { getAsset, ratioToCss, type AssetId } from '@/content/assets';
+import { getPublicAsset, ratioOf, type PublicAsset } from '@/content/media';
 import { Placeholder } from './Placeholder';
 
 interface AssetProps {
-  id: AssetId;
-  /** Wrapper classes. Aspect ratio comes from the registry, not from here. */
+  id: string;
+  /** Wrapper classes. Aspect ratio comes from the record, not from here. */
   className?: string;
   /** Responsive sizes hint. Always pass one for non-fixed placements. */
   sizes?: string;
   priority?: boolean;
-  /** Overrides the registry alt text where context makes it more useful. */
+  /** Overrides the record's alt text where context makes it more useful. */
   alt?: string;
   rounded?: boolean;
   /** Keeps a missing-asset placeholder inside the surrounding surface's ramp. */
@@ -25,14 +25,17 @@ interface AssetProps {
 /**
  * The only way a photograph enters a page.
  *
- * Components request a semantic ID; they never see a file path. Aspect ratio,
- * focal point, alt text, and dimensions all come from src/content/assets.ts, so
- * swapping the entire media package is a registry edit — no component changes.
+ * Components request a semantic ID; they never see a file path. Everything else
+ * — the file, aspect ratio, focal point, alt text, dimensions — comes from the
+ * media record, which is the registry in `src/content/assets.ts` with whatever
+ * the admin has published laid over the top. Swapping a photograph in Photos
+ * therefore changes the website, and a clean checkout with no database renders
+ * exactly what it always did.
  *
- * If the registry entry has no file yet, this renders the branded placeholder at
- * the identical geometry, so layout never depends on whether the photo exists.
+ * If the record has no file, this renders the branded placeholder at the
+ * identical geometry, so layout never depends on whether the photo exists.
  */
-export function Asset({
+export async function Asset({
   id,
   className = '',
   sizes = '100vw',
@@ -42,7 +45,39 @@ export function Asset({
   tone = 'light',
   fit = 'cover',
 }: AssetProps) {
-  const asset = getAsset(id);
+  const asset = await getPublicAsset(id);
+  return (
+    <AssetView
+      asset={asset}
+      id={id}
+      className={className}
+      sizes={sizes}
+      priority={priority}
+      alt={alt}
+      rounded={rounded}
+      tone={tone}
+      fit={fit}
+    />
+  );
+}
+
+/**
+ * The same rendering, from an already-resolved record.
+ *
+ * Used where the caller has the record in hand — the admin, which shows one
+ * photograph per row and would otherwise re-resolve the whole map each time.
+ */
+export function AssetView({
+  asset,
+  id,
+  className = '',
+  sizes = '100vw',
+  priority = false,
+  alt,
+  rounded = true,
+  tone = 'light',
+  fit = 'cover',
+}: AssetProps & { asset: PublicAsset | null }) {
   const radius = rounded ? 'rounded-(--radius-lg)' : '';
 
   // An unknown ID is a programming error, but it must not take a whole page
@@ -55,14 +90,7 @@ export function Asset({
   }
 
   if (!asset.path) {
-    return (
-      <Placeholder
-        id={id}
-        className={`${radius} ${className}`}
-        label={alt ?? undefined}
-        tone={tone}
-      />
-    );
+    return <Placeholder asset={asset} id={id} className={`${radius} ${className}`} tone={tone} />;
   }
 
   const decorative = asset.alt === null && !alt;
@@ -70,10 +98,12 @@ export function Asset({
   return (
     <div
       className={`relative overflow-hidden ${radius} ${className}`}
-      // The registry ratio is the default. A caller that sets its own height
+      // The record's ratio is the default. A caller that sets its own height
       // (`size-full`, `h-full`, `aspect-*`) overrides it, so a background layer
       // is not forced to the asset's intrinsic shape.
-      style={/\b(size-full|h-full|aspect-)/.test(className) ? undefined : { aspectRatio: ratioToCss(asset) }}
+      style={
+        /\b(size-full|h-full|aspect-)/.test(className) ? undefined : { aspectRatio: ratioOf(asset) }
+      }
     >
       <Image
         src={asset.path}

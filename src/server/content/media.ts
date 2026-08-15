@@ -73,6 +73,39 @@ export async function usageOf(db: Db, assetId: string): Promise<MediaUsage[]> {
   return usage;
 }
 
+/**
+ * Public routes a design placement touches.
+ *
+ * A registry placement is prose written for a person — "Header", "Homepage
+ * gallery", "/menu#cocktails" — not a route. This turns it into routes so that
+ * swapping a design-placed photograph can refresh the pages it actually appears
+ * on. It errs towards refreshing too much: a stale photograph is a real defect,
+ * an extra revalidation is a few milliseconds.
+ */
+export function routesOfRegistryUsage(usage: string[]): string[] {
+  const routes = new Set<string>();
+  const ALL = ['/', '/menu', '/events', '/catering', '/private-events', '/visit', '/careers'];
+
+  for (const entry of usage) {
+    const explicit = entry.match(/\/[a-z0-9/-]+/i)?.[0].split('#')[0];
+    if (explicit) {
+      routes.add(explicit.replace(/\/$/, '') || '/');
+      continue;
+    }
+    // The header and the footer are on every page, so a logo swap is site-wide.
+    if (/header|footer|logo|grain/i.test(entry)) return ALL;
+    if (/home|hero/i.test(entry)) routes.add('/');
+    if (/menu/i.test(entry)) routes.add('/menu');
+    if (/event|flyer|dark/i.test(entry)) routes.add('/events');
+    if (/visit|gallery|room/i.test(entry)) routes.add('/visit');
+    if (/career|team/i.test(entry)) routes.add('/careers');
+    if (/catering/i.test(entry)) routes.add('/catering');
+    if (/private/i.test(entry)) routes.add('/private-events');
+  }
+
+  return [...routes];
+}
+
 function labelPage(page: string): string {
   const labels: Record<string, string> = {
     home: 'Homepage',

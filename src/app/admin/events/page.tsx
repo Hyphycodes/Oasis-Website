@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
+import { ArtworkSourceNote, ArtworkThumb, artworkSourceOf } from '@/components/admin/Artwork';
 import { Card, EmptyState, Notice, StateChip } from '@/components/admin/ui';
+import { getMediaMap } from '@/content/media';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getUpcomingEvents, ineligibleReason, venueIsoDate } from '@/lib/events';
@@ -59,6 +61,8 @@ export default async function AdminEventsPage({
   const overrides = db ? await db.list<Row>('event_occurrences', { orderBy: 'starts_at' }) : [];
 
   const upcoming = getUpcomingEvents(events, now, 40);
+  // Resolved once for every row on the page rather than per thumbnail.
+  const media = await getMediaMap();
   // A month by default. Forty rows of "Friday, then Saturday, then Friday" is a
   // list nobody reads; the next four weeks is the window a restaurant works in.
   const windowDays = params.window === '7' ? 7 : params.window === 'all' ? null : 30;
@@ -144,7 +148,7 @@ export default async function AdminEventsPage({
                 {ready.length === 0 ? (
                   <EmptyState>Nothing scheduled in this period.</EmptyState>
                 ) : (
-                  <ReadinessTable events={ready} canPublish={canPublish} now={now} />
+                  <ReadinessTable events={ready} canPublish={canPublish} now={now} media={media} />
                 )}
               </Card>
             </>
@@ -211,7 +215,7 @@ export default async function AdminEventsPage({
               {drafts.length === 0 ? (
                 <EmptyState>No drafts. Everything you have made is either live or archived.</EmptyState>
               ) : (
-                <ReadinessTable events={drafts} canPublish={canPublish} now={now} />
+                <ReadinessTable events={drafts} canPublish={canPublish} now={now} media={media} />
               )}
             </Card>
           ) : null}
@@ -227,7 +231,7 @@ export default async function AdminEventsPage({
                     finds out. It is never offered as “what’s on”.
                   </Notice>
                   <div className="mt-4">
-                    <ReadinessTable events={cancelled} canPublish={canPublish} now={now} />
+                    <ReadinessTable events={cancelled} canPublish={canPublish} now={now} media={media} />
                   </div>
                 </>
               )}
@@ -283,18 +287,27 @@ function ReadinessTable({
   events,
   canPublish,
   now,
+  media,
 }: {
   events: import('@/content/types').ResolvedEvent[];
   canPublish: boolean;
   now: Date;
+  media: Record<string, import('@/content/media').PublicAsset>;
 }) {
   return (
     <ul className="divide-y divide-brown/12">
       {events.map((event) => {
         const problem = ineligibleReason(event, now);
         const date = venueIsoDate(event.startsAt);
+        const source = artworkSourceOf(event);
         return (
-          <li key={event.id} className="grid gap-2 py-3">
+          <li key={event.id} className="flex gap-4 py-3">
+            {/* The flyer itself. Two Fridays and a Saturday are only telling
+                apart by looking at them. */}
+            <ArtworkThumb
+              asset={event.flyerAssetId ? (media[event.flyerAssetId] ?? null) : null}
+            />
+            <div className="grid min-w-0 flex-1 gap-2">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <span className="tabular shrink-0 text-[0.9375rem] font-semibold text-brown">
                 {formatEventDateLong(event.startsAt)}
@@ -338,15 +351,23 @@ function ReadinessTable({
               ) : (
                 <span className="text-brown-soft">Tickets set</span>
               )}
-              <span className="text-brown-soft">
-                {event.flyerAssetId ? 'Artwork set' : 'No artwork'}
-                {event.overriddenFields.includes('flyerAssetId') ? ' (this night only)' : ''}
-              </span>
-              {event.overriddenFields.length > 0 ? (
+              {source === 'none' && event.seriesSlug ? (
+                <Link
+                  href={`/admin/events/${event.seriesSlug}`}
+                  className="font-semibold text-warning underline underline-offset-4"
+                >
+                  Needs artwork
+                </Link>
+              ) : (
+                <ArtworkSourceNote source={source} />
+              )}
+              {event.overriddenFields.filter((f) => f !== 'flyerAssetId').length > 0 ? (
                 <span className="text-clay">
-                  Changed for this night: {event.overriddenFields.join(', ')}
+                  Changed for this night:{' '}
+                  {event.overriddenFields.filter((f) => f !== 'flyerAssetId').join(', ')}
                 </span>
               ) : null}
+            </div>
             </div>
           </li>
         );

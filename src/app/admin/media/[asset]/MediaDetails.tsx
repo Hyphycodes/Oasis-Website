@@ -2,9 +2,16 @@
 
 import { ActionForm, SubmitButton } from '@/components/admin/ActionForm';
 import { Card, Checkbox, FieldNote, Label, Select, TextInput } from '@/components/admin/ui';
-import { archiveMedia, replaceMedia, saveMediaDetails, unarchiveMedia } from '@/server/actions/media';
+import {
+  archiveMedia,
+  repointMedia,
+  replaceMedia,
+  saveMediaDetails,
+  unarchiveMedia,
+} from '@/server/actions/media';
+import { Versions } from '@/components/admin/Versions';
 import { MEDIA_TAGS } from '@/content/labels';
-import type { AdminMedia } from '@/content/admin-types';
+import type { AdminMedia, VersionEntry } from '@/content/admin-types';
 
 /**
  * Photo details.
@@ -17,11 +24,15 @@ import type { AdminMedia } from '@/content/admin-types';
 export function MediaDetails({
   entry,
   alternatives,
+  versions,
   canArchive,
+  canRestore,
 }: {
   entry: AdminMedia;
   alternatives: { id: string; label: string }[];
+  versions: VersionEntry[];
   canArchive: boolean;
+  canRestore: boolean;
 }) {
   return (
     <div className="grid gap-5">
@@ -133,6 +144,53 @@ export function MediaDetails({
             </div>
           </ActionForm>
         </Card>
+      ) : null}
+
+      {/* A slot the design fills. There is no reference row to repoint, so this
+          changes which FILE the slot holds — which is the only way to swap a
+          photograph the layout asks for by name. */}
+      {entry.registryUsage.length > 0 && alternatives.length > 0 ? (
+        <Card title="Change the photo in this slot">
+          <p className="text-[0.9375rem] leading-relaxed text-brown-soft">
+            The design puts this photo on {entry.registryUsage.join(', ')}. Picking a different one
+            here changes it in {entry.registryUsage.length === 1 ? 'that place' : 'all of those places'} —
+            the shape and the crop stay exactly as they are.
+          </p>
+
+          <ActionForm action={repointMedia} className="mt-4 grid gap-4">
+            <input type="hidden" name="assetId" value={entry.assetId} />
+            <div>
+              <Label htmlFor="repointId">Show this photo instead</Label>
+              <Select id="repointId" name="replacementId" defaultValue="" aria-describedby="repoint-note">
+                <option value="" disabled>
+                  Pick a photo
+                </option>
+                {alternatives.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+              <FieldNote id="repoint-note">
+                Its description comes across with it, so the words still match the picture.
+              </FieldNote>
+            </div>
+            <div>
+              <SubmitButton variant="secondary">Use this photo</SubmitButton>
+            </div>
+          </ActionForm>
+        </Card>
+      ) : null}
+
+      {/* The way back from a swap. A photograph is edited live, so restoring one
+          applies straight away rather than waiting behind a publish step. */}
+      {versions.length > 0 ? (
+        <Versions
+          table="media_assets"
+          id={entry.assetId}
+          versions={versions}
+          canRestore={canRestore}
+        />
       ) : null}
 
       {canArchive ? (

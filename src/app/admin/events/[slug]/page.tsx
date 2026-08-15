@@ -7,6 +7,8 @@ import type { Row } from '@/lib/db/types';
 import { getSeriesOccurrences, venueIsoDate } from '@/lib/events';
 import { formatEventDateLong, formatTimeRange } from '@/lib/format';
 import { getStaff, staffCan } from '@/server/auth';
+import { ArtworkSourceNote, ArtworkThumb, artworkSourceOf } from '@/components/admin/Artwork';
+import { getMediaMap } from '@/content/media';
 import { getEditableEvents } from '@/server/content/events';
 import { canOpen } from '@/server/permissions';
 import { BulkTicketLinks, OccurrenceEditor, ResetOccurrence } from './OccurrenceEditor';
@@ -60,6 +62,14 @@ export default async function SeriesPage({
     .filter((row) => row.path && !row.archived_at && row.kind === 'image')
     .map((row) => ({ id: String(row.asset_id), label: String(row.title ?? row.asset_id) }));
 
+  const assets = await getMediaMap();
+  const seriesFlyer = series.flyerAssetId ? (assets[series.flyerAssetId] ?? null) : null;
+  // Nights that would follow a change to the series artwork — the ones with no
+  // flyer of their own.
+  const inheritingCount = occurrences.filter(
+    (event) => !event.overriddenFields.includes('flyerAssetId'),
+  ).length;
+
   const suggestion = occurrences
     .slice(0, 3)
     .map((event) => `${venueIsoDate(event.startsAt)} https://`)
@@ -90,7 +100,23 @@ export default async function SeriesPage({
       }
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">
-        <SeriesEditor series={series} canPublish={canPublish} />
+        <SeriesEditor
+          series={series}
+          canPublish={canPublish}
+          flyerOptions={flyerOptions}
+          inheritingCount={inheritingCount}
+          flyerPreview={
+            <div className="grid justify-items-start gap-1.5">
+              <ArtworkThumb asset={seriesFlyer} size="lg" />
+              <ArtworkSourceNote source={series.flyerAssetId ? 'series' : 'none'} />
+              {seriesFlyer?.alt ? (
+                <p className="max-w-40 text-[0.75rem] leading-snug text-brown-soft">
+                  {seriesFlyer.alt}
+                </p>
+              ) : null}
+            </div>
+          }
+        />
 
         <div className="grid gap-5">
           <Card title="The next dates">
@@ -142,6 +168,18 @@ export default async function SeriesPage({
                               date={date}
                               seriesSlug={series.slug}
                               flyerOptions={flyerOptions}
+                              artwork={
+                                <div className="flex items-center gap-3">
+                                  <ArtworkThumb
+                                    asset={
+                                      event.flyerAssetId
+                                        ? (assets[event.flyerAssetId] ?? null)
+                                        : null
+                                    }
+                                  />
+                                  <ArtworkSourceNote source={artworkSourceOf(event)} />
+                                </div>
+                              }
                             />
                             {event.overrideId ? (
                               <div className="mt-3 border-t border-dashed border-brown/20 pt-3">

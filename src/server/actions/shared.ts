@@ -126,10 +126,23 @@ export function friendly(error: unknown): string {
  * the list you just edited keeps rendering the old value until you navigate away,
  * and "did that save?" is the fastest way to lose someone's trust in a tool.
  */
-export function done(message: string, area?: keyof typeof AFFECTED): ActionState {
-  const affected = area ? revalidate(area) : undefined;
+export function done(
+  message: string,
+  area?: keyof typeof AFFECTED,
+  /**
+   * Routes this particular change touched, on top of the area's usual ones.
+   *
+   * A photograph is the case that needs it: which pages a swapped image appears
+   * on depends on where it happens to be placed, so the routes are computed from
+   * the live references rather than listed in a table here.
+   */
+  extraRoutes: string[] = [],
+): ActionState {
+  const base = area ? revalidate(area) : [];
+  for (const route of extraRoutes) revalidatePath(route);
   revalidatePath('/admin', 'layout');
-  return { ok: true, message, affected };
+  const affected = [...new Set([...base, ...extraRoutes])];
+  return { ok: true, message, affected: affected.length > 0 ? affected : undefined };
 }
 
 /** Saved, but nothing public changed — a draft. Only the admin needs refreshing. */

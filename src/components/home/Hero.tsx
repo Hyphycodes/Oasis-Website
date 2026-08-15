@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AssetVideo } from '@/components/media/AssetVideo';
+import { getPublicAsset } from '@/content/media';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
 import { site } from '@/content/site';
@@ -19,7 +20,12 @@ import { formatEventDate, formatEventTime } from '@/lib/format';
  * first frame, the last frame, under reduced motion, and on a dead connection.
  * Height is bounded so the actions always sit inside the first viewport.
  */
-export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
+export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
+  // Resolved here, on the server, because AssetVideo runs in the browser and the
+  // media store does not.
+  const video = await getPublicAsset('heroVideo');
+  if (!video) return null;
+
   return (
     <section className="relative isolate overflow-hidden bg-plum">
       {/* Wrapped rather than positioned directly: AssetVideo sets `relative` on
@@ -27,7 +33,7 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
           (same specificity — stylesheet order decides, not the class list). */}
       <div className="absolute inset-0">
         <AssetVideo
-          id="heroVideo"
+          asset={video}
           mobileBelow={0}
           className="size-full"
           objectPosition="50% 42%"

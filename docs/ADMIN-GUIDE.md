@@ -151,11 +151,18 @@ Website → pick the page → each panel is a real section of that page. Change 
 
 ### Replace a photo
 
-Photos → open the photo → **Swap this photo**. It asks whether you mean here only or everywhere,
-because those are different things.
+Photos → open the photo. There are two swaps, because there are two kinds of placement:
 
-Some photographs are placed by the design itself. Those say *Placed by the design* and swapping
-them is a job for your developer — the admin tells you rather than letting you leave a gap.
+- **Swap this photo** — for pictures somebody chose, like a flyer on an event. It asks whether you
+  mean here only or everywhere, because those are different things.
+- **Change the photo in this slot** — for pictures the design places itself, like the six tiles on
+  the homepage. The shape and the crop stay exactly as they are; only the picture changes, and it
+  changes everywhere the design uses that slot.
+
+Either way the description travels with the picture, so the words never end up describing the
+photograph you just replaced.
+
+Changed your mind? **Earlier versions** on the same page puts the old one straight back.
 
 ### Undo something
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ActionForm, IntentField, SubmitButton } from '@/components/admin/ActionForm';
 import { Card, FieldNote, Label, Select, TextArea, TextInput } from '@/components/admin/ui';
 import type { EventSeries } from '@/content/types';
@@ -27,9 +28,17 @@ function hhmm(minutes: number): string {
 export function SeriesEditor({
   series,
   canPublish,
+  flyerOptions,
+  flyerPreview,
+  inheritingCount,
 }: {
   series: EventSeries;
   canPublish: boolean;
+  flyerOptions: { id: string; label: string }[];
+  /** Rendered on the server — a client component cannot read the media store. */
+  flyerPreview: React.ReactNode;
+  /** How many upcoming nights use this rather than their own. */
+  inheritingCount: number;
 }) {
   return (
     <div className="grid gap-5">
@@ -141,6 +150,65 @@ export function SeriesEditor({
                 Music
               </Label>
               <TextInput id="music" name="music" defaultValue={series.musicFormats.join(', ')} />
+            </div>
+          </div>
+        </Card>
+
+        {/* Artwork, shown as artwork. The value behind it is an id like
+            `flyerLatinSaturdays`, which tells a person nothing about whether it
+            is the right picture — so the picture is what is on screen. */}
+        <Card title="Artwork for every night">
+          <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+            {flyerPreview}
+
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="flyerAssetId" hint="Used on the events page and on this night's own page.">
+                  Photo
+                </Label>
+                <Select
+                  id="flyerAssetId"
+                  name="flyerAssetId"
+                  defaultValue={series.flyerAssetId ?? ''}
+                  aria-describedby="flyer-note"
+                >
+                  <option value="">No artwork yet</option>
+                  {flyerOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                <FieldNote id="flyer-note">
+                  {inheritingCount === 0
+                    ? 'Every upcoming night has its own artwork, so changing this affects new dates only.'
+                    : `Changes ${inheritingCount} upcoming ${inheritingCount === 1 ? 'night' : 'nights'} — every one that has not been given its own.`}{' '}
+                  <Link href="/admin/media" className="text-clay underline underline-offset-4">
+                    Upload a new photo
+                  </Link>
+                </FieldNote>
+              </div>
+
+              <div>
+                <Label
+                  htmlFor="flyerPrintedDate"
+                  hint="Only if a date is printed on the picture itself."
+                >
+                  Date printed on the artwork
+                </Label>
+                <TextInput
+                  id="flyerPrintedDate"
+                  name="flyerPrintedDate"
+                  defaultValue={series.flyerPrintedDate ?? ''}
+                  placeholder="August 8th"
+                  maxLength={60}
+                  aria-describedby="printed-note"
+                />
+                <FieldNote id="printed-note">
+                  A flyer with a date baked into it gets captioned with that date, so guests are
+                  never left comparing it with the real one. Leave blank if there is no date on it.
+                </FieldNote>
+              </div>
             </div>
           </div>
         </Card>

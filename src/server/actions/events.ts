@@ -36,6 +36,8 @@ const seriesSchema = z.object({
   music: z.string().trim().max(200),
   price: z.string().trim().max(12),
   ticketPolicy: z.enum(['required', 'door', 'free', 'later']),
+  flyerAssetId: z.string().trim().optional(),
+  flyerPrintedDate: z.string().trim().max(60).optional(),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 22:00.'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 02:00.'),
   publish: z.string().optional(),
@@ -78,6 +80,21 @@ export async function saveSeries(_prev: ActionState, formData: FormData): Promis
       start_minutes: start,
       end_minutes: end,
     };
+
+    if (value.flyerAssetId !== undefined) {
+      const chosen = value.flyerAssetId || null;
+      if (chosen) {
+        const asset = await db.get<Row>('media_assets', chosen);
+        if (!asset?.path) return { ok: false, message: 'Pick a photo that has a file.' };
+        // A flyer with a date printed into it has to declare that date, so the
+        // public page can caption it instead of showing two dates and letting a
+        // guest work out which one to believe.
+        fields.flyer_printed_date = value.flyerPrintedDate?.trim() || null;
+      } else {
+        fields.flyer_printed_date = null;
+      }
+      fields.flyer_asset_id = chosen;
+    }
 
     const wantsPublish = value.publish === 'true' && staffCan(staff, 'content.publish');
     if (wantsPublish) {

@@ -1,9 +1,9 @@
-import { getAsset, ratioToCss, type AssetId } from '@/content/assets';
+import { ratioOf, type PublicAsset } from '@/content/media';
 
 /**
  * Branded neutral fill for a slot with no photograph yet.
  *
- * Renders at the registry's exact aspect ratio, so a missing image produces zero
+ * Renders at the record's exact aspect ratio, so a missing image produces zero
  * layout shift and the composition is final before the pixels arrive.
  *
  * It is `aria-hidden` and carries NO text. An earlier version exposed the
@@ -14,16 +14,16 @@ import { getAsset, ratioToCss, type AssetId } from '@/content/assets';
  * docs/ASSET-HANDOFF.md, not on the website.
  */
 export function Placeholder({
+  asset,
   id,
   className = '',
   tone = 'light',
 }: {
-  id: AssetId;
+  asset: Pick<PublicAsset, 'ratio' | 'width' | 'height'>;
+  id: string;
   className?: string;
-  label?: string;
   tone?: 'light' | 'dark';
 }) {
-  const asset = getAsset(id);
   const surface = tone === 'dark' ? 'bg-espresso-lift' : 'bg-sand-deep';
   const mark = tone === 'dark' ? 'text-night-text opacity-[0.10]' : 'text-brown opacity-[0.08]';
 
@@ -31,7 +31,7 @@ export function Placeholder({
     <div
       aria-hidden="true"
       className={`relative flex items-center justify-center overflow-hidden ${surface} ${className}`}
-      style={{ aspectRatio: ratioToCss(asset) }}
+      style={{ aspectRatio: ratioOf(asset) }}
       data-asset-placeholder={id}
     >
       <svg viewBox="0 0 100 100" className={`w-[22%] max-w-24 ${mark}`} fill="currentColor">

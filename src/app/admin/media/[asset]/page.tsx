@@ -5,6 +5,7 @@ import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
 import { Card, EmptyState, Notice } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
+import { listVersions } from '@/server/content/editorial';
 import { getMedia, getMediaLibrary, mediaProblems } from '@/server/content/media';
 import { canOpen } from '@/server/permissions';
 import { MediaDetails } from './MediaDetails';
@@ -37,6 +38,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
     .map((other) => ({ id: other.assetId, label: other.title }));
 
   const problems = mediaProblems(entry);
+  const versions = await listVersions(db, 'media_assets', assetId);
 
   return (
     <AdminShell
@@ -103,9 +105,9 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
               <div className={entry.usage.length > 0 ? 'mt-4 border-t border-brown/12 pt-3' : ''}>
                 <p className="text-[0.8125rem] font-semibold text-brown">Placed by the design</p>
                 <p className="mt-1 text-[0.8125rem] leading-relaxed text-brown-soft">
-                  {entry.registryUsage.join(', ')}. These are fixed in the page layout, so swapping
-                  them is a job for your developer — but it does mean this photo is still on the
-                  website.
+                  {entry.registryUsage.join(', ')}. The design decides where these go and what
+                  shape they are, so they cannot be moved — but you can change which photo sits in
+                  the slot, below.
                 </p>
               </div>
             ) : null}
@@ -115,7 +117,9 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
         <MediaDetails
           entry={entry}
           alternatives={alternatives}
+          versions={versions}
           canArchive={staffCan(staff, 'content.archive')}
+          canRestore={staffCan(staff, 'content.restore')}
         />
       </div>
     </AdminShell>

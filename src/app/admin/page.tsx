@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin/AdminShell';
+import { ArtworkSourceNote, ArtworkThumb, artworkSourceOf } from '@/components/admin/Artwork';
 import { Card, EmptyState, Notice, StateChip, TaskLink } from '@/components/admin/ui';
+import { getMediaMap } from '@/content/media';
 import { getSiteSettings } from '@/content/resolve';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
@@ -42,6 +44,9 @@ export default async function AdminDashboard() {
   const waiting = inquiries.length;
 
   const upcoming = getUpcomingEvents(events, now, 5);
+  // One lookup for the whole list — the thumbnails are what let staff tell a
+  // Friday from a Saturday at a glance.
+  const media = await getMediaMap();
   const openState = getOpenState(
     settings.hours.value,
     settings.temporaryClosures,
@@ -87,19 +92,6 @@ export default async function AdminDashboard() {
         />
       </div>
 
-      {/* Said once, on the dashboard, rather than on every screen — it matters
-          before this goes on a public address, and nagging gets ignored. */}
-      {staff.source === 'open' ? (
-        <div className="mt-6">
-          <Notice tone="warning">
-            The admin has no password on it at the moment, so anyone who knows the address can edit
-            the website. That is fine while it is only running on this machine — turn sign-in back
-            on in <code className="font-mono">src/server/admin-access.ts</code> before it goes to a
-            public address.
-          </Notice>
-        </div>
-      ) : null}
-
       {attention.length > 0 ? (
         <section className="mt-9">
           <h2 className="text-[1.0625rem] font-semibold text-brown">Needs attention</h2>
@@ -129,9 +121,9 @@ export default async function AdminDashboard() {
           </div>
         </section>
       ) : (
-        <div className="mt-9">
-          <Notice tone="success">Everything looks in order. Nothing needs your attention.</Notice>
-        </div>
+        <p className="mt-9 text-[0.9375rem] text-brown-soft">
+          Nothing needs attention right now.
+        </p>
       )}
 
       <div className="mt-9 grid gap-5 lg:grid-cols-2">
@@ -151,11 +143,17 @@ export default async function AdminDashboard() {
                 const problem = ineligibleReason(event, now);
                 return (
                   <li key={event.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
-                    <span className="tabular w-28 shrink-0 text-[0.875rem] font-semibold text-brown">
+                    <ArtworkThumb
+                      asset={event.flyerAssetId ? (media[event.flyerAssetId] ?? null) : null}
+                    />
+                    <span className="tabular w-24 shrink-0 text-[0.875rem] font-semibold text-brown">
                       {formatEventDate(event.startsAt)}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] text-brown">
-                      {event.title}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[0.9375rem] text-brown">
+                        {event.title}
+                      </span>
+                      <ArtworkSourceNote source={artworkSourceOf(event)} />
                     </span>
                     <span className="tabular text-[0.8125rem] text-brown-soft">
                       {formatEventTime(event.startsAt)}

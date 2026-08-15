@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getSessionClient } from '@/lib/supabase/server';
-import { archive, unarchive } from '../content/editorial';
-import { getMedia, usageOf } from '../content/media';
+import { archive, publishDirect, unarchive } from '../content/editorial';
+import { getMedia, routesOfRegistryUsage, usageOf } from '../content/media';
 import { done, run, type ActionState } from './shared';
 
 /**
@@ -165,6 +165,78 @@ async function imageSize(bytes: Buffer): Promise<{ width: number; height: number
   } catch {
     return null;
   }
+}
+
+const repointSchema = z.object({
+  assetId: z.string().min(1),
+  replacementId: z.string().min(1),
+});
+
+/**
+ * Point a design-placed slot at a different file.
+ *
+ * Most photographs on this website are not chosen by a staff member — they are
+ * written into the layout as `<Asset id="dishQuesabirria" />`, because the
+ * composition is built around that shape and that focal point. There is no
+ * reference row to repoint, so `replaceMedia` cannot touch them, and until now
+ * the admin correctly said "swapping this is a job for your developer".
+ *
+ * It is not any more. The public site resolves every image through the media
+ * record, so changing which FILE a slot points at changes the website. The slot
+ * keeps its id, its crop and its place in the design; only the picture changes.
+ *
+ * The alt text comes across with the file, because a description that stays
+ * behind describes the wrong photograph — the single most common way an image
+ * swap breaks a screen reader.
+ */
+export async function repointMedia(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.edit', async ({ db, staff }) => {
+    const parsed = repointSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: 'Could not swap that photo.' };
+    const { assetId, replacementId } = parsed.data;
+
+    if (assetId === replacementId) {
+      return { ok: false, message: 'That is the photo already in this slot.' };
+    }
+
+    const [slot, replacement] = await Promise.all([
+      db.get<Row>('media_assets', assetId),
+      db.get<Row>('media_assets', replacementId),
+    ]);
+    if (!slot) return { ok: false, message: 'That slot no longer exists.' };
+    if (!replacement?.path) return { ok: false, message: 'Pick a photo that has a file.' };
+
+    if (replacement.kind !== slot.kind) {
+      return {
+        ok: false,
+        message: `This slot holds a ${slot.kind}. Pick a ${slot.kind} to put in it.`,
+      };
+    }
+
+    // Snapshot first. Repointing a slot replaces the only record of which file
+    // used to be in it, so without this the swap would be one-way — and "put the
+    // old photo back" is the first thing anyone asks for after a swap.
+    await publishDirect(db, 'media_assets', assetId, {
+      path: replacement.path,
+      width: replacement.width,
+      height: replacement.height,
+      ratio: replacement.ratio,
+      mime: replacement.mime,
+      size_bytes: replacement.size_bytes,
+      poster: replacement.poster ?? slot.poster ?? null,
+      alt: replacement.decorative ? null : (replacement.alt ?? slot.alt),
+      decorative: Boolean(replacement.decorative),
+      status: 'final',
+    }, staff);
+
+    const entry = await getMedia(db, assetId);
+    const routes = [
+      ...(entry?.usage ?? []).map((use) => use.route),
+      ...routesOfRegistryUsage(entry?.registryUsage ?? []),
+    ];
+
+    return done('Swapped. Every place that uses this photo now shows the new one.', 'media', routes);
+  });
 }
 
 const detailsSchema = z.object({

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { getAsset } from '@/content/assets';
+import { getPublicAsset } from '@/content/media';
 import { getSiteSettings } from '@/content/resolve';
 import { MobileDrawer } from './MobileDrawer';
 import { primaryNav } from './nav';
@@ -17,7 +17,7 @@ import { primaryNav } from './nav';
  * identical plain links, so neither reads as the primary action.
  */
 export async function Header() {
-  const logo = getAsset('brandLogo');
+  const logo = await getPublicAsset('brandLogo');
   // Ordering and booking links come from settings, so changing one in the admin
   // changes every button on the site at once.
   const site = await getSiteSettings();
@@ -32,15 +32,22 @@ export async function Header() {
         >
           {/* Fixed-size, so width/height are the RENDERED size at 2x — not the
               intrinsic 1200px. Passing `sizes` here would make the browser pull
-              the 3840px variant for a 70px slot. */}
-          <Image
-            src={logo.path!}
-            alt={site.name}
-            width={280}
-            height={Math.round((280 * logo.height) / logo.width)}
-            priority
-            className="h-7 w-auto sm:h-8"
-          />
+              the 3840px variant for a 70px slot.
+
+              The wordmark falls back to text rather than to a gap: a header with
+              no way home is worse than a header with no logo. */}
+          {logo?.path ? (
+            <Image
+              src={logo.path}
+              alt={site.name}
+              width={280}
+              height={Math.round((280 * logo.height) / logo.width)}
+              priority
+              className="h-7 w-auto sm:h-8"
+            />
+          ) : (
+            <span className="display text-[1.25rem] text-brown">{site.shortName}</span>
+          )}
         </Link>
 
         <nav aria-label="Primary" className="hidden flex-1 lg:block">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getAsset, type AssetId } from '@/content/assets';
+import type { PublicAsset } from '@/content/media';
 
 /**
  * Decorative background video.
@@ -16,18 +16,22 @@ import { getAsset, type AssetId } from '@/content/assets';
  *    source; a 16:9 desktop loop cropped to 9:16 is worse than a good still)
  */
 export function AssetVideo({
-  id,
+  asset,
   className = '',
   mobileBelow = 768,
   objectPosition,
 }: {
-  id: AssetId;
+  /**
+   * Resolved by the server parent. A client component cannot read the media
+   * store itself, and passing the record down is what lets a video swapped in
+   * the admin actually reach the page.
+   */
+  asset: PublicAsset;
   className?: string;
   mobileBelow?: number;
-  /** Overrides the registry focal point for this placement. */
+  /** Overrides the record's focal point for this placement. */
   objectPosition?: string;
 }) {
-  const asset = getAsset(id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [enabled, setEnabled] = useState(false);
 

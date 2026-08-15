@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Db, ListOptions, Row } from './types';
 import { primaryKey } from './types';
@@ -35,6 +35,17 @@ export class LocalDb implements Db {
   readonly kind = 'local' as const;
 
   private cache: Tables | null = null;
+  /**
+   * Modification time of the file the cache was read from.
+   *
+   * Next.js gives the page render and the server actions their own module
+   * instances in development, so each holds its own LocalDb and its own cached
+   * copy of this file. Without this check, a photo swapped by an action was
+   * written to disk, and the page that rendered next kept serving the copy it
+   * had read at startup — the change was real and invisible, which is the worst
+   * of both. Re-reading when the file has moved on costs one stat per query.
+   */
+  private cachedMtimeMs = 0;
   private queue: Promise<unknown> = Promise.resolve();
   /** In-flight first load, shared so concurrent requests do not each seed. */
   private loading: Promise<Tables> | null = null;
@@ -58,11 +69,12 @@ export class LocalDb implements Db {
    * filename is how the first version produced ENOENT on rename.
    */
   private async load(): Promise<Tables> {
-    if (this.cache) return this.cache;
+    if (this.cache && !(await this.changedOnDisk())) return this.cache;
     this.loading ??= (async () => {
       try {
         const raw = await readFile(this.file, 'utf8');
         this.cache = JSON.parse(raw) as Tables;
+        this.cachedMtimeMs = (await stat(this.file)).mtimeMs;
       } catch {
         this.cache = this.seed();
         await this.flush();
@@ -72,6 +84,16 @@ export class LocalDb implements Db {
       this.loading = null;
     });
     return this.loading;
+  }
+
+  /** True when another module instance, or another process, has written since. */
+  private async changedOnDisk(): Promise<boolean> {
+    try {
+      return (await stat(this.file)).mtimeMs !== this.cachedMtimeMs;
+    } catch {
+      // No file: whatever is in memory is as good as it gets.
+      return false;
+    }
   }
 
   /**
@@ -87,6 +109,9 @@ export class LocalDb implements Db {
     const temp = `${this.file}.${process.pid}.${(this.writes += 1)}.tmp`;
     await writeFile(temp, JSON.stringify(this.cache, null, 2), 'utf8');
     await rename(temp, this.file);
+    // Record what we just wrote, so our own write does not read back as somebody
+    // else's change on the next query.
+    this.cachedMtimeMs = (await stat(this.file)).mtimeMs;
   }
 
   /** Serialises every mutation so two concurrent requests cannot interleave. */

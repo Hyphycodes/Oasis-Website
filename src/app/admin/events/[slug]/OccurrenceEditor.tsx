@@ -26,11 +26,14 @@ export function OccurrenceEditor({
   date,
   seriesSlug,
   flyerOptions,
+  artwork,
 }: {
   event: ResolvedEvent;
   date: string;
   seriesSlug: string;
   flyerOptions: { id: string; label: string }[];
+  /** Rendered on the server: what this night is showing right now. */
+  artwork?: React.ReactNode;
 }) {
   const overridden = new Set(event.overriddenFields);
   const inherited = (field: string, value: string) =>
@@ -85,6 +88,7 @@ export function OccurrenceEditor({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
+          {artwork ? <div className="mb-2">{artwork}</div> : null}
           <Label htmlFor={`flyer-${date}`} hint={inherited('flyerAssetId', event.flyerAssetId ?? 'none')}>
             Artwork, this night only
           </Label>

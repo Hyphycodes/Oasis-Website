@@ -1,6 +1,5 @@
-import { Asset } from '@/components/media/Asset';
-import type { AssetId } from '@/content/assets';
-import { getAsset } from '@/content/assets';
+import { AssetView } from '@/components/media/Asset';
+import { getPublicAsset } from '@/content/media';
 
 /**
  * Series or occurrence flyer.
@@ -18,7 +17,7 @@ import { getAsset } from '@/content/assets';
  * With no approved flyer the frame still reserves its square and says current
  * artwork is pending, rather than collapsing the layout.
  */
-export function Flyer({
+export async function Flyer({
   assetId,
   printedDate,
   eventName,
@@ -39,14 +38,17 @@ export function Flyer({
     tone === 'teal' ? 'border-amber/30 bg-teal-lift/60' : 'border-coral-light/30 bg-plum-lift/60';
   const caption = tone === 'teal' ? 'text-teal-soft' : 'text-plum-soft';
 
-  const asset = assetId ? getAsset(assetId as AssetId) : null;
+  // Resolved through the media store, so the flyer a guest sees is the same
+  // record the admin edits — including a photograph swapped for one night only.
+  const asset = assetId ? await getPublicAsset(assetId) : null;
 
   return (
     <figure>
       <div className={`overflow-hidden rounded-(--radius-lg) border ${frame} p-2.5 sm:p-3`}>
-        {assetId && asset?.path ? (
-          <Asset
-            id={assetId as AssetId}
+        {asset?.path ? (
+          <AssetView
+            asset={asset}
+            id={assetId!}
             className="aspect-square w-full"
             sizes={sizes}
             priority={priority}

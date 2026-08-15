@@ -84,6 +84,28 @@ and writes fail closed.
 The seed for both is the same typed static content in `src/content/` that already
 generates `supabase/seed.sql`, so there is exactly one origin for the real data.
 
+## Follow-up: connecting the photographs (2026-08-15)
+
+The first pass left one thing disconnected. `<Asset id="dishQuesabirria" />` read
+`src/content/assets.ts` directly, so a photograph swapped in the admin changed the
+admin and nothing else — Photos was a catalogue of things it could not alter.
+
+Every image now resolves through `src/content/media.ts`, which merges the stored
+record over the typed registry. The registry is still the default and the
+fallback, so a clean checkout and a database outage both render exactly what they
+always did, and `npm run assets:check` still verifies the files in the repo.
+
+That also made a new capability possible. A design-placed photograph has no
+reference row to repoint, so `replaceMedia` could never touch one; `repointMedia`
+changes which FILE the slot holds instead, which is the only way to swap a picture
+the layout asks for by name. It snapshots first, so the swap is reversible from
+Earlier versions.
+
+One bug surfaced while proving it end to end: `LocalDb` cached the file in memory,
+and Next.js gives the page render and the server actions separate module
+instances, so a write landed on disk and the next render kept serving its own
+stale copy. It now re-reads when the file's mtime has moved.
+
 ## Consequences
 
 - No new runtime dependency. The admin ships as application code in the site's own
