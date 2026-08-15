@@ -5,14 +5,19 @@ import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink } from '@/components/primitives/Button';
 import { Eyebrow } from '@/components/primitives/Type';
-import { pageCopy, seo } from '@/content/pages';
-import { site } from '@/content/site';
+import { getPageCopy } from '@/server/content/pages';
+import { getPublicEvents } from '@/server/content/events';
+import { getSiteSettings } from '@/content/resolve';
+import { seo } from '@/content/pages';
 import type { ResolvedEvent } from '@/content/types';
-import { getAllSeries, getUpcomingEvents, STATUS_LABEL } from '@/lib/events';
+import { nextPerSeries, STATUS_LABEL } from '@/lib/events';
 import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = buildMetadata({ ...seo.events!, path: '/events' });
+// Five minutes. Anything that renders a "next date" has to have a small, bounded
+// staleness window — a cached page holding a finished night is the exact defect
+// the August 15 audit found. See docs/EVENTS-FRESHNESS.md.
 export const revalidate = 300;
 
 /** Friday leans amber on teal; Saturday leans coral on plum. Related, not identical. */
@@ -51,10 +56,9 @@ function NightFeature({
   flip: boolean;
   priority: boolean;
 }) {
-  const { series } = event;
   const theme = ACCENT[tone];
   const statusLabel = STATUS_LABEL[event.status] ?? '';
-  const shortName = series.title.replace('Oasis ', '');
+  const shortName = event.title.replace('Oasis ', '');
   // "Show all Fridays dates" reads badly; the series names are plural, the label
   // wants the singular night. Both titles end in a plural "s".
   const nightName = shortName.replace(/s$/, '');
@@ -63,16 +67,24 @@ function NightFeature({
     <article className={`${theme.surface} on-dark rounded-(--radius-lg) p-5 sm:p-8`}>
       <div className="grid gap-6 lg:grid-cols-12 lg:items-center lg:gap-10">
         <div className={`lg:col-span-5 ${flip ? 'lg:order-2 lg:col-start-8' : ''}`}>
-          <Flyer series={series} tone={tone} priority={priority} />
+          <Flyer
+            assetId={event.flyerAssetId}
+            printedDate={event.flyerPrintedDate}
+            eventName={shortName}
+            tone={tone}
+            priority={priority}
+          />
         </div>
 
         <div className={`lg:col-span-6 ${flip ? 'lg:order-1' : 'lg:col-start-7'}`}>
-          <div className={`flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-b-2 ${theme.rule} pb-3`}>
+          <div
+            className={`flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-b-2 ${theme.rule} pb-3`}
+          >
             <h2 className={`display text-[clamp(1.75rem,3vw,2.5rem)] ${theme.accent}`}>
               {shortName}
             </h2>
             <span className="eyebrow shrink-0 text-night-text/75">
-              {series.ageMin ? `${series.ageMin}+` : 'All ages'}
+              {event.ageMin ? `${event.ageMin}+` : 'All ages'}
             </span>
           </div>
 
@@ -91,7 +103,7 @@ function NightFeature({
             </div>
             <div>
               <dt className={`text-[0.8125rem] ${theme.soft}`}>Music</dt>
-              <dd className="mt-1 text-night-text">{series.musicFormats.join(' · ')}</dd>
+              <dd className="mt-1 text-night-text">{event.musicFormats.join(' · ')}</dd>
             </div>
             <div>
               <dt className={`text-[0.8125rem] ${theme.soft}`}>Entry</dt>
@@ -107,18 +119,20 @@ function NightFeature({
                 {statusLabel}
               </p>
             ) : event.ticketUrl ? (
-              <ExternalButtonLink href={event.ticketUrl} destination={`${series.title} tickets`}>
+              <ExternalButtonLink href={event.ticketUrl} destination={`${event.title} tickets`}>
                 Tickets — {formatEventDate(event.startsAt)}
               </ExternalButtonLink>
             ) : null}
             {/* The full recurring schedule lives on the series page, one series at
                 a time — never as one mixed Friday-and-Saturday list. */}
-            <Link
-              href={`/events/${series.slug}`}
-              className="inline-flex min-h-11 items-center text-[0.9375rem] text-night-text underline underline-offset-4 hover:underline-offset-[6px]"
-            >
-              Show all {nightName} dates
-            </Link>
+            {event.seriesSlug ? (
+              <Link
+                href={`/events/${event.seriesSlug}`}
+                className="inline-flex min-h-11 items-center text-[0.9375rem] text-night-text underline underline-offset-4 hover:underline-offset-[6px]"
+              >
+                Show all {nightName} dates
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
@@ -131,19 +145,17 @@ function NightFeature({
  *
  * Two nights, featured once each, flyer-led. The combined multi-week schedule
  * that used to sit underneath is gone: it published months of dates that had not
- * been confirmed, and it mixed both series into one list. Each feature now links
- * to its own series page, which lists only that night's future dates.
+ * been confirmed, and it mixed both series into one list. Each feature links to
+ * its own series page, which lists only that night's future dates.
  */
-export default function EventsPage() {
+export default async function EventsPage() {
   const now = new Date();
-  const upcoming = getUpcomingEvents(now);
-  const series = getAllSeries();
-
-  const featured: ResolvedEvent[] = [];
-  for (const slug of series.map((s) => s.slug)) {
-    const next = upcoming.find((event) => event.series.slug === slug);
-    if (next) featured.push(next);
-  }
+  const [input, copy, settings] = await Promise.all([
+    getPublicEvents(),
+    getPageCopy('events'),
+    getSiteSettings(),
+  ]);
+  const featured = nextPerSeries(input, now);
 
   return (
     <>
@@ -158,13 +170,15 @@ export default function EventsPage() {
         <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-teal to-teal/70" />
         <Frame wide>
           <div className="relative max-w-2xl py-10 lg:py-14">
-            <Eyebrow tone="night">{pageCopy.events.eyebrow}</Eyebrow>
+            <Eyebrow tone="night">{copy.eyebrow}</Eyebrow>
             <h1 className="display mt-3 text-[clamp(1.875rem,3.6vw,2.75rem)] text-night-text">
-              {pageCopy.events.heading}
+              {copy.heading}
             </h1>
-            <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-teal-soft">
-              {pageCopy.events.body}
-            </p>
+            {copy.body ? (
+              <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-teal-soft">
+                {copy.body}
+              </p>
+            ) : null}
           </div>
         </Frame>
       </section>
@@ -200,7 +214,7 @@ export default function EventsPage() {
               The kitchen is open before the music starts. Come for dinner, get a table, and stay
               for the night.
             </p>
-            <ExternalButtonLink href={site.reservationUrl} destination="Toast reservations">
+            <ExternalButtonLink href={settings.reservationUrl} destination="Toast reservations">
               Reserve a table
             </ExternalButtonLink>
           </div>
@@ -208,7 +222,7 @@ export default function EventsPage() {
       </Band>
 
       {featured.map((event) => (
-        <JsonLd key={event.id} data={eventJsonLd(event)} />
+        <JsonLd key={event.id} data={eventJsonLd(event, settings)} />
       ))}
     </>
   );

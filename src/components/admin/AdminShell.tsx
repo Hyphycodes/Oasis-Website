@@ -1,135 +1,132 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { signOut } from '@/app/admin/actions';
-import type { Role } from '@/lib/supabase/auth';
+import { signOut } from '@/server/actions/team';
+import type { Staff } from '@/server/auth';
+import { canOpen, ROLE_LABEL, type Section } from '@/server/permissions';
+import { Notice } from './ui';
 
-const NAV: { href: string; label: string; adminOnly?: boolean }[] = [
+/**
+ * The admin shell.
+ *
+ * Six destinations, and a seventh only an Owner sees. That ceiling is the point:
+ * a restaurant manager should be able to hold the whole tool in their head, and
+ * every extra top-level item makes the five things they came to do harder to
+ * find. "Website" is five named screens, not a pages collection.
+ */
+
+const NAV: { href: string; label: string; section?: Section; ownerOnly?: boolean }[] = [
   { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/announcement', label: 'Announcement bar' },
-  { href: '/admin/hours', label: 'Hours & closures' },
-  { href: '/admin/menu', label: 'Menus' },
-  { href: '/admin/events', label: 'Events' },
-  { href: '/admin/catering', label: 'Catering' },
-  { href: '/admin/inquiries', label: 'Enquiries' },
-  { href: '/admin/media', label: 'Photos' },
-  { href: '/admin/settings', label: 'Settings', adminOnly: true },
+  { href: '/admin/menu', label: 'Menu', section: 'menu' },
+  { href: '/admin/events', label: 'Events', section: 'events' },
+  { href: '/admin/website', label: 'Website', section: 'website' },
+  { href: '/admin/media', label: 'Photos', section: 'media' },
+  { href: '/admin/settings', label: 'Settings', section: 'settings' },
+  { href: '/admin/team', label: 'Team & permissions', ownerOnly: true },
 ];
 
-const ROLE_LABEL: Record<Role, string> = {
-  owner: 'Owner',
-  admin: 'Manager',
-  editor: 'Staff',
-};
-
 export function AdminShell({
-  children,
-  role,
-  name,
-  email,
+  staff,
   title,
   description,
+  actions,
+  local,
+  children,
 }: {
-  children: ReactNode;
-  role: Role;
-  name: string;
-  email: string;
+  staff: Staff;
   title: string;
   description?: string;
+  actions?: ReactNode;
+  /** True when edits are going to the local development file, not a real backend. */
+  local: boolean;
+  children: ReactNode;
 }) {
-  const isAdmin = role === 'owner' || role === 'admin';
+  const items = NAV.filter((item) => {
+    if (item.ownerOnly) return staff.role === 'owner';
+    if (!item.section) return true;
+    return canOpen({ role: staff.role, sections: staff.sections }, item.section);
+  });
 
   return (
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-8 px-5 py-8 lg:flex-row lg:gap-12 lg:px-8">
-      <aside className="lg:w-56 lg:shrink-0">
-        <Link href="/admin" className="block text-[1.125rem] font-semibold text-brown">
-          Oasis admin
-        </Link>
-        <p className="mt-1 text-[0.8125rem] text-brown-soft">
-          {name || email} · {ROLE_LABEL[role]}
-        </p>
-
-        <nav aria-label="Admin sections" className="mt-6">
-          <ul className="flex flex-wrap gap-1 lg:flex-col">
-            {NAV.filter((item) => !item.adminOnly || isAdmin).map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="inline-flex min-h-11 w-full items-center rounded-(--radius-md) px-3 text-[0.9375rem] font-medium text-brown-soft transition-colors hover:bg-brown/8 hover:text-brown"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="mt-6 border-t border-brown/15 pt-4">
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center text-[0.875rem] text-brown-soft underline underline-offset-4"
-          >
-            View the website
+    <div className="min-h-dvh bg-ivory">
+      <header className="border-b border-brown/15 bg-linen">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+          <Link href="/admin" className="text-[1.0625rem] font-semibold text-brown">
+            Oasis admin
           </Link>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center text-[0.875rem] text-brown-soft underline underline-offset-4"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
-      </aside>
 
-      <main className="min-w-0 flex-1">
-        <h1 className="text-[length:var(--text-display-md)] font-semibold leading-none tracking-[-0.025em] text-brown [font-variation-settings:'wdth'_104]">
-          {title}
-        </h1>
-        {description ? (
-          <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">
-            {description}
-          </p>
+          <nav aria-label="Admin sections" className="order-3 w-full sm:order-none sm:w-auto">
+            <ul className="-mx-1 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {items.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-(--radius-sm) px-3 text-[0.9375rem] font-medium text-brown-soft transition-colors hover:bg-brown/8 hover:text-brown"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-4 text-[0.8125rem]">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center whitespace-nowrap font-medium text-clay underline underline-offset-4"
+            >
+              View live site
+            </Link>
+            <span className="hidden text-brown-soft sm:inline">
+              {staff.name || staff.email} · {ROLE_LABEL[staff.role]}
+            </span>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center text-brown-soft underline underline-offset-4"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1280px] px-4 py-7 sm:px-6 sm:py-9">
+        {local ? (
+          <div className="mb-6">
+            <Notice tone="warning">
+              You are on the local development copy. Changes are saved to a file on this machine and
+              are not on the real website.
+            </Notice>
+          </div>
         ) : null}
-        <div className="mt-8">{children}</div>
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-[length:var(--text-display-md)] font-semibold leading-tight tracking-[-0.02em] text-brown">
+              {title}
+            </h1>
+            {description ? (
+              <p className="measure mt-2 text-[0.9375rem] leading-relaxed text-brown-soft">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        </div>
+
+        <div className="mt-7">{children}</div>
       </main>
     </div>
   );
 }
 
-export function Card({ children, title }: { children: ReactNode; title?: string }) {
+/** Contributors see this instead of a section they are not allowed to open. */
+export function NoAccess({ what }: { what: string }) {
   return (
-    <section className="rounded-(--radius-md) border border-brown/15 bg-linen p-5">
-      {title ? <h2 className="text-[1.0625rem] font-semibold text-brown">{title}</h2> : null}
-      <div className={title ? 'mt-4' : ''}>{children}</div>
-    </section>
-  );
-}
-
-export function EmptyState({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-(--radius-md) border border-dashed border-brown/25 px-5 py-8 text-center text-[0.9375rem] text-brown-soft">
-      {children}
-    </p>
-  );
-}
-
-export function Warning({
-  tone = 'warning',
-  children,
-}: {
-  tone?: 'warning' | 'danger' | 'success';
-  children: ReactNode;
-}) {
-  const border = {
-    warning: 'border-warning',
-    danger: 'border-danger',
-    success: 'border-success',
-  }[tone];
-  const text = { warning: 'text-warning', danger: 'text-danger', success: 'text-success' }[tone];
-
-  return (
-    <p className={`rounded-(--radius-md) border-2 ${border} bg-linen px-4 py-3 text-[0.9375rem] ${text}`}>
-      {children}
-    </p>
+    <Notice tone="info">
+      Your account does not have access to {what}. If you need it, ask the owner to add it to your
+      account.
+    </Notice>
   );
 }

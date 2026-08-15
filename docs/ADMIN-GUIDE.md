@@ -6,7 +6,7 @@ For the Oasis team. No technical knowledge assumed.
 
 ## Signing in
 
-Go to **yoursite.com/admin**. Enter your email and password.
+Go to **yoursite.com/admin** and enter your email and password.
 
 If you have forgotten your password, ask whoever set up your account to reset it — there is no
 self-service reset, on purpose.
@@ -16,179 +16,161 @@ The website is still working normally for guests; only editing is unavailable.
 
 ---
 
-## What you can change, and what you cannot
+## The six places you can go
 
-**You can change:**
+| | What lives there |
+|---|---|
+| **Dashboard** | What needs your attention, what is on this week, what changed recently |
+| **Menu** | Prices, sold-out, descriptions, sections, adding a dish |
+| **Events** | Friday and Saturday nights, ticket links, one-off events |
+| **Website** | The words and photographs on each page |
+| **Photos** | Every picture, where each one is used, uploading new ones |
+| **Settings** | Address, phone, hours, holidays, ordering and booking links, the banner |
 
-- The announcement bar at the top of every page
-- Opening hours
-- Menu item names, prices, descriptions, and whether something is sold out
-- Event status, ticket price, and ticket link
-- Enquiry status and internal notes
+Owners also see **Team & permissions**.
 
-**You cannot change** (by design — this is what stops the site from breaking):
-
-- Fonts, colours, spacing, or layout
-- Adding or deleting whole menu sections
-- The address, business name, or phone number
-- Uploading photos directly
-
-Anything in the second list, ask your developer. Most take a few minutes.
-
----
-
-## The dashboard
-
-The first page after signing in. It shows:
-
-- **Today** — whether you are open right now, and this week's hours
-- **This week** — the next few event nights
-- **Enquiries** — how many messages are waiting for a reply
-- **Things worth a look** — specific problems, each linking to the page that fixes it
-
-That last section is worth reading whenever you sign in. It flags things like a dish with no price
-or a menu with nothing on it.
-
----
-
-## Announcement bar
-
-The thin coloured strip across the very top of every page. Use it for a special, an event, or a
-temporary notice.
-
-1. Go to **Announcement bar**.
-2. Type your message. Keep it to one short sentence — it has to fit on a phone.
-3. Optionally add a link and the text for the button.
-4. Optionally set a start and end date. Leave both blank to run it until you switch it off.
-5. Pick a colour: **orange** for specials, **dark** for events and nightlife.
-6. Tick **Show this on the website**.
-7. Click **Save changes**.
-
-A live preview at the top shows exactly how it will look before you save.
-
-**Remember to switch it off when the special ends.** An expired promotion is worse than none — or
-set an end date and it turns itself off.
-
----
-
-## Hours
-
-1. Go to **Hours & closures**.
-2. Set the opening and closing time for each day, or tick **Closed**.
-3. Click **Save hours**.
-
-**For nights that run past midnight**, set the closing time to the small hours — opens 10:00, closes
-01:00. The website works out that it means the next day.
-
-Hours appear in the footer of every page, on the Visit page, and in Google search results, so this
-is one of the highest-impact things on the site.
-
----
-
-## Menus
-
-1. Go to **Menus**.
-2. Find the dish and click **Edit**.
-3. Change the name, price, or description.
-4. Click **Save**.
-
-**Prices:** type numbers only — `16` or `16.50`, no dollar sign. Leave the price blank for anything
-that changes with the market; the website then shows whatever you put in *"What to show instead of a
-price"* (usually "Ask your server").
-
-**Sold out?** Untick **Available**. The dish stays on the menu, greyed out, so guests know it exists
-and is off tonight. Tick it back when it returns.
-
-**Featured** marks a dish as an Oasis original.
-
-Adding a brand-new dish, or a whole new section, needs your developer — that keeps the menu layout
-from breaking.
-
----
-
-## Events
-
-Your Friday and Saturday nights repeat automatically. **You never add dates one by one.** The
-website works out the next 26 weeks and always shows the right ones.
-
-To change something:
-
-1. Go to **Events**.
-2. Pick the night.
-3. Change the **status** — sold out, cancelled, free entry, postponed.
-4. Change the **ticket price** or **ticket link** if they have moved.
-5. Click **Save**.
-
-Cancelled nights stay visible on the website for two weeks so guests who were planning to come are
-not surprised by a silent disappearance.
-
-**About flyers:** send your developer a flyer with **no date printed on it**. The website prints the
-date itself, in text, over the artwork. That is why the old problem — a flyer showing one date and
-the listing showing another — cannot happen any more.
-
----
-
-## Enquiries
-
-Catering requests, private-event requests, and job applications from the website all land here.
-
-1. Go to **Enquiries**. New ones are open by default.
-2. Read the details — the date, headcount, and everything they filled in.
-3. Reply by clicking their email or phone number.
-4. Set the status to **Working on it**, then **Done**.
-5. Add internal notes. Only your team sees them.
-
-**Nobody is emailed automatically.** Email notification is not set up, so check this page daily.
-Guests are told exactly this when they submit — the website never claims to have emailed you.
-
----
-
-## Photos
-
-**Photos** is a read-only list of every photo slot on the website and which ones are still empty.
-
-You cannot upload here. Each slot has a fixed shape and a focal point so the picture crops correctly
-on phones; uploading straight in would break those crops. Send photos to your developer instead —
-the list on this page tells you exactly what is needed and what size.
-
-Most valuable to shoot first: **quesabirrias**, **the Bizza**, and **a Friday or Saturday night on
-the floor**. There is currently no photograph of any dish anywhere on the website.
-
-Shooting tips are in `docs/ASSET-HANDOFF.md` — a phone is genuinely fine if you shoot in portrait,
-near a window, with the overhead lights off.
-
----
-
-## Previewing changes
-
-Every editing page has a **Preview on the website** link. Changes appear within about a minute.
-
-If you do not see a change, wait a minute and refresh. If it is still missing after five, tell your
-developer.
+Enquiries — catering, celebrations and job applications — are reached from the Dashboard.
 
 ---
 
 ## Who can do what
 
-| | Owner | Manager | Staff |
+| | Owner | Manager | Contributor |
 |---|---|---|---|
-| Menus, events, hours, announcements, enquiries | ✅ | ✅ | ✅ |
-| Settings and business details | ✅ | ✅ | — |
-| Adding and removing user accounts | ✅ | ✅ | — |
+| Edit anything and save a draft | ✅ | ✅ | ✅ |
+| Publish a change to the website | ✅ | ✅ | ❌ |
+| Take something off the website | ✅ | ✅ | ❌ |
+| Put an earlier version back | ✅ | ✅ | ❌ |
+| Upload a photo | ✅ | ✅ | ✅ |
+| Change the restaurant details and hours | ✅ | ✅ | ❌ |
+| Change staff accounts | ✅ | ❌ | ❌ |
 
-New accounts start as **Staff**. An owner or manager raises that deliberately.
+A Contributor's work is never lost. It is saved as a draft and shows up on the Dashboard as
+"waiting to be published", and a manager publishes it.
+
+These limits are enforced by the database, not just hidden in the screen. Someone who knows their
+way around a browser still cannot publish from a Contributor account.
 
 ---
 
-## If something goes wrong
+## The five states a change can be in
 
-**A change did not save.** Look for the red message next to the Save button — it says what was
-wrong. Most often it is a price typed with a dollar sign, or a link missing `https://`.
+| | What guests see |
+|---|---|
+| **Live** | Exactly this |
+| **Draft waiting** | The *old* version — your change is saved but not out yet |
+| **Draft** | Nothing; it has never been published |
+| **Off the website** | Nothing, but everything is kept and can come back |
 
-**You saved something you did not mean to.** Change it back and save again. Every change is logged
-with who made it and when, so nothing is lost.
+There is no scheduled publishing yet — see "Not built" at the end.
 
-**The website looks broken.** Contact your developer immediately. Do not try to fix it from here —
-nothing in this admin can break the website's appearance.
+---
 
-**You are locked out.** Ask another owner or manager to reset your password.
+## The things you will actually do
+
+### Change a price
+
+Menu → find the dish → type the new price → **Save**. It is on the website within a minute.
+You do not need to open the dish.
+
+If the price is not a number — "Ask your server", "Market price" — change the dropdown next to it
+instead. That removes the number entirely, so an old price can never be left showing.
+
+### Mark something sold out
+
+Menu → find the dish → the second dropdown → **Sold out today** → **Apply**.
+
+- **Sold out today** — guests still see it, greyed out, labelled *Currently unavailable*.
+- **Hidden from guests** — it disappears from the website but stays here, so you can bring it back.
+
+### Add a dish
+
+Menu → open a section → type the name at the bottom → **Add**. It starts **hidden**, so you can
+fill in the price and description before anybody sees it. Switch it to *On the menu* when it is
+ready.
+
+### Change one Friday or Saturday
+
+Events → **Repeating nights** → open the night → the dates are on the right. Open a date and change
+only that night: its ticket link, its artwork, its price, or mark it cancelled.
+
+Everything you leave blank stays the same as usual. **Use the usual details** puts a night fully
+back to normal.
+
+Cancelling one night never touches the others. A cancelled night stays on the website for two weeks
+so anyone holding a ticket finds out, and it is never shown as "what's on".
+
+### Add ticket links for the next few weeks
+
+Events → the night → **Ticket links** → paste one per line:
+
+```
+2026-08-21 https://…
+2026-08-28 https://…
+```
+
+### Add a one-off event
+
+Events → **Repeating nights** → *Add a one-off event*. It saves as a draft. Publish it from the
+**Drafts** tab when the details are final.
+
+### Update hours, or close for a holiday
+
+Settings → **Opening hours** for the normal week. For a one-off, use **Holidays and one-off
+changes**: pick the date, say what it is, and guests see it on the day. Past dates drop off on
+their own.
+
+A closing time earlier than the opening time means *after midnight* — 10:00 to 01:00 is a
+fifteen-hour day, and that is what Friday and Saturday are.
+
+### Change a headline
+
+Website → pick the page → each panel is a real section of that page. Change the words, then
+**Save and publish**, or **Save as a draft** and use **Preview the page** first.
+
+### Replace a photo
+
+Photos → open the photo → **Swap this photo**. It asks whether you mean here only or everywhere,
+because those are different things.
+
+Some photographs are placed by the design itself. Those say *Placed by the design* and swapping
+them is a job for your developer — the admin tells you rather than letting you leave a gap.
+
+### Undo something
+
+Open the dish or the section → **Earlier versions** → **Bring this back**. It returns as a draft,
+so you can look at it before it goes live.
+
+---
+
+## Why some things are refused
+
+- **"Your account can save drafts…"** — you are a Contributor. Your work is saved; ask a manager.
+- **"Still in use in 2 places…"** — the photo is on the website. Swap it there first.
+- **"Add a short description…"** — a photo needs alt text so screen readers can describe it, or an
+  explicit *decorative* tick.
+- **"A ticket link has to start with https://"** — a link without it does not work for guests.
+
+---
+
+## What the admin does not touch
+
+- **Toast** — the ordering menu and table bookings live on Toast. This website links to them. A
+  price changed here does **not** change Toast, and vice versa.
+- **Ticket sales** — tickets are sold on your ticketing site. The admin stores which link each
+  night points at, nothing more.
+- **Where enquiries are delivered** — the form fields, spam protection and delivery are fixed.
+  You can edit the *choices* in a dropdown (Website → Careers → positions, for example).
+- **The design** — you choose the words and the photograph in a slot. You cannot move a section,
+  add one, or change how a page is laid out. That is what keeps the site from drifting.
+
+---
+
+## Not built (deliberately, and honestly)
+
+- **Scheduled publishing.** There is nothing running at 9am to publish for you, and a "scheduled"
+  button that silently never fires would be worse than not offering it. Publish when you are ready.
+- **Deleting things.** Staff archive; nothing is deleted. Archived content is kept and can come
+  back.
+- **Uploading video.** Videos need a poster frame and a matching crop, so they are placed by your
+  developer. Send them the file.

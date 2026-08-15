@@ -20,3 +20,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 coverage/
+
+# Local development content database (see docs/ADR-001-ADMIN-BACKEND.md).
+# Never used in production; seeded from src/content/.
+.oasis-local/
+
+# Photos uploaded through the admin in local development.
+/public/media/uploads/

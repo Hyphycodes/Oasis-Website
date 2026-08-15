@@ -1,61 +1,62 @@
 'use client';
 
-import { useActionState } from 'react';
-import { signIn, type ActionState } from '../actions';
+import { ActionForm, SubmitButton } from '@/components/admin/ActionForm';
+import { Label, TextInput } from '@/components/admin/ui';
+import { signIn, signInAs } from '@/server/actions/team';
+import type { Role } from '@/server/permissions';
 
 export function LoginForm() {
-  const [state, action, pending] = useActionState<ActionState, FormData>(signIn, null);
-
   return (
-    <form action={action} className="grid gap-5">
-      {state && !state.ok ? (
-        <p
-          role="alert"
-          className="rounded-(--radius-md) border-2 border-danger bg-linen px-4 py-3 text-[0.9375rem] font-medium text-danger"
-        >
-          {state.message}
-        </p>
-      ) : null}
-
+    <ActionForm action={signIn} className="grid gap-4">
       <div>
-        <label htmlFor="email" className="block text-[0.875rem] font-medium text-brown">
-          Email
-        </label>
-        <input
+        <Label htmlFor="email">Email</Label>
+        <TextInput
           id="email"
           name="email"
           type="email"
+          autoComplete="email"
           required
-          autoComplete="username"
-          className="mt-1.5 min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3.5 py-2.5 text-[0.9375rem] text-brown"
+          autoFocus
+          placeholder="you@oasis.com"
         />
       </div>
-
       <div>
-        <label htmlFor="password" className="block text-[0.875rem] font-medium text-brown">
-          Password
-        </label>
-        <input
+        <Label htmlFor="password">Password</Label>
+        <TextInput
           id="password"
           name="password"
           type="password"
-          required
           autoComplete="current-password"
-          className="mt-1.5 min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3.5 py-2.5 text-[0.9375rem] text-brown"
+          required
         />
       </div>
+      <div>
+        <SubmitButton>Sign in</SubmitButton>
+      </div>
+    </ActionForm>
+  );
+}
 
+/** Development only — the server action refuses unless the local database is live. */
+export function LocalSignIn({
+  role,
+  name,
+  summary,
+}: {
+  role: Role;
+  name: string;
+  summary: string;
+}) {
+  return (
+    <ActionForm action={signInAs}>
+      <input type="hidden" name="role" value={role} />
       <button
         type="submit"
-        disabled={pending}
-        className="inline-flex min-h-11 items-center justify-center rounded-(--radius-md) bg-orange px-7 py-3 font-semibold text-on-orange transition-colors hover:bg-orange-deep disabled:opacity-50"
+        className="w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-4 py-3 text-left transition-colors hover:border-coral hover:bg-coral/5"
       >
-        {pending ? 'Signing in…' : 'Sign in'}
+        <span className="block text-[0.9375rem] font-semibold text-brown">{name}</span>
+        <span className="mt-0.5 block text-[0.8125rem] text-brown-soft">{summary}</span>
       </button>
-
-      <p className="text-[0.8125rem] text-brown-soft">
-        Forgot your password? Ask whoever set up your account to reset it for you.
-      </p>
-    </form>
+    </ActionForm>
   );
 }

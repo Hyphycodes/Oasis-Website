@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next';
-import { getAllSeries } from '@/lib/events';
+import { getPublicEvents } from '@/server/content/events';
 import { absoluteUrl } from '@/lib/seo';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const { series } = await getPublicEvents();
 
   const staticRoutes: { path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' }[] = [
     { path: '/', priority: 1, changeFrequency: 'weekly' },
@@ -23,8 +24,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: route.changeFrequency,
       priority: route.priority,
     })),
-    ...getAllSeries().map((series) => ({
-      url: absoluteUrl(`/events/${series.slug}`),
+    // Archived or paused series drop out of the sitemap automatically, because
+    // the loader has already filtered them.
+    ...series.map((entry) => ({
+      url: absoluteUrl(`/events/${entry.slug}`),
       lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.7,

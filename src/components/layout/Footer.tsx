@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { site } from '@/content/site';
+import { getSiteSettings } from '@/content/resolve';
 import { formatPhoneHref } from '@/lib/format';
 import { primaryNav, secondaryNav } from './nav';
 
@@ -24,7 +24,8 @@ const PLATFORM_LABEL: Record<string, string> = {
   youtube: 'YouTube',
 };
 
-export function Footer() {
+export async function Footer() {
+  const site = await getSiteSettings();
   // Computed, never typed. The live site still reads "© 2024".
   const year = new Date().getFullYear();
 

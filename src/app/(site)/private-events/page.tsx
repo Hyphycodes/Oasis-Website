@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { getSiteSettings } from '@/content/resolve';
+import { getPageCopy, getPageList } from '@/server/content/pages';
 import { PrivateEventForm } from '@/components/forms/PrivateEventForm';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { PageHeader } from '@/components/primitives/PageHeader';
 import { Eyebrow } from '@/components/primitives/Type';
-import { birthdayCelebration, privateEventTypes } from '@/content/catering';
-import { pageCopy, seo } from '@/content/pages';
-import { site } from '@/content/site';
+import { birthdayCelebration } from '@/content/catering';
+import { seo } from '@/content/pages';
+
 import { formatPrice } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 
@@ -23,14 +25,21 @@ export const metadata: Metadata = buildMetadata({
  * and food-and-beverage minimums are not published anywhere and are NOT invented.
  * See docs/CONTENT-QUESTIONS.md §8.
  */
-export default function PrivateEventsPage() {
+export default async function PrivateEventsPage() {
+  // Address, phone and links come from settings, so an edit in the admin
+  // reaches every page rather than only the ones somebody remembered.
+  const [site, copy, eventTypes] = await Promise.all([
+    getSiteSettings(),
+    getPageCopy('private-events'),
+    getPageList('private-events', 'types'),
+  ]);
   return (
     <>
       <PageHeader
         surface="sand"
-        eyebrow={pageCopy.privateEvents.eyebrow}
-        heading={pageCopy.privateEvents.heading}
-        body={pageCopy.privateEvents.body}
+        eyebrow={copy.eyebrow ?? undefined}
+        heading={copy.heading}
+        body={copy.body ?? undefined}
       />
 
       <Band surface="cream">
@@ -96,7 +105,7 @@ export default function PrivateEventsPage() {
             </div>
 
             <div className="lg:col-span-7">
-              <PrivateEventForm phone={site.phone.value} eventTypes={privateEventTypes} />
+              <PrivateEventForm phone={site.phone.value} eventTypes={eventTypes} />
             </div>
           </div>
         </Frame>

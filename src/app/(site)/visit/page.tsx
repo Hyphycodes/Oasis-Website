@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { getSiteSettings } from '@/content/resolve';
+import { getPageCopy } from '@/server/content/pages';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
 import { pageCopy, seo } from '@/content/pages';
-import { site } from '@/content/site';
+
 import { formatPhoneHref } from '@/lib/format';
 import { getOpenState, groupHours } from '@/lib/hours';
 import { buildMetadata } from '@/lib/seo';
@@ -14,7 +16,12 @@ export const metadata: Metadata = buildMetadata({ ...seo.visit!, path: '/visit' 
 // Hourly — the open/closed state changes through the day.
 export const revalidate = 3600;
 
-export default function VisitPage() {
+export default async function VisitPage() {
+  // Address, phone and links come from settings, so an edit in the admin
+  // reaches every page rather than only the ones somebody remembered. The
+  // heading comes from the page record, so the control in the admin does
+  // something — the address underneath it is still single-sourced.
+  const [site, copy] = await Promise.all([getSiteSettings(), getPageCopy('visit')]);
   const groups = groupHours(site.hours.value);
   const state = getOpenState(site.hours.value, site.temporaryClosures, new Date(), site.timeZone);
 
@@ -24,14 +31,17 @@ export default function VisitPage() {
         <Frame wide>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-6">
-              <Eyebrow>{pageCopy.visit.eyebrow}</Eyebrow>
+              <Eyebrow>{copy.eyebrow ?? pageCopy.visit.eyebrow}</Eyebrow>
               <Display as="h1" size="lg" className="mt-4 text-brown">
+                {copy.heading}
+              </Display>
+              <p className="tabular mt-4 text-[length:var(--text-body-lg)] font-semibold leading-snug text-brown">
                 {site.street}
                 <br />
                 {site.locality}, {site.region} {site.postalCode}
-              </Display>
-              <p className="measure-lead mt-5 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
-                {pageCopy.visit.body}
+              </p>
+              <p className="measure-lead mt-4 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
+                {copy.body ?? pageCopy.visit.body}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">

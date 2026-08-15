@@ -4,8 +4,8 @@ import { MenuExperience } from '@/components/menu/MenuExperience';
 import { Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink } from '@/components/primitives/Button';
 import { pageCopy, seo } from '@/content/pages';
-import { getAllMenus } from '@/content/resolve';
-import { site } from '@/content/site';
+import { getAllMenus, getSiteSettings } from '@/content/resolve';
+
 import type { AssetId } from '@/content/assets';
 import { buildMetadata, JsonLd, menuJsonLd } from '@/lib/seo';
 
@@ -34,7 +34,7 @@ const STRIP: AssetId[] = ['consommeDip', 'plateTorta', 'cocktailPour'];
  * they are going to use first.
  */
 export default async function MenuPage() {
-  const menus = await getAllMenus();
+  const [menus, site] = await Promise.all([getAllMenus(), getSiteSettings()]);
 
   // The bar list is the only menu with items the restaurant does not publish a
   // price for, so its note belongs at the foot of the bar list — not in an

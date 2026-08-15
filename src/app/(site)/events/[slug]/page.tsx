@@ -4,25 +4,19 @@ import { Flyer } from '@/components/events/Flyer';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
-import { site } from '@/content/site';
-import {
-  addToCalendarUrl,
-  getAllSeries,
-  getSeries,
-  getSeriesOccurrences,
-  STATUS_LABEL,
-} from '@/lib/events';
-import {
-  formatEventDateLong,
-  formatPrice,
-  formatTimeRange,
-} from '@/lib/format';
+import { eventSeries as staticSeries } from '@/content/events';
+import { getSiteSettings } from '@/content/resolve';
+import { getPublicEvents } from '@/server/content/events';
+import { addToCalendarUrl, getSeriesOccurrences, STATUS_LABEL } from '@/lib/events';
+import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
+// Bounded staleness, for the same reason as /events: a cached page must never be
+// able to hold a finished night for long.
 export const revalidate = 300;
 
 export function generateStaticParams() {
-  return getAllSeries().map((series) => ({ slug: series.slug }));
+  return staticSeries.map((series) => ({ slug: series.slug }));
 }
 
 export async function generateMetadata({
@@ -31,11 +25,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const series = getSeries(slug);
+  const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
+  const series = input.series.find((entry) => entry.slug === slug);
   if (!series) return {};
 
   return buildMetadata({
-    title: `${series.title} — ${site.name}, Lockport IL`,
+    title: `${series.title} — ${settings.name}, Lockport IL`,
     description: series.description.slice(0, 300),
     path: `/events/${series.slug}`,
   });
@@ -43,18 +38,21 @@ export async function generateMetadata({
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const series = getSeries(slug);
+  const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
+
+  const series = input.series.find((entry) => entry.slug === slug);
   if (!series) notFound();
 
   const now = new Date();
   // Six weeks, not a quarter. Occurrences are generated from cadence, so the
   // list could run indefinitely — but publishing months of nights the owner has
   // not looked at turns a schedule into a promise. Six is "the next few weeks".
-  const occurrences = getSeriesOccurrences(slug, now, 6);
+  const occurrences = getSeriesOccurrences(input, slug, now, 6);
   const next = occurrences[0];
   // The series keeps its own identity across the site: Friday is teal, Latin
   // Saturday is plum, on the listing and on its own page alike.
   const tone = series.cadence.kind === 'weekly' && series.cadence.weekday === 5 ? 'teal' : 'plum';
+  const address = `${settings.street}, ${settings.locality}, ${settings.region} ${settings.postalCode}`;
 
   return (
     <>
@@ -97,7 +95,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   {/* Base entry only. Any service fee is whatever the ticket page
                       charges on the day — quoting it here would go stale. */}
                   <dd className="tabular mt-1.5 text-night-text">
-                    {series.priceCents != null ? formatPrice(series.priceCents) : 'Ask at the door'}
+                    {next?.priceCents != null ? formatPrice(next.priceCents) : 'Ask at the door'}
                   </dd>
                 </div>
                 <div className="sm:col-span-2">
@@ -124,7 +122,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 )}
                 {next ? (
                   <ExternalTextLink
-                    href={addToCalendarUrl(next)}
+                    href={addToCalendarUrl(next, address)}
                     destination="Google Calendar"
                     className="text-night-text"
                   >
@@ -135,10 +133,16 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             </div>
 
             <div className="lg:col-span-4 lg:col-start-9">
-              <Flyer series={series} tone={tone} priority sizes="(min-width: 1024px) 32vw, 90vw" />
+              <Flyer
+                assetId={next?.flyerAssetId ?? series.flyerAssetId}
+                printedDate={next?.flyerPrintedDate ?? series.flyerPrintedDate}
+                eventName={series.title.replace('Oasis ', '')}
+                tone={tone}
+                priority
+                sizes="(min-width: 1024px) 32vw, 90vw"
+              />
               <p className="mt-3 text-[0.8125rem] text-night-soft">
-                {series.venueName}, {site.street}, {site.locality}, {site.region}{' '}
-                {site.postalCode}
+                {series.venueName}, {address}
               </p>
             </div>
           </div>
@@ -194,14 +198,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             <ButtonLink href="/events" variant="secondary">
               All events
             </ButtonLink>
-            <ExternalButtonLink href={site.reservationUrl} destination="Toast reservations">
+            <ExternalButtonLink href={settings.reservationUrl} destination="Toast reservations">
               Reserve a table first
             </ExternalButtonLink>
           </div>
         </Frame>
       </Band>
 
-      {next ? <JsonLd data={eventJsonLd(next)} /> : null}
+      {next ? <JsonLd data={eventJsonLd(next, settings)} /> : null}
     </>
   );
 }

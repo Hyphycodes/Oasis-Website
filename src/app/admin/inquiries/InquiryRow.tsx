@@ -1,9 +1,9 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { inputClass, labelClass } from '@/components/admin/SaveBar';
 import type { InquiryRecord } from '@/content/types';
-import { updateInquiry, type ActionState } from '../actions';
+import { updateInquiry } from '@/server/actions/inquiries';
+import type { ActionState } from '@/server/actions/shared';
 
 const STATUS_LABEL: Record<string, string> = {
   new: 'New',
@@ -18,7 +18,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
-  const [state, action, pending] = useActionState<ActionState, FormData>(updateInquiry, null);
+  const [state, action, pending] = useActionState<ActionState, FormData>(updateInquiry, { ok: true, message: '' });
   const [open, setOpen] = useState(inquiry.status === 'new');
 
   return (
@@ -72,7 +72,7 @@ export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
       </div>
 
       {open ? (
-        <div className="mt-4 rounded-(--radius-md) border border-brown/15 bg-cream p-4">
+        <div className="mt-4 rounded-(--radius-md) border border-brown/15 bg-ivory p-4">
           <dl className="grid gap-x-6 gap-y-2 text-[0.875rem] sm:grid-cols-2">
             {Object.entries(inquiry.payload).map(([key, value]) => (
               <div key={key} className="flex gap-2">
@@ -89,14 +89,14 @@ export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor={`${inquiry.id}-status`} className={labelClass}>
+                <label htmlFor={`${inquiry.id}-status`} className="block text-[0.875rem] font-semibold text-brown">
                   Status
                 </label>
                 <select
                   id={`${inquiry.id}-status`}
                   name="status"
                   defaultValue={inquiry.status}
-                  className={`mt-1.5 ${inputClass}`}
+                  className="mt-1.5 block min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3 py-2 text-[0.9375rem] text-brown"
                 >
                   <option value="new">New</option>
                   <option value="in-progress">Working on it</option>
@@ -106,7 +106,7 @@ export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
             </div>
 
             <div>
-              <label htmlFor={`${inquiry.id}-notes`} className={labelClass}>
+              <label htmlFor={`${inquiry.id}-notes`} className="block text-[0.875rem] font-semibold text-brown">
                 Internal notes
               </label>
               <textarea
@@ -115,7 +115,7 @@ export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
                 rows={2}
                 defaultValue={inquiry.notes ?? ''}
                 placeholder="Only your team sees this."
-                className={`mt-1.5 ${inputClass}`}
+                className="mt-1.5 block min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3 py-2 text-[0.9375rem] text-brown"
               />
             </div>
 
@@ -123,11 +123,11 @@ export function InquiryRow({ inquiry }: { inquiry: InquiryRecord }) {
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex min-h-11 items-center justify-center rounded-(--radius-md) bg-orange px-5 font-semibold text-on-orange disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-(--radius-md) bg-coral px-5 font-semibold text-on-orange disabled:opacity-50"
               >
                 {pending ? 'Saving…' : 'Save'}
               </button>
-              {state ? (
+              {state.message ? (
                 <p
                   role="status"
                   className={`text-[0.875rem] font-medium ${state.ok ? 'text-success' : 'text-danger'}`}

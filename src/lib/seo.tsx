@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { allMenus } from '@/content/menu';
 import { site } from '@/content/site';
-import type { ResolvedEvent } from '@/content/types';
+import type { ResolvedEvent, SiteSettings } from '@/content/types';
 import { toSchemaHours } from './hours';
 import { absoluteUrl, SITE_URL } from './site-url';
 
@@ -50,35 +50,35 @@ export function buildMetadata({
  * menu. Hours come from the same source of truth the footer renders, so the two
  * can never drift apart.
  */
-export function restaurantJsonLd() {
+export function restaurantJsonLd(settings: SiteSettings = site) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
     '@id': `${SITE_URL}/#restaurant`,
-    name: site.name,
+    name: settings.name,
     url: SITE_URL,
-    telephone: site.phone.value,
-    servesCuisine: site.cuisine,
-    priceRange: site.priceRange,
+    telephone: settings.phone.value,
+    servesCuisine: settings.cuisine,
+    priceRange: settings.priceRange,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: site.street,
-      addressLocality: site.locality,
-      addressRegion: site.region,
-      postalCode: site.postalCode,
-      addressCountry: site.country,
+      streetAddress: settings.street,
+      addressLocality: settings.locality,
+      addressRegion: settings.region,
+      postalCode: settings.postalCode,
+      addressCountry: settings.country,
     },
-    openingHoursSpecification: toSchemaHours(site.hours.value),
-    acceptsReservations: site.reservationUrl,
+    openingHoursSpecification: toSchemaHours(settings.hours.value),
+    acceptsReservations: settings.reservationUrl,
     hasMenu: allMenus.map((menu) => ({
       '@type': 'Menu',
       name: `${menu.title} menu`,
       url: absoluteUrl(menu.slug === 'food' ? '/menu' : `/menu/${menu.slug}`),
     })),
-    sameAs: site.socials.map((s) => s.url),
+    sameAs: settings.socials.map((social) => social.url),
     potentialAction: {
       '@type': 'OrderAction',
-      target: site.orderUrl,
+      target: settings.orderUrl,
     },
   };
 }
@@ -118,31 +118,36 @@ const EVENT_STATUS: Record<string, string> = {
   free: 'https://schema.org/EventScheduled',
 };
 
-/** Event data comes from the occurrence, never from artwork. */
-export function eventJsonLd(event: ResolvedEvent) {
+/**
+ * Event structured data.
+ *
+ * Built from the occurrence's own resolved values, so a night with its own name,
+ * artwork or admission is described accurately — and never from artwork.
+ */
+export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
-    name: event.series.title,
-    description: event.series.description,
+    name: event.title,
+    description: event.description,
     startDate: event.startsAt,
     endDate: event.endsAt,
     eventStatus: EVENT_STATUS[event.status] ?? EVENT_STATUS.scheduled,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    url: absoluteUrl(`/events/${event.series.slug}`),
+    url: absoluteUrl(event.seriesSlug ? `/events/${event.seriesSlug}` : '/events'),
     location: {
       '@type': 'Place',
-      name: event.series.venueName,
+      name: event.venueName,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: site.street,
-        addressLocality: site.locality,
-        addressRegion: site.region,
-        postalCode: site.postalCode,
-        addressCountry: site.country,
+        streetAddress: settings.street,
+        addressLocality: settings.locality,
+        addressRegion: settings.region,
+        postalCode: settings.postalCode,
+        addressCountry: settings.country,
       },
     },
-    organizer: { '@type': 'Organization', name: site.name, url: SITE_URL },
+    organizer: { '@type': 'Organization', name: settings.name, url: SITE_URL },
     ...(event.priceCents != null && event.ticketUrl
       ? {
           offers: {
@@ -158,7 +163,7 @@ export function eventJsonLd(event: ResolvedEvent) {
           },
         }
       : {}),
-    ...(event.series.ageMin ? { typicalAgeRange: `${event.series.ageMin}-` } : {}),
+    ...(event.ageMin ? { typicalAgeRange: `${event.ageMin}-` } : {}),
   };
 }
 

@@ -1,11 +1,11 @@
 import { activeAnnouncement, AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { getAnnouncements } from '@/content/resolve';
+import { getAnnouncements, getSiteSettings } from '@/content/resolve';
 import { JsonLd, restaurantJsonLd } from '@/lib/seo';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const announcements = await getAnnouncements();
+  const [announcements, settings] = await Promise.all([getAnnouncements(), getSiteSettings()]);
   const announcement = activeAnnouncement(announcements, new Date());
 
   return (
@@ -20,7 +20,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <Header />
       <main id="main">{children}</main>
       <Footer />
-      <JsonLd data={restaurantJsonLd()} />
+      <JsonLd data={restaurantJsonLd(settings)} />
     </>
   );
 }

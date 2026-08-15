@@ -101,7 +101,7 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
                 className="group inline-flex min-h-12 flex-wrap items-center gap-x-2 text-[0.9375rem] text-night-text/85"
               >
                 <span className="tabular text-amber">
-                  {nextEvent.series.title.replace('Oasis ', '')} ·{' '}
+                  {nextEvent.title.replace('Oasis ', '')} ·{' '}
                   {formatEventDate(nextEvent.startsAt)} · {formatEventTime(nextEvent.startsAt)}
                 </span>
                 <span className="underline underline-offset-4 group-hover:underline-offset-[6px]">

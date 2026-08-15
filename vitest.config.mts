@@ -7,6 +7,14 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
   },
   resolve: {
-    alias: { '@': path.resolve(import.meta.dirname, 'src') },
+    alias: {
+      '@': path.resolve(import.meta.dirname, 'src'),
+      // `server-only` is a Next.js build-time marker with no runtime behaviour —
+      // its whole job is to fail the build if a client component imports the
+      // module. Under vitest there is no bundler to enforce that, so it resolves
+      // to an empty module rather than being stripped from the source, which
+      // would remove the very guard that keeps the service-role key server-side.
+      'server-only': path.resolve(import.meta.dirname, 'src/test/server-only.ts'),
+    },
   },
 });

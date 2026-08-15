@@ -191,21 +191,48 @@ export interface EventSeries {
   status: EventStatus;
   /** Generated occurrences stop here. null = open-ended. */
   seriesEndsOn: string | null;
+  /** Paused stops generation without losing the series or its history. */
+  paused?: boolean;
+  archivedAt?: string | null;
+  /** What the guest is expected to do about entry. */
+  ticketPolicy?: 'required' | 'door' | 'free' | 'later';
 }
 
-export interface EventOccurrence {
+/**
+ * One night, with every inherited value already resolved.
+ *
+ * `overriddenFields` records which values came from the occurrence rather than
+ * the series — the admin needs it to label inherited values, and to offer "use
+ * the series default" for exactly the fields that have been changed.
+ */
+export interface ResolvedEvent {
   id: string;
-  seriesSlug: string;
+  /** The `event_occurrences` row backing this night, when one exists. */
+  overrideId: string | null;
+  seriesSlug: string | null;
+  series: EventSeries | null;
+  slug: string | null;
   /** ISO datetime with venue offset. */
   startsAt: string;
   endsAt: string;
   status: EventStatus;
+  published: boolean;
+  archivedAt: string | null;
   ticketUrl: string | null;
+  ticketLabel: string | null;
   priceCents: number | null;
-}
-
-export interface ResolvedEvent extends EventOccurrence {
-  series: EventSeries;
+  title: string;
+  summary: string;
+  description: string;
+  ageMin: number | null;
+  ageNote: string | null;
+  musicFormats: string[];
+  venueName: string;
+  flyerAssetId: string | null;
+  /** Only set when the flyer is the series' own dated artwork. */
+  flyerPrintedDate: string | null;
+  note: string | null;
+  overriddenFields: string[];
 }
 
 /* -------------------------------------------------------------------------- */

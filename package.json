@@ -2,7 +2,7 @@
   "name": "oasis-website",
   "version": "1.0.0",
   "private": true,
-  "description": "Oasis Mexican Kitchen & Bar — Lockport, IL",
+  "description": "Oasis Mexican Kitchen & Bar \u2014 Lockport, IL",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +14,8 @@
     "assets:check": "tsx scripts/check-assets.ts",
     "assets:fetch": "tsx scripts/fetch-reference-media.ts",
     "content:seed": "tsx scripts/generate-seed.ts",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run assets:check && npm run build"
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run assets:check && npm run build",
+    "content:migrate": "tsx scripts/migrate-content.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

@@ -1,239 +1,195 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AdminShell, Card, EmptyState, Warning } from '@/components/admin/AdminShell';
-import { assets } from '@/content/assets';
-import { allMenus } from '@/content/menu';
-import { getAllMenus, getAnnouncements } from '@/content/resolve';
-import { site } from '@/content/site';
-import { getUpcomingEvents } from '@/lib/events';
+import { AdminShell } from '@/components/admin/AdminShell';
+import { Card, EmptyState, Notice, StateChip, TaskLink } from '@/components/admin/ui';
+import { getSiteSettings } from '@/content/resolve';
+import { getReadDb, isLocalDb } from '@/lib/db';
+import type { Row } from '@/lib/db/types';
+import { getUpcomingEvents, ineligibleReason, venueIsoDate } from '@/lib/events';
 import { formatEventDate, formatEventTime } from '@/lib/format';
-import { getOpenState, groupHours } from '@/lib/hours';
-import { getStaff } from '@/lib/supabase/auth';
-import { getServiceClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { getOpenState } from '@/lib/hours';
+import { getStaff } from '@/server/auth';
+import { getAttention, getRecentChanges, TABLE_LABEL } from '@/server/content/attention';
+import { getEditableEvents } from '@/server/content/events';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Dashboard.
  *
- * Designed around what a restaurant manager actually needs to know when they open
- * this page: are we open, what is on tonight, is anything about to go wrong, and
- * has anyone messaged us. Warnings are specific and actionable — each one links
- * to the exact thing that needs fixing.
+ * It opens with what you came to do, not with numbers. Then the things that are
+ * actually wrong, each linked to the field that fixes it. Then tonight. There are
+ * no charts: a restaurant manager opening this on a Friday afternoon needs to
+ * know whether anything is broken and what is on, and nothing else.
  */
 export default async function AdminDashboard() {
   const staff = await getStaff();
-
-  if (!staff) {
-    // Configured but no profile row, or signed out entirely.
-    redirect('/admin/login');
-  }
+  if (!staff) redirect('/admin/login');
 
   const now = new Date();
-  const [menus, announcements] = await Promise.all([getAllMenus(), getAnnouncements()]);
-  const events = getUpcomingEvents(now, 4);
-  const openState = getOpenState(site.hours.value, site.temporaryClosures, now, site.timeZone);
-  const todayHours = groupHours(site.hours.value);
+  const db = getReadDb();
+  const settings = await getSiteSettings();
 
-  // --- warnings, computed from real content ---------------------------------
-  const allItems = menus.flatMap((menu) =>
-    menu.categories.flatMap((category) => category.items.map((item) => ({ menu, item }))),
-  );
-  const missingPrice = allItems.filter(({ item }) => item.priceCents == null);
-  const missingDescription = allItems.filter(
-    ({ item }) => !item.description && item.priceCents != null,
-  );
-  const unavailable = allItems.filter(({ item }) => !item.available);
-  const emptyMenus = menus.filter((menu) => menu.categories.length === 0);
-  const placeholderAssets = Object.entries(assets).filter(
-    ([, asset]) => asset.status === 'placeholder',
-  );
-  const liveAnnouncement = announcements.find((a) => a.enabled);
+  const [attention, recent, events, inquiries] = db
+    ? await Promise.all([
+        getAttention(db, now),
+        getRecentChanges(db),
+        getEditableEvents(db),
+        db.list<Row>('inquiries', { where: { status: 'new' } }),
+      ])
+    : [[], [], { series: [], occurrences: [] }, []];
 
-  // Inquiries only exist when a backend is connected.
-  let newInquiries = 0;
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    if (supabase) {
-      const { count } = await supabase
-        .from('inquiries')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'new');
-      newInquiries = count ?? 0;
-    }
-  }
+  const waiting = inquiries.length;
+
+  const upcoming = getUpcomingEvents(events, now, 5);
+  const openState = getOpenState(
+    settings.hours.value,
+    settings.temporaryClosures,
+    now,
+    settings.timeZone,
+  );
+
+  const blocking = attention.filter((entry) => entry.severity === 'blocking');
+  const rest = attention.filter((entry) => entry.severity !== 'blocking');
 
   return (
     <AdminShell
-      role={staff.role}
-      name={staff.name}
-      email={staff.user.email ?? ''}
-      title={`Good to see you${staff.name ? `, ${staff.name.split(' ')[0]}` : ''}.`}
-      description="Everything you can change on the website is in the menu on the left. Changes go live within a few minutes."
+      staff={staff}
+      local={isLocalDb()}
+      title="What do you want to update?"
+      description={
+        openState.open
+          ? `You are open now — ${openState.label.toLowerCase()}.`
+          : openState.label
+      }
     >
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card title="Today">
-          <p className={`text-[1.25rem] font-semibold ${openState.open ? 'text-success' : 'text-brown'}`}>
-            {openState.label}
-          </p>
-          <dl className="mt-4 space-y-1.5 text-[0.875rem]">
-            {todayHours.map((group) => (
-              <div key={group.label} className="flex justify-between gap-4">
-                <dt className="text-brown-soft">{group.label}</dt>
-                <dd className="tabular text-brown">{group.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <Link
-            href="/admin/hours"
-            className="mt-4 inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4"
-          >
-            Change hours
-          </Link>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <TaskLink href="/admin/menu" title="Change a price" hint="Menu · edit it in the list" />
+        <TaskLink
+          href="/admin/menu"
+          title="Mark something sold out"
+          hint="Menu · one tap, guests see it straight away"
+        />
+        <TaskLink href="/admin/events" title="Add or edit an event" hint="Events · dates and tickets" />
+        <TaskLink href="/admin/settings" title="Update hours" hint="Settings · including a holiday" />
+        <TaskLink href="/admin/media" title="Replace a photo" hint="Photos · upload and swap" />
+        <TaskLink href="/admin/website" title="Change a headline" hint="Website · and preview it" />
+        {/* Enquiries are not in the top navigation — six destinations is the
+            ceiling — so this is how you reach them. */}
+        <TaskLink
+          href="/admin/inquiries"
+          title={
+            waiting > 0
+              ? `Read ${waiting} new ${waiting === 1 ? 'enquiry' : 'enquiries'}`
+              : 'Read enquiries'
+          }
+          hint="Catering, celebrations and job applications"
+        />
+      </div>
 
-        <Card title="This week">
-          {events.length === 0 ? (
+      {attention.length > 0 ? (
+        <section className="mt-9">
+          <h2 className="text-[1.0625rem] font-semibold text-brown">Needs attention</h2>
+          <div className="mt-4 grid gap-2.5">
+            {[...blocking, ...rest].map((entry) => (
+              <Notice
+                key={entry.id}
+                tone={
+                  entry.severity === 'blocking'
+                    ? 'danger'
+                    : entry.severity === 'warning'
+                      ? 'warning'
+                      : 'info'
+                }
+                action={
+                  <Link
+                    href={entry.href}
+                    className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-[0.875rem] font-semibold underline underline-offset-4"
+                  >
+                    {entry.actionLabel}
+                  </Link>
+                }
+              >
+                {entry.message}
+              </Notice>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="mt-9">
+          <Notice tone="success">Everything looks in order. Nothing needs your attention.</Notice>
+        </div>
+      )}
+
+      <div className="mt-9 grid gap-5 lg:grid-cols-2">
+        <Card
+          title="Coming up"
+          action={
+            <Link href="/admin/events" className="text-[0.875rem] text-clay underline underline-offset-4">
+              All events
+            </Link>
+          }
+        >
+          {upcoming.length === 0 ? (
             <EmptyState>Nothing on the calendar.</EmptyState>
           ) : (
-            <ul className="space-y-3">
-              {events.map((event) => (
-                <li key={event.id} className="flex items-baseline justify-between gap-4">
-                  <span className="text-[0.9375rem] text-brown">{event.series.title}</span>
-                  <span className="tabular shrink-0 text-[0.8125rem] text-brown-soft">
-                    {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
+            <ul className="divide-y divide-brown/12">
+              {upcoming.map((event) => {
+                const problem = ineligibleReason(event, now);
+                return (
+                  <li key={event.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
+                    <span className="tabular w-28 shrink-0 text-[0.875rem] font-semibold text-brown">
+                      {formatEventDate(event.startsAt)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] text-brown">
+                      {event.title}
+                    </span>
+                    <span className="tabular text-[0.8125rem] text-brown-soft">
+                      {formatEventTime(event.startsAt)}
+                    </span>
+                    {problem ? (
+                      <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
+                        {problem}
+                      </span>
+                    ) : !event.ticketUrl ? (
+                      <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-danger">
+                        No tickets
+                      </span>
+                    ) : (
+                      <StateChip state="published" />
+                    )}
+                    <Link
+                      href={`/admin/events/${event.seriesSlug ?? ''}`}
+                      className="text-[0.8125rem] text-clay underline underline-offset-4"
+                    >
+                      Edit
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
+        <Card title="Recently changed">
+          {recent.length === 0 ? (
+            <EmptyState>No changes yet. Everything is as it was set up.</EmptyState>
+          ) : (
+            <ul className="divide-y divide-brown/12">
+              {recent.map((entry) => (
+                <li key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3">
+                  <span className="text-[0.9375rem] text-brown">
+                    {TABLE_LABEL[entry.table] ?? entry.table} · {entry.rowId}
+                  </span>
+                  <span className="text-[0.8125rem] text-brown-soft">
+                    {entry.actorName}, {venueIsoDate(entry.at)}
                   </span>
                 </li>
               ))}
             </ul>
           )}
-          <Link
-            href="/admin/events"
-            className="mt-4 inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4"
-          >
-            Manage events
-          </Link>
-        </Card>
-
-        <Card title="Enquiries">
-          {isSupabaseConfigured() ? (
-            <>
-              <p className="text-[2rem] font-semibold leading-none text-brown">{newInquiries}</p>
-              <p className="mt-2 text-[0.875rem] text-brown-soft">
-                {newInquiries === 1 ? 'new message' : 'new messages'} waiting for a reply
-              </p>
-              <Link
-                href="/admin/inquiries"
-                className="mt-4 inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4"
-              >
-                Open enquiries
-              </Link>
-            </>
-          ) : (
-            <EmptyState>
-              Enquiries are recorded in the server log until the content system is connected.
-            </EmptyState>
-          )}
         </Card>
       </div>
-
-      <section className="mt-8">
-        <h2 className="text-[1.0625rem] font-semibold text-brown">Things worth a look</h2>
-        <div className="mt-4 grid gap-3">
-          {!liveAnnouncement ? (
-            <Warning>
-              The announcement bar is switched off. Turn it on to promote a special or an event —{' '}
-              <Link href="/admin/announcement" className="underline underline-offset-4">
-                announcement bar
-              </Link>
-              .
-            </Warning>
-          ) : null}
-
-          {missingPrice.length > 0 ? (
-            <Warning>
-              {missingPrice.length} menu {missingPrice.length === 1 ? 'item has' : 'items have'} no
-              price and currently show “{missingPrice[0]?.item.priceNote}” on the website —{' '}
-              <Link href="/admin/menu" className="underline underline-offset-4">
-                add prices
-              </Link>
-              .
-            </Warning>
-          ) : null}
-
-          {emptyMenus.length > 0 ? (
-            <Warning>
-              The {emptyMenus.map((m) => m.title).join(' and ')} menu has no dishes on it. The page
-              tells guests it is being finalised —{' '}
-              <Link href="/admin/menu" className="underline underline-offset-4">
-                add dishes
-              </Link>
-              .
-            </Warning>
-          ) : null}
-
-          {unavailable.length > 0 ? (
-            <Warning tone="warning">
-              {unavailable.length}{' '}
-              {unavailable.length === 1 ? 'dish is marked' : 'dishes are marked'} unavailable:{' '}
-              {unavailable
-                .slice(0, 3)
-                .map(({ item }) => item.name)
-                .join(', ')}
-              . Guests still see them, greyed out.
-            </Warning>
-          ) : null}
-
-          {missingDescription.length > 0 ? (
-            <Warning>
-              {missingDescription.length} priced{' '}
-              {missingDescription.length === 1 ? 'item has' : 'items have'} no description.
-            </Warning>
-          ) : null}
-
-          {placeholderAssets.length > 0 ? (
-            <Warning>
-              {placeholderAssets.length} photo slots are still showing the Oasis placeholder. Send
-              photos to your developer — the list is in{' '}
-              <Link href="/admin/media" className="underline underline-offset-4">
-                photos
-              </Link>
-              .
-            </Warning>
-          ) : null}
-
-          {!isSupabaseConfigured() ? (
-            <Warning tone="warning">
-              The content system is not connected, so the website is serving its built-in content
-              and nothing you change here will save. A developer needs to finish the setup in
-              docs/ENVIRONMENT.md.
-            </Warning>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <Card title="What is on the website right now">
-          <dl className="grid gap-x-8 gap-y-3 text-[0.9375rem] sm:grid-cols-2">
-            <div className="flex justify-between gap-4">
-              <dt className="text-brown-soft">Dishes and drinks</dt>
-              <dd className="tabular text-brown">{allItems.length}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-brown-soft">Menus</dt>
-              <dd className="tabular text-brown">{allMenus.length}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-brown-soft">Event nights coming up</dt>
-              <dd className="tabular text-brown">{getUpcomingEvents(now).length}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-brown-soft">Phone number shown</dt>
-              <dd className="tabular text-brown">{site.phone.value}</dd>
-            </div>
-          </dl>
-        </Card>
-      </section>
     </AdminShell>
   );
 }

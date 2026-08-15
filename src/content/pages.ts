@@ -110,7 +110,10 @@ export const pageCopy = {
 
   visit: {
     eyebrow: 'Find us',
-    heading: '1250 E. 9th St., Lockport.',
+    // Deliberately NOT the street address. The address is a business fact and
+    // lives once, in settings; a copy of it in an editable heading is a copy that
+    // goes stale the day the restaurant moves or the suite number changes.
+    heading: 'Come and find us.',
     body: 'Fresh Mexican flavors and a modern room in the heart of Lockport.',
   },
 

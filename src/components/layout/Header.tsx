@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getAsset } from '@/content/assets';
-import { site } from '@/content/site';
+import { getSiteSettings } from '@/content/resolve';
 import { MobileDrawer } from './MobileDrawer';
 import { primaryNav } from './nav';
 
@@ -16,8 +16,11 @@ import { primaryNav } from './nav';
  * Reserve and Order keep different visual weight; on the live Wix site they are
  * identical plain links, so neither reads as the primary action.
  */
-export function Header() {
+export async function Header() {
   const logo = getAsset('brandLogo');
+  // Ordering and booking links come from settings, so changing one in the admin
+  // changes every button on the site at once.
+  const site = await getSiteSettings();
 
   return (
     <header className="sticky top-0 z-40 border-b border-brown/12 bg-ivory/95 backdrop-blur-[2px]">

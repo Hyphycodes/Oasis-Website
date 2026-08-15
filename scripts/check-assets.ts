@@ -227,6 +227,11 @@ async function main() {
     for (const file of files) {
       if (path.basename(file).startsWith('.')) continue;
       const publicPath = `/${path.relative(PUBLIC_DIR, file).split(path.sep).join('/')}`;
+      // Photos uploaded through the admin live in the content database, not in
+      // the typed registry, and the directory is git-ignored. They are runtime
+      // content — checking them against a compile-time registry would fail by
+      // design.
+      if (publicPath.startsWith('/media/uploads/')) continue;
       if (!claimedPaths.has(publicPath)) {
         fail(`Unregistered media file: ${publicPath} — add a registry entry or delete it.`);
       }

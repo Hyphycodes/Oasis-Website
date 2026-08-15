@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { getSiteSettings } from '@/content/resolve';
+import { getPageCopy, getPageList } from '@/server/content/pages';
 import { CareersForm } from '@/components/forms/CareersForm';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { Display, Eyebrow } from '@/components/primitives/Type';
 import { pageCopy, seo } from '@/content/pages';
-import { site } from '@/content/site';
+
 import { formatPhoneHref } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 
@@ -12,32 +14,28 @@ export const metadata: Metadata = buildMetadata({ ...seo.careers!, path: '/caree
 
 /** Positions are drawn from the roles a restaurant of this shape actually runs.
  *  "Something else" exists so nobody is turned away by a list. */
-const POSITIONS = [
-  'Server',
-  'Bartender',
-  'Host',
-  'Busser',
-  'Line cook',
-  'Prep cook',
-  'Dishwasher',
-  'Barback',
-  'Security',
-  'Something else',
-];
-
-export default function CareersPage() {
+export default async function CareersPage() {
+  // Address, phone and links come from settings, so an edit in the admin
+  // reaches every page rather than only the ones somebody remembered.
+  const [site, copy, positions] = await Promise.all([
+    getSiteSettings(),
+    getPageCopy('careers'),
+    // The list of openings is staff-editable; the form's fields, validation and
+    // delivery are not.
+    getPageList('careers', 'positions'),
+  ]);
   return (
     <>
       <Band surface="sand" size="sm">
         <Frame wide>
           <div className="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-12">
             <div className="lg:col-span-6">
-              <Eyebrow>{pageCopy.careers.eyebrow}</Eyebrow>
+              <Eyebrow>{copy.eyebrow ?? pageCopy.careers.eyebrow}</Eyebrow>
               <Display as="h1" size="xl" className="mt-3 text-brown">
-                {pageCopy.careers.heading}
+                {copy.heading}
               </Display>
               <p className="measure-lead mt-6 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
-                {pageCopy.careers.body}
+                {copy.body ?? pageCopy.careers.body}
               </p>
               <a
                 href="#apply"
@@ -111,7 +109,7 @@ export default function CareersPage() {
             </div>
 
             <div className="lg:col-span-7">
-              <CareersForm phone={site.phone.value} positions={POSITIONS} />
+              <CareersForm phone={site.phone.value} positions={positions} />
             </div>
           </div>
         </Frame>

@@ -1,0 +1,126 @@
+import 'server-only';
+
+import { cache } from 'react';
+import { eventSeries as staticSeries } from '@/content/events';
+import type { EventSeries, EventStatus } from '@/content/types';
+import { getReadDb } from '@/lib/db';
+import type { Db, Row } from '@/lib/db/types';
+import type { EventInput, OccurrenceRecord } from '@/lib/events';
+import { liveValues, workingValues, type EditorialRow } from './editorial';
+
+/**
+ * Loading events for the selector.
+ *
+ * `published` decides which side of the draft line a caller sees, and it is the
+ * only difference between the public site and the admin. A public read never
+ * looks at `draft`, so there is no path by which an unpublished edit reaches a
+ * guest — including through the homepage, which uses the same loader.
+ */
+
+type Mode = 'published' | 'working';
+
+function seriesFromRow(row: Row, mode: Mode): EventSeries {
+  const source = mode === 'working' ? workingValues(row as EditorialRow) : liveValues(row as EditorialRow);
+  const cadence = String(source.cadence ?? 'one-time');
+  const weekday = cadence.startsWith('weekly:') ? Number(cadence.split(':')[1]) : null;
+
+  return {
+    slug: String(source.slug),
+    title: String(source.title ?? ''),
+    summary: String(source.summary ?? ''),
+    description: String(source.description ?? ''),
+    cadence:
+      weekday === null
+        ? { kind: 'one-time' }
+        : { kind: 'weekly', weekday: weekday as 0 | 1 | 2 | 3 | 4 | 5 | 6 },
+    startMinutes: Number(source.start_minutes ?? 0),
+    endMinutes: Number(source.end_minutes ?? 0),
+    ageMin: (source.age_min as number | null) ?? null,
+    ageNote: (source.age_note as string | null) ?? null,
+    musicFormats: (source.music_formats as string[]) ?? [],
+    venueName: String(source.venue_name ?? 'Oasis Mexican Kitchen & Bar'),
+    artworkAssetId: (source.artwork_asset_id as string | null) ?? null,
+    flyerAssetId: (source.flyer_asset_id as string | null) ?? null,
+    flyerPrintedDate: (source.flyer_printed_date as string | null) ?? null,
+    ticketUrl: (source.ticket_url as string | null) ?? null,
+    priceCents: (source.price_cents as number | null) ?? null,
+    status: (source.status as EventStatus) ?? 'scheduled',
+    seriesEndsOn: (source.series_ends_on as string | null) ?? null,
+    paused: Boolean(source.paused),
+    archivedAt: (source.archived_at as string | null) ?? null,
+    ticketPolicy: (source.ticket_policy as EventSeries['ticketPolicy']) ?? 'required',
+  };
+}
+
+function occurrenceFromRow(row: Row, mode: Mode): OccurrenceRecord {
+  const source = mode === 'working' ? workingValues(row as EditorialRow) : liveValues(row as EditorialRow);
+  return {
+    id: String(source.id),
+    seriesSlug: (source.series_slug as string | null) ?? null,
+    startsAt: String(source.starts_at),
+    endsAt: (source.ends_at as string | null) ?? null,
+    status: (source.status as EventStatus | null) ?? null,
+    published: source.published !== false,
+    archivedAt: (source.archived_at as string | null) ?? null,
+    ticketUrl: (source.ticket_url as string | null) ?? null,
+    ticketLabel: (source.ticket_label as string | null) ?? null,
+    priceCents: (source.price_cents as number | null) ?? null,
+    title: (source.title as string | null) ?? null,
+    slug: (source.slug as string | null) ?? null,
+    summary: (source.summary as string | null) ?? null,
+    description: (source.description as string | null) ?? null,
+    ageMin: (source.age_min as number | null) ?? null,
+    ageNote: (source.age_note as string | null) ?? null,
+    musicFormats: (source.music_formats as string[] | null) ?? null,
+    venueName: (source.venue_name as string | null) ?? null,
+    flyerAssetId: (source.flyer_asset_id as string | null) ?? null,
+    note: (source.note as string | null) ?? null,
+  };
+}
+
+/** The typed static content, used when no database is reachable. */
+function staticInput(): EventInput {
+  return { series: staticSeries, occurrences: [] };
+}
+
+async function load(db: Db, mode: Mode): Promise<EventInput> {
+  const [seriesRows, occurrenceRows] = await Promise.all([
+    db.list<Row>('event_series', { orderBy: 'sort' }),
+    db.list<Row>('event_occurrences', { orderBy: 'starts_at' }),
+  ]);
+
+  if (seriesRows.length === 0) return staticInput();
+
+  return {
+    series: seriesRows
+      .map((row) => seriesFromRow(row, mode))
+      .filter((series) => mode === 'working' || !series.archivedAt),
+    occurrences: occurrenceRows
+      .map((row) => occurrenceFromRow(row, mode))
+      .filter((occurrence) => mode === 'working' || !occurrence.archivedAt),
+  };
+}
+
+/**
+ * Published events, for the public site. Cached per render.
+ *
+ * A database failure degrades to the typed static content rather than taking the
+ * page down — the same rule `resolve.ts` has followed since the first build.
+ */
+export const getPublicEvents = cache(async (): Promise<EventInput> => {
+  const db = getReadDb();
+  if (!db) return staticInput();
+  try {
+    return await load(db, 'published');
+  } catch (error) {
+    console.error('[events] falling back to static content:', error);
+    return staticInput();
+  }
+});
+
+/** Everything, drafts included. Admin only — never call this from a public page. */
+export async function getEditableEvents(db: Db): Promise<EventInput> {
+  return load(db, 'working');
+}
+
+export { seriesFromRow, occurrenceFromRow };

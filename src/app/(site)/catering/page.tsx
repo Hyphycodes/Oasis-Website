@@ -5,8 +5,9 @@ import { ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Bu
 import { PageHeader } from '@/components/primitives/PageHeader';
 import { Eyebrow } from '@/components/primitives/Type';
 import { pageCopy, seo } from '@/content/pages';
-import { getCateringItems, getCateringPackages } from '@/content/resolve';
-import { site } from '@/content/site';
+import { getCateringItems, getCateringPackages, getSiteSettings } from '@/content/resolve';
+import { getPageCopy } from '@/server/content/pages';
+
 import { formatPriceRange } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 
@@ -28,14 +29,19 @@ export const revalidate = 3600;
  */
 
 export default async function CateringPage() {
-  const [packages, items] = await Promise.all([getCateringPackages(), getCateringItems()]);
+  const [packages, items, site, copy] = await Promise.all([
+    getCateringPackages(),
+    getCateringItems(),
+    getSiteSettings(),
+    getPageCopy('catering'),
+  ]);
 
   return (
     <>
       <PageHeader
-        eyebrow={pageCopy.catering.eyebrow}
-        heading={pageCopy.catering.heading}
-        body={pageCopy.catering.body}
+        eyebrow={copy.eyebrow ?? undefined}
+        heading={copy.heading}
+        body={copy.body ?? undefined}
         actions={
           <ExternalButtonLink
             href={site.cateringOrderUrl}

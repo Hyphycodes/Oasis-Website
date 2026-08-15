@@ -1,34 +1,85 @@
-import { eventOverrides, eventSeries } from '@/content/events';
-import type { EventOccurrence, EventSeries, ResolvedEvent } from '@/content/types';
+import type { EventSeries, EventStatus, ResolvedEvent } from '@/content/types';
 
 /**
- * Occurrence generation.
+ * Occurrence generation and the next-event selector.
  *
- * A series has no dates. Occurrences are computed from `cadence` for a rolling
- * window, so the calendar never runs out and nobody maintains 21 rows by hand —
- * and, critically, so no date can ever be baked into artwork or copy.
- * See PLAN.md §4.1.
+ * Two rules hold this together:
+ *
+ * 1. A SERIES HAS NO DATE. Recurring dates are generated from `cadence` at read
+ *    time, so a weekly series has no stored date that can go stale and no artwork
+ *    that can become the authoritative one. See PLAN.md §4.1.
+ *
+ * 2. AN OVERRIDE IS SPARSE. A single night gets its own row only when something
+ *    about it actually differs — its own flyer, its own ticket link, a
+ *    cancellation. Everything else is inherited, and the admin shows which is
+ *    which.
+ *
+ * A one-time event is an occurrence with no series, so the selector has one code
+ * path rather than two.
+ *
+ * IN-PROGRESS EVENTS STAY "NEXT" UNTIL THEY END. Friday's night is still the
+ * answer to "what's on" at 1am on Saturday — which is exactly when somebody is
+ * checking their phone. The rule is applied identically on the homepage and on
+ * /events; `events.test.ts` pins it, along with the August 15 / August 14 case
+ * from the live-site audit.
  */
 
 const DEFAULT_WEEKS = 26;
 const TZ = 'America/Chicago';
 
+/* -------------------------------------------------------------------------- */
+/* Inputs                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** A per-night override, or a standalone one-time event when `seriesSlug` is null. */
+export interface OccurrenceRecord {
+  id: string;
+  seriesSlug: string | null;
+  /** Venue-local ISO date (`2026-08-21`) for an override; full ISO for standalone. */
+  startsAt: string;
+  endsAt?: string | null;
+  status?: EventStatus | null;
+  published?: boolean;
+  archivedAt?: string | null;
+  ticketUrl?: string | null;
+  ticketLabel?: string | null;
+  priceCents?: number | null;
+  title?: string | null;
+  slug?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  ageMin?: number | null;
+  ageNote?: string | null;
+  musicFormats?: string[] | null;
+  venueName?: string | null;
+  flyerAssetId?: string | null;
+  note?: string | null;
+}
+
+export interface EventInput {
+  series: EventSeries[];
+  occurrences: OccurrenceRecord[];
+  weeks?: number;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Venue-local time                                                           */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Builds an ISO string for a venue-local wall-clock time on a given date.
- * Resolves the America/Chicago offset for that specific date, so CST/CDT
- * transitions do not shift a 10pm door time to 9pm or 11pm.
+ * An ISO instant for a venue-local wall-clock time on a given date.
+ * The offset is resolved for that specific date, so a CST/CDT transition cannot
+ * shift a 10pm door time to 9pm or 11pm.
  */
 function venueLocalIso(year: number, month: number, day: number, minutes: number): string {
   const hour = Math.floor(minutes / 60);
   const minute = minutes % 60;
 
-  // Start from the intended wall clock as if it were UTC, then correct by the
-  // zone's actual offset at that moment.
   const naive = Date.UTC(year, month - 1, day, hour, minute);
   const offsetMinutes = tzOffsetMinutes(new Date(naive));
   const corrected = new Date(naive - offsetMinutes * 60_000);
 
-  // Re-resolve once: the correction can cross a DST boundary.
+  // Re-resolve once: the correction can itself cross a DST boundary.
   const settled = new Date(naive - tzOffsetMinutes(corrected) * 60_000);
   return settled.toISOString();
 }
@@ -45,7 +96,7 @@ function tzOffsetMinutes(date: Date): number {
   return sign * (Number(match[2]) * 60 + Number(match[3] ?? 0));
 }
 
-function venueDateParts(date: Date) {
+export function venueDateParts(date: Date) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: TZ,
     year: 'numeric',
@@ -63,17 +114,19 @@ function venueDateParts(date: Date) {
   };
 }
 
+/** The venue-local calendar date an instant falls on. */
+export function venueIsoDate(iso: string): string {
+  return venueDateParts(new Date(iso)).isoDate;
+}
+
 /**
- * Builds the ticket URL for a SPECIFIC night.
+ * The per-night ticket URL.
  *
- * The ticketing pages are per-occurrence and their slug carries the date:
- *   /event-details/oasis-fridays-2026-08-21-22-00
- *
- * A slug without the date suffix does NOT 404 — it silently resolves to a
- * different event. `/event-details/oasis-fridays` served a page titled "Oasis
- * Latin Saturdays", so an Oasis Fridays ticket button sold Saturday tickets.
- * Composing the suffix from the occurrence makes every button land on its own
- * night, and the series can no longer carry one hard-coded link.
+ * The ticketing pages are per-occurrence and their slug carries the date. A slug
+ * without the date suffix does NOT 404 — it silently resolves to a different
+ * event, and `/event-details/oasis-fridays` served a page titled "Oasis Latin
+ * Saturdays". Composing the suffix from the occurrence is what stops a Fridays
+ * button selling Saturday tickets.
  */
 export function ticketUrlForOccurrence(seriesSlug: string, startsAt: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -95,70 +148,236 @@ export function ticketUrlForOccurrence(seriesSlug: string, startsAt: string): st
   return `https://www.oasismexicankitchenbar.com/event-details/${seriesSlug}-${stamp}`;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Resolution                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Fields an occurrence may override, in the order the admin lists them.
+ * Exported so the admin cannot drift out of step with what is actually
+ * overridable.
+ */
+export const OVERRIDABLE = [
+  'startsAt',
+  'endsAt',
+  'status',
+  'ticketUrl',
+  'priceCents',
+  'title',
+  'summary',
+  'description',
+  'ageMin',
+  'ageNote',
+  'musicFormats',
+  'venueName',
+  'flyerAssetId',
+] as const;
+
+function resolve(
+  series: EventSeries | null,
+  occurrence: OccurrenceRecord | null,
+  startsAt: string,
+  endsAt: string,
+): ResolvedEvent {
+  const overridden: string[] = [];
+  const take = <T>(field: (typeof OVERRIDABLE)[number], override: T | null | undefined, base: T): T => {
+    if (override === null || override === undefined) return base;
+    if (Array.isArray(override) && Array.isArray(base) && override.join() === base.join()) {
+      return base;
+    }
+    if (override === base) return base;
+    overridden.push(field);
+    return override;
+  };
+
+  const seriesSlug = series?.slug ?? null;
+  const resolvedStart = occurrence?.seriesSlug ? take('startsAt', occurrence.startsAt && occurrence.startsAt.length > 10 ? occurrence.startsAt : null, startsAt) : startsAt;
+  const resolvedEnd = occurrence?.seriesSlug ? take('endsAt', occurrence.endsAt && occurrence.endsAt.length > 10 ? occurrence.endsAt : null, endsAt) : endsAt;
+
+  const status = take('status', occurrence?.status ?? null, series?.status ?? 'scheduled');
+  const priceCents = take(
+    'priceCents',
+    occurrence?.priceCents === undefined ? null : occurrence.priceCents,
+    series?.priceCents ?? null,
+  );
+
+  const ticketUrl = take(
+    'ticketUrl',
+    occurrence?.ticketUrl ?? null,
+    series
+      ? (series.ticketUrl ?? ticketUrlForOccurrence(series.slug, resolvedStart))
+      : null,
+  );
+
+  return {
+    id: occurrence && !seriesSlug ? `one-time:${occurrence.id}` : `${seriesSlug}:${venueIsoDate(resolvedStart)}`,
+    overrideId: occurrence?.id ?? null,
+    seriesSlug,
+    series,
+    slug: occurrence?.slug ?? series?.slug ?? null,
+    startsAt: resolvedStart,
+    endsAt: resolvedEnd,
+    status,
+    published: occurrence?.published ?? true,
+    archivedAt: occurrence?.archivedAt ?? null,
+    ticketUrl,
+    ticketLabel: occurrence?.ticketLabel ?? null,
+    priceCents,
+    title: take('title', occurrence?.title ?? null, series?.title ?? 'Event'),
+    summary: take('summary', occurrence?.summary ?? null, series?.summary ?? ''),
+    description: take('description', occurrence?.description ?? null, series?.description ?? ''),
+    ageMin: take('ageMin', occurrence?.ageMin ?? null, series?.ageMin ?? null),
+    ageNote: take('ageNote', occurrence?.ageNote ?? null, series?.ageNote ?? null),
+    musicFormats: take('musicFormats', occurrence?.musicFormats ?? null, series?.musicFormats ?? []),
+    venueName: take(
+      'venueName',
+      occurrence?.venueName ?? null,
+      series?.venueName ?? 'Oasis Mexican Kitchen & Bar',
+    ),
+    flyerAssetId: take('flyerAssetId', occurrence?.flyerAssetId ?? null, series?.flyerAssetId ?? null),
+    flyerPrintedDate: occurrence?.flyerAssetId ? null : (series?.flyerPrintedDate ?? null),
+    note: occurrence?.note ?? null,
+    overriddenFields: overridden,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Generation                                                                 */
+/* -------------------------------------------------------------------------- */
+
 export function generateOccurrences(
   series: EventSeries,
   from: Date,
+  occurrences: OccurrenceRecord[] = [],
   weeks = DEFAULT_WEEKS,
-): EventOccurrence[] {
+): ResolvedEvent[] {
   if (series.cadence.kind !== 'weekly') return [];
+  if (series.paused) return [];
 
-  const occurrences: EventOccurrence[] = [];
+  const byDate = new Map<string, OccurrenceRecord>();
+  for (const record of occurrences) {
+    if (record.seriesSlug !== series.slug) continue;
+    byDate.set(record.startsAt.slice(0, 10), record);
+  }
+
+  const results: ResolvedEvent[] = [];
   const target = series.cadence.weekday;
   const cursor = new Date(from.getTime());
 
-  // Walk back to the start of the current venue-local day so an event happening
-  // *right now* is still counted as upcoming until it actually ends.
+  // Step back to the start of the current venue-local day, so an event happening
+  // right now is still generated and can still count as upcoming until it ends.
   cursor.setUTCHours(cursor.getUTCHours() - 12);
 
   for (let i = 0; i < weeks * 7 + 7; i += 1) {
     const probe = new Date(cursor.getTime() + i * 86_400_000);
     const parts = venueDateParts(probe);
     if (parts.weekday !== target) continue;
-
     if (series.seriesEndsOn && parts.isoDate > series.seriesEndsOn) break;
 
     const startsAt = venueLocalIso(parts.year, parts.month, parts.day, series.startMinutes);
     const endsAt = venueLocalIso(parts.year, parts.month, parts.day, series.endMinutes);
 
-    // A series must never publish an occurrence whose end precedes its start.
+    // A night must never end before it starts, whatever the data says.
     if (new Date(endsAt) <= new Date(startsAt)) continue;
 
-    const override = eventOverrides.find(
-      (o) => o.seriesSlug === series.slug && o.date === parts.isoDate,
-    );
-
-    occurrences.push({
-      id: `${series.slug}:${parts.isoDate}`,
-      seriesSlug: series.slug,
-      startsAt,
-      endsAt,
-      status: override?.status ?? series.status,
-      // Composed per night. `series.ticketUrl` is only a manual override.
-      ticketUrl: override?.ticketUrl ?? series.ticketUrl ?? ticketUrlForOccurrence(series.slug, startsAt),
-      priceCents: override?.priceCents !== undefined ? override.priceCents : series.priceCents,
-    });
-
-    if (occurrences.length >= weeks) break;
+    results.push(resolve(series, byDate.get(parts.isoDate) ?? null, startsAt, endsAt));
+    if (results.length >= weeks) break;
   }
 
-  return occurrences;
+  return results;
+}
+
+/** One-time events: occurrence rows with no series behind them. */
+export function standaloneEvents(occurrences: OccurrenceRecord[]): ResolvedEvent[] {
+  return occurrences
+    .filter((record) => record.seriesSlug === null)
+    .map((record) =>
+      resolve(null, record, record.startsAt, record.endsAt ?? record.startsAt),
+    );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Eligibility                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Why an occurrence is not eligible to be shown as upcoming, or null if it is.
+ * Returning the reason rather than a boolean is what lets the admin's readiness
+ * table say "no ticket link" instead of just hiding the row.
+ */
+export function ineligibleReason(event: ResolvedEvent, now: Date): string | null {
+  if (!event.published) return 'Draft — not on the website yet';
+  if (event.archivedAt) return 'Archived';
+  if (event.series?.paused) return 'Series paused';
+  if (event.series?.archivedAt) return 'Series archived';
+  if (new Date(event.endsAt).getTime() <= now.getTime()) return 'Already finished';
+  if (event.status === 'cancelled') return 'Cancelled';
+  if (!event.title.trim()) return 'No name';
+  return null;
 }
 
 /**
- * Upcoming occurrences across every series, soonest first.
- * An event is "past" only once it has ENDED — a Friday night still shows on the
- * listing at 1am Saturday, which is exactly when someone is checking their phone.
+ * Every eligible upcoming occurrence, soonest first.
+ *
+ * A cancelled night inside the next fortnight is kept so a guest holding a ticket
+ * is told rather than left to find a dark room — but `nextEvent` never returns
+ * one, because a cancellation is not something to advertise.
  */
-export function getUpcomingEvents(now: Date, limit?: number): ResolvedEvent[] {
-  const resolved = eventSeries
-    .flatMap((series) =>
-      generateOccurrences(series, now).map((occurrence) => ({ ...occurrence, series })),
-    )
-    .filter((event) => new Date(event.endsAt).getTime() > now.getTime())
-    .filter((event) => event.status !== 'cancelled' || isSoon(event.startsAt, now))
+export function getUpcomingEvents(input: EventInput, now: Date, limit?: number): ResolvedEvent[] {
+  const generated = input.series.flatMap((series) =>
+    generateOccurrences(series, now, input.occurrences, input.weeks ?? DEFAULT_WEEKS),
+  );
+
+  const all = [...generated, ...standaloneEvents(input.occurrences)]
+    .filter((event) => {
+      const reason = ineligibleReason(event, now);
+      if (reason === null) return true;
+      // The single exception, so ticket-holders are informed.
+      return reason === 'Cancelled' && isSoon(event.startsAt, now);
+    })
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
-  return typeof limit === 'number' ? resolved.slice(0, limit) : resolved;
+  return typeof limit === 'number' ? all.slice(0, limit) : all;
+}
+
+/**
+ * THE next occurrence to promote, or null.
+ *
+ * This is the one function the homepage and /events both use, so they can never
+ * disagree. A past, cancelled, draft, archived or paused occurrence can never be
+ * returned — `events.test.ts` asserts each of those individually, plus the exact
+ * case the live-site audit found on August 15, 2026.
+ */
+export function nextEvent(
+  input: EventInput,
+  now: Date,
+  seriesSlug?: string,
+): ResolvedEvent | null {
+  const candidates = getUpcomingEvents(input, now).filter(
+    (event) => ineligibleReason(event, now) === null,
+  );
+  const scoped = seriesSlug
+    ? candidates.filter((event) => event.seriesSlug === seriesSlug)
+    : candidates;
+  return scoped[0] ?? null;
+}
+
+/** The next occurrence of each series, in series order. */
+export function nextPerSeries(input: EventInput, now: Date): ResolvedEvent[] {
+  return input.series
+    .map((series) => nextEvent(input, now, series.slug))
+    .filter((event): event is ResolvedEvent => event !== null);
+}
+
+export function getSeriesOccurrences(
+  input: EventInput,
+  slug: string,
+  now: Date,
+  limit = 6,
+): ResolvedEvent[] {
+  return getUpcomingEvents(input, now)
+    .filter((event) => event.seriesSlug === slug)
+    .slice(0, limit);
 }
 
 /** Cancelled nights stay visible for two weeks so guests are not surprised. */
@@ -166,24 +385,7 @@ function isSoon(iso: string, now: Date): boolean {
   return new Date(iso).getTime() - now.getTime() < 14 * 86_400_000;
 }
 
-export function getSeries(slug: string): EventSeries | undefined {
-  return eventSeries.find((s) => s.slug === slug);
-}
-
-export function getSeriesOccurrences(slug: string, now: Date, limit = 8): ResolvedEvent[] {
-  const series = getSeries(slug);
-  if (!series) return [];
-  return generateOccurrences(series, now)
-    .filter((o) => new Date(o.endsAt).getTime() > now.getTime())
-    .slice(0, limit)
-    .map((o) => ({ ...o, series }));
-}
-
-export function getAllSeries(): EventSeries[] {
-  return eventSeries;
-}
-
-/** Human label for a status. Never conveyed by color alone. */
+/** Human label for a status. Never conveyed by colour alone. */
 export const STATUS_LABEL: Record<string, string> = {
   scheduled: '',
   'sold-out': 'Sold out',
@@ -192,15 +394,15 @@ export const STATUS_LABEL: Record<string, string> = {
   free: 'Free entry',
 };
 
-/** Google Calendar link. Uses occurrence data, never artwork. */
-export function addToCalendarUrl(event: ResolvedEvent): string {
+/** Google Calendar link. Built from the occurrence's own timestamps. */
+export function addToCalendarUrl(event: ResolvedEvent, address: string): string {
   const stamp = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: event.series.title,
+    text: event.title,
     dates: `${stamp(event.startsAt)}/${stamp(event.endsAt)}`,
-    details: event.series.description,
-    location: `${event.series.venueName}, 1250 E 9th St, Lockport, IL 60441`,
+    details: event.description,
+    location: `${event.venueName}, ${address}`,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

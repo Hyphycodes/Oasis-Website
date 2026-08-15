@@ -1,50 +1,52 @@
 import { Asset } from '@/components/media/Asset';
 import type { AssetId } from '@/content/assets';
 import { getAsset } from '@/content/assets';
-import type { EventSeries } from '@/content/types';
 
 /**
- * Series flyer.
+ * Series or occurrence flyer.
  *
  * The restaurant's own artwork, shown whole. Two rules make it safe to publish:
  *
  *  1. `object-contain` inside a stable square frame, so nothing is cropped away —
  *     an event flyer squeezed into a landscape card loses the address, the age
  *     line and the times printed along its edges.
- *  2. The date printed INTO the pixels is captioned as what it is. The flyer is
- *     recurring-series artwork; the authoritative next date is rendered as live
- *     HTML text beside it, from a generated occurrence. A visitor is therefore
- *     never left to reconcile two dates on their own. See PLAN.md §4.1.
+ *  2. A date printed INTO the pixels is captioned as what it is. The authoritative
+ *     next date is rendered as live HTML text beside it, from a generated
+ *     occurrence, so a visitor is never left to reconcile two dates on their own.
+ *     See PLAN.md §4.1.
  *
- * With no approved flyer the frame still reserves its square and states plainly
- * that current artwork is pending, rather than collapsing the layout.
+ * With no approved flyer the frame still reserves its square and says current
+ * artwork is pending, rather than collapsing the layout.
  */
 export function Flyer({
-  series,
+  assetId,
+  printedDate,
+  eventName,
   tone,
   sizes = '(min-width: 1024px) 30vw, 90vw',
   priority = false,
 }: {
-  series: EventSeries;
+  assetId: string | null;
+  /** The date printed into the artwork, when there is one. */
+  printedDate: string | null;
+  /** Used in the caption: "Fridays runs every week". */
+  eventName: string;
   tone: 'teal' | 'plum';
   sizes?: string;
   priority?: boolean;
 }) {
   const frame =
-    tone === 'teal'
-      ? 'border-amber/30 bg-teal-lift/60'
-      : 'border-coral-light/30 bg-plum-lift/60';
+    tone === 'teal' ? 'border-amber/30 bg-teal-lift/60' : 'border-coral-light/30 bg-plum-lift/60';
   const caption = tone === 'teal' ? 'text-teal-soft' : 'text-plum-soft';
 
-  const assetId = series.flyerAssetId as AssetId | null;
-  const asset = assetId ? getAsset(assetId) : null;
+  const asset = assetId ? getAsset(assetId as AssetId) : null;
 
   return (
     <figure>
       <div className={`overflow-hidden rounded-(--radius-lg) border ${frame} p-2.5 sm:p-3`}>
         {assetId && asset?.path ? (
           <Asset
-            id={assetId}
+            id={assetId as AssetId}
             className="aspect-square w-full"
             sizes={sizes}
             priority={priority}
@@ -55,7 +57,7 @@ export function Flyer({
         ) : (
           <div className="flex aspect-square w-full items-center justify-center px-6 text-center">
             <p className={`text-[0.875rem] leading-relaxed ${caption}`}>
-              Current artwork for {series.title} is on the way. The date, time and tickets below
+              Current artwork for {eventName} is on the way. The date, time and tickets on this page
               are live.
             </p>
           </div>
@@ -65,11 +67,10 @@ export function Flyer({
       {/* Deliberately not "the next date is above/below": the flyer sits beside
           the details on wide screens and above them on narrow ones, so the
           caption has to be true at every width. */}
-      {series.flyerPrintedDate ? (
+      {printedDate ? (
         <figcaption className={`mt-2.5 text-[0.8125rem] leading-relaxed ${caption}`}>
-          Series artwork, printed for {series.flyerPrintedDate}.{' '}
-          {series.title.replace('Oasis ', '')} runs every week — the next date and tickets are
-          listed on this page.
+          Series artwork, printed for {printedDate}. {eventName} runs every week — the next date and
+          tickets are listed on this page.
         </figcaption>
       ) : null}
     </figure>

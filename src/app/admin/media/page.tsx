@@ -1,96 +1,210 @@
+import Image from 'next/image';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AdminShell, Card, Warning } from '@/components/admin/AdminShell';
-import { assets } from '@/content/assets';
-import { getStaff } from '@/lib/supabase/auth';
+import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
+import { Card, EmptyState, Notice } from '@/components/admin/ui';
+import { getReadDb, isLocalDb } from '@/lib/db';
+import { getStaff, staffCan } from '@/server/auth';
+import {
+  getMediaLibrary,
+  MEDIA_TAGS,
+  mediaProblems,
+  searchMedia,
+  totalPlacements,
+} from '@/server/content/media';
+import { canOpen } from '@/server/permissions';
+import { UploadForm } from './UploadForm';
 
 export const dynamic = 'force-dynamic';
 
-const STATUS_COPY: Record<string, string> = {
-  brand: 'Brand file',
-  final: 'Done',
-  'temp-wix': 'Temporary — from the old website',
-  placeholder: 'No photo yet',
-};
-
 /**
- * Read-only by design.
+ * The photo library.
  *
- * Uploading a photo is not just dropping a file — each slot has a fixed shape and
- * a focal point so it crops correctly on phones. Letting a manager upload directly
- * would break those crops. Instead this page tells them exactly what to send and
- * to whom, which is the part they can actually action.
+ * Flat, searchable, with a deliberately small tag list. No folders: a restaurant
+ * has a few hundred photographs at most, and nested folders turn "find the bar
+ * shot" into an archaeology exercise. Every card says where the photo is used,
+ * because that is the question people actually have.
  */
-export default async function MediaPage() {
+export default async function MediaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; tag?: string; show?: string }>;
+}) {
   const staff = await getStaff();
   if (!staff) redirect('/admin/login');
 
-  const entries = Object.entries(assets);
-  const missing = entries.filter(([, asset]) => asset.status === 'placeholder');
-  const temporary = entries.filter(([, asset]) => asset.status === 'temp-wix');
+  const local = isLocalDb();
+  if (!canOpen({ role: staff.role, sections: staff.sections }, 'media')) {
+    return (
+      <AdminShell staff={staff} local={local} title="Photos">
+        <NoAccess what="photos" />
+      </AdminShell>
+    );
+  }
+
+  const db = getReadDb();
+  const params = await searchParams;
+  const library = db ? await getMediaLibrary(db) : [];
+
+  const showArchived = params.show === 'archived';
+  let visible = library.filter((entry) => Boolean(entry.archivedAt) === showArchived);
+  if (params.tag) visible = visible.filter((entry) => entry.tags.includes(params.tag!));
+  visible = searchMedia(visible, params.q ?? '');
+
+  const needsAlt = library.filter(
+    (entry) => entry.path && !entry.archivedAt && !entry.decorative && !entry.alt?.trim(),
+  );
+  const missing = library.filter((entry) => !entry.path && !entry.archivedAt);
 
   return (
     <AdminShell
-      role={staff.role}
-      name={staff.name}
-      email={staff.user.email ?? ''}
+      staff={staff}
+      local={local}
       title="Photos"
-      description="Every photo slot on the website. Send new photos to your developer and they will drop them in — the layout is already built around them, so nothing moves."
+      description="Every photograph on the website, and where each one is used."
     >
-      {missing.length > 0 ? (
-        <div className="mb-6">
-          <Warning>
-            {missing.length} slots have no photo and are showing a plain Oasis panel. The most
-            valuable ones to shoot first are the quesabirrias, the Bizza, and a Friday or Saturday
-            night on the floor.
-          </Warning>
-        </div>
-      ) : null}
+      {!db ? (
+        <EmptyState>
+          The content system is not connected, so photos are read from the built-in registry.
+        </EmptyState>
+      ) : (
+        <>
+          {needsAlt.length > 0 ? (
+            <div className="mb-4">
+              <Notice tone="danger">
+                {needsAlt.length}{' '}
+                {needsAlt.length === 1 ? 'photo has no description' : 'photos have no description'},
+                so screen readers cannot describe them.
+              </Notice>
+            </div>
+          ) : null}
 
-      <div className="grid gap-6">
-        <Card title={`Needs a photo (${missing.length})`}>
-          <ul className="divide-y divide-brown/12">
-            {missing.map(([id, asset]) => (
-              <li key={id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.9375rem] font-medium text-brown">
-                    {asset.alt ?? 'Decorative'}
-                  </p>
-                  <p className="mt-0.5 text-[0.8125rem] text-brown-soft">
-                    Used on: {asset.usage.join(', ')}
-                  </p>
-                </div>
-                <p className="tabular shrink-0 text-[0.8125rem] text-brown-soft">
-                  {asset.ratio} · at least {asset.width}×{asset.height}px
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
+          {missing.length > 0 ? (
+            <div className="mb-4">
+              <Notice tone="warning">
+                {missing.length} slots are still waiting for a real photograph. They show a branded
+                placeholder in the meantime, so nothing looks broken.
+              </Notice>
+            </div>
+          ) : null}
 
-        <Card title={`Temporary photos from the old site (${temporary.length})`}>
-          <p className="mb-4 text-[0.875rem] text-brown-soft">
-            These work, but they are copies pulled off the old Wix site rather than the original
-            files. If you still have the originals from your photographer, send those.
-          </p>
-          <ul className="divide-y divide-brown/12">
-            {temporary.map(([id, asset]) => (
-              <li key={id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.9375rem] font-medium text-brown">
-                    {asset.alt ?? 'Decorative'}
-                  </p>
-                  <p className="mt-0.5 text-[0.8125rem] text-brown-soft">
-                    Used on: {asset.usage.join(', ')}
-                  </p>
-                </div>
-                <p className="tabular shrink-0 text-[0.8125rem] text-brown-soft">
-                  {asset.width}×{asset.height}px · {STATUS_COPY[asset.status]}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+          {staffCan(staff, 'media.upload') ? (
+            <div className="mb-6">
+              <UploadForm />
+            </div>
+          ) : null}
+
+          <form className="mb-5 flex flex-wrap items-end gap-2" role="search">
+            <div className="min-w-48 flex-1">
+              <label htmlFor="media-search" className="block text-[0.8125rem] font-semibold text-brown">
+                Search
+              </label>
+              <input
+                id="media-search"
+                name="q"
+                type="search"
+                defaultValue={params.q ?? ''}
+                placeholder="Name, file, description or tag"
+                className="mt-1.5 min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown"
+              />
+            </div>
+            <div>
+              <label htmlFor="media-tag" className="block text-[0.8125rem] font-semibold text-brown">
+                Tag
+              </label>
+              <select
+                id="media-tag"
+                name="tag"
+                defaultValue={params.tag ?? ''}
+                className="mt-1.5 min-h-11 rounded-(--radius-sm) border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown"
+              >
+                <option value="">All</option>
+                {MEDIA_TAGS.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
+            >
+              Filter
+            </button>
+            <Link
+              href={showArchived ? '/admin/media' : '/admin/media?show=archived'}
+              className="inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4"
+            >
+              {showArchived ? 'Back to the library' : 'Show archived'}
+            </Link>
+          </form>
+
+          {visible.length === 0 ? (
+            <EmptyState>Nothing matches. Try a different word.</EmptyState>
+          ) : (
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((entry) => {
+                const problems = mediaProblems(entry);
+                return (
+                  <li key={entry.assetId}>
+                    <Link
+                      href={`/admin/media/${entry.assetId}`}
+                      className="group flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-brown/20 bg-linen transition-colors hover:border-coral"
+                    >
+                      <span className="relative block aspect-4/3 w-full bg-ivory-deep">
+                        {entry.path ? (
+                          <Image
+                            src={entry.path}
+                            alt=""
+                            fill
+                            sizes="(min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="flex size-full items-center justify-center text-[0.8125rem] text-brown-soft">
+                            No photo yet
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex flex-1 flex-col p-3">
+                        <span className="text-[0.9375rem] font-semibold text-brown group-hover:text-clay">
+                          {entry.title}
+                        </span>
+                        <span className="mt-0.5 text-[0.8125rem] text-brown-soft">
+                          {entry.decorative
+                            ? 'Decorative'
+                            : (entry.alt ?? 'No description').slice(0, 60)}
+                        </span>
+                        <span className="mt-2 text-[0.75rem] text-brown-soft">
+                          {totalPlacements(entry) === 0
+                            ? 'Not used anywhere'
+                            : `Used in ${totalPlacements(entry)} ${totalPlacements(entry) === 1 ? 'place' : 'places'}`}
+                        </span>
+                        {problems.length > 0 ? (
+                          <span className="mt-2 text-[0.75rem] font-semibold text-danger">
+                            {problems[0]}
+                          </span>
+                        ) : null}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <div className="mt-8">
+            <Card title="Sending new photographs" tone="quiet">
+              <p className="measure text-[0.9375rem] leading-relaxed text-brown-soft">
+                Shoot in portrait, in daylight, and send the original file rather than something
+                that has been through Instagram. Videos need a still frame and a matching crop, so
+                send those to your developer to place.
+              </p>
+            </Card>
+          </div>
+        </>
+      )}
     </AdminShell>
   );
 }

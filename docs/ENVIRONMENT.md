@@ -76,18 +76,27 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
 
 1. Create a project at [supabase.com](https://supabase.com). Pick a region near Chicago —
    `us-east-1` or `us-central`.
-2. Apply the schema. Either paste `supabase/migrations/0001_init.sql` into the SQL editor, or:
+2. Apply the schema, **in order**. Either paste each file into the SQL editor, or:
    ```bash
    supabase link --project-ref <ref>
    supabase db push
    ```
-3. Load the content that was already captured from the live site:
+   | Migration | What it adds |
+   |---|---|
+   | `0001_init.sql` | Tables, RLS, audit log |
+   | `0002_event_flyers.sql` | Series flyers with a declared printed date; drops the ticket fee |
+   | `0003_admin_backend.sql` | Drafts, versions, occurrence overrides, media fields, special hours, the publish guard, the storage bucket |
+
+3. Load the content that was captured from the live site:
    ```bash
-   npm run content:seed     # regenerates supabase/seed.sql from src/content/
-   psql "$DATABASE_URL" -f supabase/seed.sql
+   npm run content:migrate            # dry run: reports counts, writes nothing
+   npm run content:migrate -- --write # applies it, then verifies the counts
    ```
-   Or paste `supabase/seed.sql` into the SQL editor. It is written as upserts, so running it twice
-   is safe.
+   Every row is keyed by its real identifier, so this is idempotent — running it twice updates
+   rather than duplicates, and running it against a half-migrated database finishes the job. It
+   never deletes and never publishes a draft.
+
+   `npm run content:seed` still regenerates `supabase/seed.sql` if you prefer to paste SQL.
 4. Create the owner account: **Authentication → Users → Add user**, with a real email and a strong
    password.
 5. Promote that user, because the signup trigger assigns the least-privileged role by design:
@@ -102,14 +111,26 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
 
 ## Roles
 
+The stored values are `owner` / `admin` / `editor`; the admin shows them as **Owner**, **Manager**
+and **Contributor**.
+
 | Role | Can do |
 |---|---|
-| `owner` | Everything, including settings, SEO, and changing other people's roles |
-| `admin` | All content, settings, and SEO |
-| `editor` | Menus, events, hours, announcements, enquiries |
+| `owner` | Everything, including staff accounts, roles and connected services |
+| `admin` | Edit and publish all content, settings and media |
+| `editor` | Edit anything allowed and save it as a **draft** — never publish |
 
-New signups become `editor`. Elevation is a deliberate act by an owner or admin — there is no
-self-service path to a higher role.
+New signups become `editor`. Only an **owner** can change a role: under the 0001 policy a manager
+could change roles, including their own, which is the classic way an account quietly becomes an
+owner. `0003_admin_backend.sql` closes it.
+
+The Contributor restriction is enforced three times over, independently:
+
+1. `requireCapability` in every server action, before a database handle is even obtained;
+2. Row Level Security;
+3. a `BEFORE UPDATE` trigger that rejects any change to a live column when the caller cannot
+   publish — so it holds for a direct PostgREST call, not only for a server action that remembered
+   to check.
 
 ---
 
@@ -130,7 +151,37 @@ canonical URLs and confuse search engines.
 | **Email delivery** | No mailer exists, so nothing in the UI claims an email was sent. Enquiries are stored in the database, or written to the server log when Supabase is absent — and the confirmation message says which. Adding email means adding a provider **and** updating the wording in `src/components/forms/FormShell.tsx`. |
 | **Analytics** | No script, no cookie banner — there is nothing to consent to. `/legal/privacy` states this plainly and must be updated in the same change if analytics is ever added. |
 | **Error monitoring** | Not set up. Vercel captures runtime logs. |
-| **File uploads from the admin** | Photo slots have fixed shapes and focal points; direct upload would break the crops. `/admin/media` tells the manager exactly what to send and to whom instead. |
+| **Scheduled publishing** | There is no scheduler in this deployment. A "scheduled" state that silently never fires is worse than not offering one, so the admin has Draft / Published / Changed / Archived and says so. |
+| **Video upload from the admin** | Video needs a poster frame and a matching crop. Images upload normally; video is refused with an explanation and placed by a developer. |
+
+---
+
+## Rolling back
+
+Nothing in this system deletes content, which is what makes a rollback cheap.
+
+| If | Do this |
+|---|---|
+| A published change is wrong | Admin → the record → **Earlier versions** → **Bring this back**. It returns as a draft; publish it. |
+| A migration import went wrong | Re-run `npm run content:migrate -- --write`. It is idempotent and restores every value from the repository. |
+| The database is unreachable or misconfigured | Nothing to do. `src/content/resolve.ts` serves the typed static content and every public page keeps working; the admin says it is not connected. |
+| The whole cutover needs reverting | Unset `NEXT_PUBLIC_SUPABASE_URL`. The site returns to serving `src/content/` exactly as it did before any of this existed. |
+
+The static modules in `src/content/` are never deleted by the migration, and they remain both the
+seed and the fallback — which is precisely why that last row is a one-variable change.
+
+---
+
+## Local development without Supabase
+
+`git clone && npm install && npm run dev` gives you a **working admin** with no configuration. With
+no Supabase configured and outside a production build, the app uses a JSON file under
+`.oasis-local/`, seeded from the same typed content that seeds Supabase, and `/admin/login` offers
+one account per role so permissions can actually be tried.
+
+It is git-ignored, the admin shows a banner saying where the data lives, and
+`src/lib/db/index.ts` refuses to construct it in production — writes fail closed instead. See
+[`ADR-001-ADMIN-BACKEND.md`](./ADR-001-ADMIN-BACKEND.md).
 
 ---
 

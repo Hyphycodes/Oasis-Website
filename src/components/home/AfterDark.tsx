@@ -26,11 +26,7 @@ export function AfterDark({
 }) {
   if (!section.visible || events.length === 0) return null;
 
-  const bySeries = new Map<string, ResolvedEvent>();
-  for (const event of events) {
-    if (!bySeries.has(event.series.slug)) bySeries.set(event.series.slug, event);
-  }
-  const nights = [...bySeries.values()].slice(0, 2);
+  const nights = events.slice(0, 2);
 
   return (
     <section className="relative isolate">
@@ -64,7 +60,7 @@ export function AfterDark({
             <ul className="grid gap-4 sm:grid-cols-2 lg:col-span-6 lg:col-start-7">
               {nights.map((event, index) => {
                 const friday =
-                  event.series.cadence.kind === 'weekly' && event.series.cadence.weekday === 5;
+                  event.series?.cadence.kind === 'weekly' && event.series.cadence.weekday === 5;
                 // coral-light, not coral: coral type on teal measures 3.61:1.
                 const accent = friday ? 'text-amber' : 'text-coral-light';
                 const rule = friday ? 'border-amber/50' : 'border-coral-light/50';
@@ -74,19 +70,19 @@ export function AfterDark({
                     <Reveal delay={index * 70}>
                       <div className={`border-t-2 ${rule} pt-4`}>
                         <p className={`display text-[1.375rem] ${accent}`}>
-                          {event.series.title.replace('Oasis ', '')}
+                          {event.title.replace('Oasis ', '')}
                         </p>
                         <p className="tabular mt-2 text-[0.9375rem] text-night-text">
                           {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
                         </p>
                         <p className="mt-1 text-[0.875rem] text-teal-soft">
-                          {event.series.musicFormats.join(' · ')}
+                          {event.musicFormats.join(' · ')}
                         </p>
                         {/* Age only. The door price is stated once, on the event
                             feature at /events, so there is one place to keep
                             right rather than three. */}
                         <p className="tabular mt-1 text-[0.875rem] text-teal-soft">
-                          {event.series.ageMin ? `${event.series.ageMin}+` : 'All ages'}
+                          {event.ageMin ? `${event.ageMin}+` : 'All ages'}
                         </p>
                       </div>
                     </Reveal>
