@@ -23,7 +23,7 @@ export default async function SettingsPage() {
   const local = isLocalDb();
   if (!staffCan(staff, 'settings.manage')) {
     return (
-      <AdminShell staff={staff} local={local} title="Settings">
+      <AdminShell staff={staff} local={local} title="Hours & contact">
         <NoAccess what="the restaurant details" />
       </AdminShell>
     );
@@ -42,8 +42,8 @@ export default async function SettingsPage() {
     <AdminShell
       staff={staff}
       local={local}
-      title="Settings"
-      description="The details that appear across the whole website and in Google. Change them once here."
+      title="Hours & contact"
+      description="Change these details once and they update everywhere on the website."
     >
       <div className="grid gap-5">
         {settings.phone.provisional || settings.hours.provisional ? (
@@ -89,11 +89,9 @@ export default async function SettingsPage() {
           />
         </Card>
 
-        <Card title="Ordering, booking and social" tone="quiet">
+        <Card title="Ordering, booking & social links" tone="quiet">
           <p className="measure text-[0.9375rem] leading-relaxed text-brown-soft">
-            Ordering and table booking are handled by Toast, and tickets by your ticketing site. This
-            website links to them — it does not manage the menus, the tables or the tickets there.
-            Change a link above and every button on the website follows it.
+            Change a link here and every matching button on the website updates automatically.
           </p>
         </Card>
       </div>

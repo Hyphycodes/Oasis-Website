@@ -10,7 +10,7 @@ import { getPublicEvents } from '@/server/content/events';
 import { getSiteSettings } from '@/content/resolve';
 import { seo } from '@/content/pages';
 import type { ResolvedEvent } from '@/content/types';
-import { nextPerSeries, STATUS_LABEL } from '@/lib/events';
+import { getUpcomingEvents, nextPerSeries, STATUS_LABEL } from '@/lib/events';
 import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
@@ -140,6 +140,51 @@ function NightFeature({
   );
 }
 
+/** A special one-off event created in the admin, including its connected artwork. */
+function SpecialEventFeature({ event, index }: { event: ResolvedEvent; index: number }) {
+  const tone = index % 2 === 0 ? 'teal' : 'plum';
+  const surface = tone === 'teal' ? 'bg-teal' : 'bg-plum';
+  const accent = tone === 'teal' ? 'text-amber' : 'text-coral-light';
+  const soft = tone === 'teal' ? 'text-teal-soft' : 'text-plum-soft';
+
+  return (
+    <article className={`${surface} on-dark rounded-(--radius-lg) p-5 sm:p-7`}>
+      <div className="grid gap-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:items-center">
+        <Flyer
+          assetId={event.flyerAssetId}
+          printedDate={null}
+          eventName={event.title}
+          tone={tone}
+          sizes="(min-width: 768px) 15rem, 90vw"
+        />
+        <div>
+          <p className={`eyebrow ${soft}`}>Special event</p>
+          <h2 className={`display mt-2 text-[clamp(1.75rem,3vw,2.5rem)] ${accent}`}>
+            {event.title}
+          </h2>
+          <p className="tabular mt-3 font-semibold text-night-text">
+            {formatEventDate(event.startsAt)} · {formatTimeRange(event.startsAt, event.endsAt)}
+          </p>
+          {event.description ? (
+            <p className={`measure mt-4 text-[0.9375rem] leading-relaxed ${soft}`}>
+              {event.description}
+            </p>
+          ) : null}
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-[0.9375rem] text-night-text">
+            {event.musicFormats.length > 0 ? <span>{event.musicFormats.join(' · ')}</span> : null}
+            <span>{event.priceCents != null ? formatPrice(event.priceCents) : 'Entry at the door'}</span>
+            {event.ticketUrl ? (
+              <ExternalButtonLink href={event.ticketUrl} destination={`${event.title} tickets`}>
+                Tickets
+              </ExternalButtonLink>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 /**
  * Events.
  *
@@ -156,6 +201,9 @@ export default async function EventsPage() {
     getSiteSettings(),
   ]);
   const featured = nextPerSeries(input, now);
+  const specialEvents = getUpcomingEvents(input, now)
+    .filter((event) => event.seriesSlug === null)
+    .slice(0, 6);
 
   return (
     <>
@@ -182,6 +230,22 @@ export default async function EventsPage() {
           </div>
         </Frame>
       </section>
+
+      {specialEvents.length > 0 ? (
+        <Band surface="ivory" size="sm">
+          <Frame wide>
+            <Eyebrow>Coming up</Eyebrow>
+            <h2 className="display mt-3 text-[clamp(1.75rem,3vw,2.5rem)] text-brown">
+              Special events
+            </h2>
+            <div className="mt-7 grid gap-6 lg:grid-cols-2">
+              {specialEvents.map((event, index) => (
+                <SpecialEventFeature key={event.id} event={event} index={index} />
+              ))}
+            </div>
+          </Frame>
+        </Band>
+      ) : null}
 
       {/* 2 — the two recurring nights, once each. */}
       <Band surface="ivory" size="sm">

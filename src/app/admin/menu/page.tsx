@@ -74,8 +74,7 @@ export default async function AdminMenuPage({
     >
       {menus.length === 0 ? (
         <EmptyState>
-          The content system is not connected, so the menu is read from the built-in content and
-          cannot be edited here yet.
+          The menu editor is not available right now. Please try again in a moment.
         </EmptyState>
       ) : (
         <>

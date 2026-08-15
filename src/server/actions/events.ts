@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import type { Row } from '@/lib/db/types';
 import { venueIsoDate } from '@/lib/events';
+import { registerDirectMedia, storeMediaFile } from '@/server/media-files';
 import { staffCan } from '../auth';
 import { archive, publishDirect, saveDraft } from '../content/editorial';
 import { done, run, saved, type ActionState } from './shared';
@@ -291,19 +292,27 @@ const oneTimeSchema = z.object({
   music: z.string().trim().max(200),
   price: z.string().trim().max(12),
   ticketUrl: httpsUrl,
+  flyerAssetId: z.string().trim().optional(),
+  publish: z.string().optional(),
+});
+
+const directArtworkSchema = z.object({
+  uploadedUrl: z.string().url(),
+  uploadedMime: z.string().min(1),
+  uploadedSize: z.coerce.number().int().nonnegative(),
+  uploadedOriginalName: z.string().min(1).max(255),
+  uploadedWidth: z.coerce.number().int().nonnegative(),
+  uploadedHeight: z.coerce.number().int().nonnegative(),
 });
 
 /**
- * A one-time event starts as a DRAFT.
- *
- * Nothing half-entered should be able to appear on the website between "save" and
- * "finish filling it in", so publication is always a second, deliberate action.
+ * A one-time event can be added to the website immediately or saved for later.
  */
 export async function createOneTimeEvent(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  return run('content.edit', async ({ db }) => {
+  return run('content.edit', async ({ db, staff }) => {
     const parsed = oneTimeSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
       return { ok: false, message: parsed.error.issues[0]?.message ?? 'Please check the form.' };
@@ -319,11 +328,58 @@ export async function createOneTimeEvent(
     }
 
     const price = value.price.replace(/[$,\s]/g, '');
+    if (price && (!Number.isFinite(Number(price)) || Number(price) < 0)) {
+      return { ok: false, message: 'Enter the entry price as a number, for example 25.' };
+    }
     const slug = value.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
       .slice(0, 48);
+
+    let flyerAssetId = value.flyerAssetId || null;
+    const artwork = formData.get('artworkFile');
+    const directArtwork = directArtworkSchema.safeParse(Object.fromEntries(formData));
+    if (directArtwork.success) {
+      const uploaded = await registerDirectMedia({
+        db,
+        staff,
+        upload: {
+          url: directArtwork.data.uploadedUrl,
+          mime: directArtwork.data.uploadedMime,
+          size: directArtwork.data.uploadedSize,
+          originalName: directArtwork.data.uploadedOriginalName,
+          width: directArtwork.data.uploadedWidth,
+          height: directArtwork.data.uploadedHeight,
+        },
+        title: `${value.title} artwork`,
+        alt: `Artwork for ${value.title}`,
+        tags: ['Events'],
+      });
+      if (!uploaded.ok) return uploaded;
+      flyerAssetId = uploaded.assetId;
+    } else if (artwork instanceof File && artwork.size > 0) {
+      const uploaded = await storeMediaFile({
+        db,
+        staff,
+        file: artwork,
+        title: `${value.title} artwork`,
+        alt: `Artwork for ${value.title}`,
+        tags: ['Events'],
+      });
+      if (!uploaded.ok) return uploaded;
+      flyerAssetId = uploaded.assetId;
+    } else if (flyerAssetId) {
+      const asset = await db.get<Row>('media_assets', flyerAssetId);
+      if (!asset?.path || asset.kind !== 'image') {
+        return { ok: false, message: 'Choose an event picture that is available.' };
+      }
+    }
+
+    const publish = value.publish === 'true' && staffCan(staff, 'content.publish');
+    if (publish && !flyerAssetId) {
+      return { ok: false, message: 'Choose an event picture before adding it to the website.' };
+    }
 
     await db.insert('event_occurrences', {
       id: `one-time:${slug}:${value.date}`,
@@ -338,12 +394,15 @@ export async function createOneTimeEvent(
       music_formats: value.music.split(',').map((s) => s.trim()).filter(Boolean),
       price_cents: price ? Math.round(Number(price) * 100) : null,
       ticket_url: value.ticketUrl || null,
-      published: false,
+      flyer_asset_id: flyerAssetId,
+      published: publish,
       draft: null,
       archived_at: null,
     });
 
-    return saved(`“${value.title}” saved as a draft. Publish it when the details are final.`);
+    return publish
+      ? done(`“${value.title}” is on the website.`, 'events')
+      : saved(`“${value.title}” is saved for later.`);
   });
 }
 

@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { Card, EmptyState, Notice } from '@/components/admin/ui';
+import { EmptyState, Notice } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
 import {
@@ -36,8 +36,8 @@ export default async function MediaPage({
   const local = isLocalDb();
   if (!canOpen({ role: staff.role, sections: staff.sections }, 'media')) {
     return (
-      <AdminShell staff={staff} local={local} title="Photos">
-        <NoAccess what="photos" />
+      <AdminShell staff={staff} local={local} title="Photos & videos">
+        <NoAccess what="photos and videos" />
       </AdminShell>
     );
   }
@@ -60,12 +60,12 @@ export default async function MediaPage({
     <AdminShell
       staff={staff}
       local={local}
-      title="Photos"
-      description="Every photograph on the website, and where each one is used."
+      title="Photos & videos"
+      description="Add a file once, then choose where it appears on the website."
     >
       {!db ? (
         <EmptyState>
-          The content system is not connected, so photos are read from the built-in registry.
+          Photos and videos are not available right now. Please try again in a moment.
         </EmptyState>
       ) : (
         <>
@@ -73,7 +73,7 @@ export default async function MediaPage({
             <div className="mb-4">
               <Notice tone="danger">
                 {needsAlt.length}{' '}
-                {needsAlt.length === 1 ? 'photo has no description' : 'photos have no description'},
+                {needsAlt.length === 1 ? 'file has no description' : 'files have no description'},
                 so screen readers cannot describe them.
               </Notice>
             </div>
@@ -82,7 +82,7 @@ export default async function MediaPage({
           {missing.length > 0 ? (
             <div className="mb-4">
               <Notice tone="warning">
-                {missing.length} slots are still waiting for a real photograph. They show a branded
+                {missing.length} spots are still waiting for a real photo. They show a branded
                 placeholder in the meantime, so nothing looks broken.
               </Notice>
             </div>
@@ -104,7 +104,7 @@ export default async function MediaPage({
                 name="q"
                 type="search"
                 defaultValue={params.q ?? ''}
-                placeholder="Name, file, description or tag"
+                placeholder="Search by name or description"
                 className="mt-1.5 min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown"
               />
             </div>
@@ -153,7 +153,16 @@ export default async function MediaPage({
                       className="group flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-brown/20 bg-linen transition-colors hover:border-coral"
                     >
                       <span className="relative block aspect-4/3 w-full bg-ivory-deep">
-                        {entry.path ? (
+                        {entry.path && entry.kind === 'video' ? (
+                          <video
+                            src={entry.path}
+                            poster={entry.poster ?? undefined}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="size-full object-cover"
+                          />
+                        ) : entry.path ? (
                           <Image
                             src={entry.path}
                             alt=""
@@ -163,13 +172,18 @@ export default async function MediaPage({
                           />
                         ) : (
                           <span className="flex size-full items-center justify-center text-[0.8125rem] text-brown-soft">
-                            No photo yet
+                            No file yet
                           </span>
                         )}
                       </span>
                       <span className="flex flex-1 flex-col p-3">
                         <span className="text-[0.9375rem] font-semibold text-brown group-hover:text-clay">
                           {entry.title}
+                          {entry.kind === 'video' ? (
+                            <span className="ml-2 rounded-full bg-teal/8 px-2 py-0.5 text-[0.6875rem] uppercase tracking-wide text-teal">
+                              Video
+                            </span>
+                          ) : null}
                         </span>
                         <span className="mt-0.5 text-[0.8125rem] text-brown-soft">
                           {entry.decorative
@@ -194,15 +208,6 @@ export default async function MediaPage({
             </ul>
           )}
 
-          <div className="mt-8">
-            <Card title="Sending new photographs" tone="quiet">
-              <p className="measure text-[0.9375rem] leading-relaxed text-brown-soft">
-                Shoot in portrait, in daylight, and send the original file rather than something
-                that has been through Instagram. Videos need a still frame and a matching crop, so
-                send those to your developer to place.
-              </p>
-            </Card>
-          </div>
         </>
       )}
     </AdminShell>

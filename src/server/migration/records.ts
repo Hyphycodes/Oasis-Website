@@ -5,6 +5,7 @@ import { allMenus } from '@/content/menu';
 import { homeSections, pageCopy, seo } from '@/content/pages';
 import { announcements, site } from '@/content/site';
 import type { Row } from '@/lib/db/types';
+import { stableUuid } from '@/lib/stable-uuid';
 
 /**
  * The single content mapping.
@@ -57,7 +58,7 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
   put(
     'announcements',
     announcements.map((a) => ({
-      id: a.id,
+      id: stableUuid('announcement', a.id),
       message: a.message,
       href: a.href,
       link_label: a.linkLabel,
@@ -143,7 +144,7 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
           modifiers.push({
             // Deterministic, so re-running the migration updates the same row
             // rather than appending a second copy of every add-on.
-            id: `${item.id}:${modifierIndex}`,
+            id: stableUuid('menu-modifier', `${item.id}:${modifierIndex}`),
             item_id: item.id,
             label: modifier.label,
             price_cents: modifier.priceCents,

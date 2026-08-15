@@ -1,835 +1,672 @@
 -- GENERATED FILE — do not edit by hand.
--- Produced by `npm run content:seed` from src/content/*.ts
---
--- Re-running is safe: every statement is an upsert keyed on the primary key,
--- so seeding a database that the owner has already edited will overwrite the
--- seeded rows and leave anything they added alone.
+-- Produced by `npm run content:seed` from src/server/migration/records.ts.
+-- The SQL and API migration consume the same canonical mapping.
 
 begin;
 
--- Site settings -------------------------------------------------------
-insert into public.site_settings (id, payload) values ('default', '{"phone":{"value":"(815) 545-7556","provisional":true,"note":"CONTENT-QUESTIONS.md §1 — Toast publishes (815) 524-4188 instead."},"altPhone":{"value":"(815) 524-4188","provisional":true,"note":"CONTENT-QUESTIONS.md §1 — recorded, not published, pending owner confirmation."},"hours":{"value":[{"day":0,"ranges":[{"openMinutes":600,"closeMinutes":1260}]},{"day":1,"ranges":[{"openMinutes":600,"closeMinutes":1320}]},{"day":2,"ranges":[{"openMinutes":600,"closeMinutes":1320}]},{"day":3,"ranges":[{"openMinutes":600,"closeMinutes":1320}]},{"day":4,"ranges":[{"openMinutes":600,"closeMinutes":1320}]},{"day":5,"ranges":[{"openMinutes":600,"closeMinutes":1500}]},{"day":6,"ranges":[{"openMinutes":600,"closeMinutes":1500}]}],"provisional":true,"note":"CONTENT-QUESTIONS.md §2 — Toast shows an 11am open every day plus a Mon/Wed midday closure."},"reservationUrl":"https://tables.toasttab.com/restaurants/43040713-bf74-449f-bd19-00594dd956fa/findTime","orderUrl":"https://oasismexicanlockport.toast.site/order","socials":[{"platform":"facebook","handle":"OasisMexicanKitchenandBar","url":"https://www.facebook.com/OasisMexicanKitchenandBar/"},{"platform":"instagram","handle":"@oasismexbar","url":"https://www.instagram.com/oasismexbar/"}]}'::jsonb)
+-- site_settings
+insert into public.site_settings (id, payload)
+  values ('default', '{}'::jsonb)
   on conflict (id) do update set payload = excluded.payload;
 
--- Announcements -------------------------------------------------------
--- Ships DISABLED: the restaurant references promotions but publishes no terms.
--- See docs/CONTENT-QUESTIONS.md §12.
+-- announcements
 insert into public.announcements (id, message, href, link_label, starts_at, ends_at, enabled, tone)
-  values (gen_random_uuid(), 'Lunch deal — details to be confirmed by the restaurant.', null, null, null, null, false, 'default')
-  on conflict do nothing;
+  values ('618f47a2-3bc5-5fa2-b07c-c4c3c1e04564', 'Lunch deal — details to be confirmed by the restaurant.', null, null, null, null, false, 'default')
+  on conflict (id) do update set message = excluded.message, href = excluded.href, link_label = excluded.link_label, starts_at = excluded.starts_at, ends_at = excluded.ends_at, enabled = excluded.enabled, tone = excluded.tone;
 
--- Menus ---------------------------------------------------------------
-insert into public.menus (slug, title, note, empty_state, sort) values ('food', 'Food', null, null, 0)
+-- media_assets
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('brandLogo', '/media/brand/oasis-logo.png', 'Oasis Mexican Kitchen & Bar', false, 'Brand Logo', 'image', 1200, 483, '1200:483', '50% 50%', null, 'brand', array['Brand']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('brandGrain', '/media/brand/paper-grain.png', null, true, 'Brand Grain', 'texture', 160, 160, '1:1', '50% 50%', null, 'final', array['Brand']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('heroVideo', '/media/video/hero-loop.mp4', null, true, 'Hero Video', 'video', 720, 1280, '9:16', '50% 50%', '/media/home/hero-poster.jpg', 'temp-wix', array['Room']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('heroPoster', '/media/home/hero-poster.jpg', null, true, 'Hero Poster', 'image', 720, 1280, '9:16', '50% 50%', null, 'temp-wix', array['Room']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('backBar', '/media/home/back-bar.jpg', 'The back bar at Oasis, stocked with tequila, whiskey and vodka under warm light', false, 'Back Bar', 'image', 1069, 1600, '1069:1600', '50% 45%', null, 'temp-wix', array['Drinks']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('exteriorSign', '/media/home/exterior-sign.jpg', 'The Oasis Mexican Restaurant sign on the building exterior', false, 'Exterior Sign', 'image', 720, 540, '4:3', '50% 50%', null, 'temp-wix', array['Exterior']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('diningRoom', '/media/home/dining-room.jpg', 'The Oasis dining room full at service, under rattan pendant lights, with the greenery wall behind', false, 'Dining Room', 'image', 1143, 1728, '1143:1728', '50% 55%', null, 'temp-wix', array['Room']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('plateTorta', '/media/menu/plate-torta.jpg', 'A torta served with rice, refried beans and salsa', false, 'Plate Torta', 'image', 720, 900, '4:5', '50% 50%', null, 'temp-wix', array['Food']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('roomAtmosphere', '/media/home/room-atmosphere.jpg', 'The Oasis dining room, with the greenery wall and rattan pendant lights', false, 'Room Atmosphere', 'image', 720, 480, '3:2', '50% 50%', null, 'temp-wix', array['Room']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('bartender', '/media/home/gallery-02.jpg', 'A bartender holding a freshly made margarita', false, 'Bartender', 'image', 720, 720, '1:1', '50% 40%', null, 'temp-wix', array['Drinks', 'Team']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('dishQuesabirria', '/media/menu/quesabirria.jpg', 'A plate of quesabirria tacos with a cup of consommé for dipping', false, 'Dish Quesabirria', 'image', 720, 900, '4:5', '50% 50%', null, 'temp-wix', array['Food']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('consommeDip', '/media/menu/consomme-dip.jpg', 'A quesabirria taco being dipped into a cup of consommé', false, 'Consomme Dip', 'image', 720, 900, '4:5', '50% 45%', null, 'temp-wix', array['Food']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('cocktailPour', '/media/menu/cocktail-pour.jpg', 'A mango margarita being poured from a shaker into a Tajín-rimmed glass', false, 'Cocktail Pour', 'image', 720, 900, '4:5', '50% 50%', null, 'temp-wix', array['Food', 'Drinks']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('margaritaTajin', '/media/menu/margarita-tajin.jpg', 'A finished mango margarita with a Tajín rim and a fan of fresh mango', false, 'Margarita Tajin', 'image', 720, 720, '1:1', '50% 50%', null, 'temp-wix', array['Food', 'Drinks']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('roomCrowd', '/media/home/room-crowd.jpg', 'A full dining room at service under the greenery wall and rattan lights', false, 'Room Crowd', 'image', 720, 480, '3:2', '50% 55%', null, 'temp-wix', array['Room']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('cocktailPair', '/media/menu/cocktail-pair.jpg', 'A margarita with a Tajín rim being finished at the bar', false, 'Cocktail Pair', 'image', 720, 900, '4:5', '50% 50%', null, 'temp-wix', array['Food', 'Drinks']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('flyerFridays', '/media/events/oasis-fridays-flyer.jpg', 'Oasis Fridays flyer artwork', false, 'Flyer Fridays', 'image', 1080, 1080, '1:1', '50% 50%', null, 'final', array['Events']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('flyerLatinSaturdays', '/media/events/oasis-latin-saturdays-flyer.jpg', 'Oasis Latin Saturdays flyer artwork', false, 'Flyer Latin Saturdays', 'image', 1080, 1080, '1:1', '50% 50%', null, 'final', array['Events']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('privateEvents', null, 'A celebration table set up at Oasis', false, 'Private Events', 'image', 1800, 1200, '3:2', '50% 42%', null, 'placeholder', array['Events']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('birthdayCelebration', null, 'The Oasis team bringing out a birthday dessert', false, 'Birthday Celebration', 'image', 1200, 1500, '4:5', '50% 40%', null, 'placeholder', array['Events']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
+  values ('teamEnergy', '/media/careers/team-energy.jpg', 'A server carrying a tray of drinks through the dining room', false, 'Team Energy', 'image', 720, 480, '3:2', '50% 50%', null, 'temp-wix', array['Team']::text[], null, null, null)
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
+
+-- menus
+insert into public.menus (slug, title, note, empty_state, sort)
+  values ('food', 'Food', null, null, 0)
   on conflict (slug) do update set title = excluded.title, note = excluded.note, empty_state = excluded.empty_state, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('food:starters', 'food', 'Starters', null, 0)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:oasis-wings', 'food:starters', 'Oasis Wings', '8 wings of your choice of sauce, with ranch.', 1800, null, 'Sauce', '{}', true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:oasis-wings';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:oasis-wings', 'Mole', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:oasis-wings', 'Mango Habanero', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:oasis-wings', 'Buffalo', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:oasis-wings', 'BBQ', null, 3);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:queso-dip', 'food:starters', 'Queso Dip', 'Queso dip with chorizo & chips: messy, cheesy, and absolutely necessary.', 900, null, null, '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:crispy-shrimps', 'food:starters', 'Crispy Shrimps', 'Golden-fried shrimp served over a fresh spring mix salad.', 1600, null, null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:street-corn', 'food:starters', 'Street Corn', 'Four grilled mini corn cobs with creamy mayo, topped with Cotija cheese and Tajín.', 1000, null, null, array['vegetarian']::text[], true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:quesadilla', 'food:starters', 'Quesadilla', 'Melted cheese in a warm tortilla, served with a side salad of lettuce, tomato & sour cream.', 1000, null, 'Add', array['vegetarian']::text[], true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:quesadilla';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:quesadilla', 'Add meat', 400, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:quesadilla', 'Upgrade to dinner', 200, 1);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:loaded-nachos', 'food:starters', 'Loaded Nachos', 'Crispy chips topped with nacho cheese, mozzarella, beans, lettuce, tomato, guacamole, sour cream, and jalapeño.', 1200, null, 'Add', array['vegetarian']::text[], true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:loaded-nachos';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:loaded-nachos', 'Meat', 400, 0);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:oasis-fries', 'food:starters', 'Oasis Fries', 'Fries smothered in nacho cheese, jalapeño, mozzarella, guacamole & sour cream.', 1200, null, 'Add', array['vegetarian']::text[], true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:oasis-fries';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:oasis-fries', 'Meat', 400, 0);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:guacamole', 'food:starters', 'Guacamole', 'A blend of fresh onion, jalapeño, tomato, cilantro, and lime, served with tortilla chips.', 1200, null, null, array['vegetarian', 'vegan']::text[], true, false, 7)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:caesar-salad', 'food:starters', 'Caesar Salad', 'Crisp romaine tossed in creamy Caesar dressing, topped with seasoned croutons and fresh grated Parmesan.', 1200, null, 'Add 8oz', array['vegetarian']::text[], true, false, 8)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:caesar-salad';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:caesar-salad', 'Chicken', 400, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:caesar-salad', 'Shrimp', 600, 1);
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('food:entrees', 'food', 'Entrees', null, 1)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:taco-dinner', 'food:entrees', 'Taco Dinner', 'Three street tacos with your choice of meat and toppings, served with rice and beans.', 1400, null, 'Choice of meat', '{}', true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:taco-dinner';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Steak', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Tinga', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Grilled Chicken', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Ground Beef', null, 3);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Pastor', null, 4);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Birria', null, 5);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Carnitas', null, 6);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Veggie — grilled peppers, onions, tomato', null, 7);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Sour Cream', 50, 8);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Guacamole', 50, 9);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Avocado Slices', 50, 10);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:taco-salad', 'food:entrees', 'Taco Salad', 'Crisp lettuce layered with seasoned beans, shredded cheese, fresh tomato, and sour cream, topped with your choice of meat and served in a golden crispy tortilla bowl.', 1600, null, 'Add', '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:taco-salad';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-salad', 'Upgrade to Fajita Salad', 200, 0);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:birria-ramen', 'food:entrees', 'Birria Ramen', 'A fusion of ramen noodles with flavorful birria, cilantro, onion and cheese.', 1600, null, null, '{}', true, true, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:bizza', 'food:entrees', 'Our Famous Bizza', 'Our unique birria pizza creation, topped with cilantro and onion. Comes with a side of consommé.', 2000, null, null, '{}', true, true, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:burrito-dinner', 'food:entrees', 'Burrito Dinner', 'A hearty burrito filled with rice, beans, lettuce, cheese, tomato, sour cream and your choice of meat.', 1400, null, null, '{}', true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:enchiladas-dinner', 'food:entrees', 'Enchiladas Dinner', 'Stuffed with your choice of meat, smothered in green, poblano, mole or red sauce.', 1600, null, 'Sauce', '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:enchiladas-dinner';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:enchiladas-dinner', 'Green', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:enchiladas-dinner', 'Poblano', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:enchiladas-dinner', 'Mole', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:enchiladas-dinner', 'Red', null, 3);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:poblano-pasta', 'food:entrees', 'Poblano Pasta', 'Grilled chicken in a rich poblano sauce finished with ricotta salata. Shrimp substitution available.', 2000, null, null, '{}', true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:oasis-alfredo', 'food:entrees', 'Oasis Alfredo Pasta', 'Creamy alfredo pasta tossed with a hint of Mexican spice, topped with grilled chicken and fresh Parmesan. Shrimp substitution available.', 2000, null, null, '{}', true, false, 7)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:fajitas', 'food:entrees', 'Fajitas', 'Sizzling skillet of grilled bell peppers and onions with your choice of protein. Comes with rice, beans, lettuce, tomato, guacamole, sour cream and warm tortillas.', 2600, null, 'Choice of protein', '{}', true, false, 8)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'food:fajitas';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:fajitas', 'Steak', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:fajitas', 'Chicken', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:fajitas', 'Shrimp', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:fajitas', 'Combo', 400, 3);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:carne-asada', 'food:entrees', 'Carne Asada', 'Tender skirt steak served with rice and refried beans, grilled jalapeño and onions, with warm tortillas, sour cream, guacamole, lettuce and tomato.', 3400, null, null, '{}', true, false, 9)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:tampiquena', 'food:entrees', 'Tampiqueña Dinner', 'Tender skirt steak served with a mole cheese enchilada topped with sour cream and sesame seeds. Served with rice, refried beans, grilled jalapeño and onions, with warm tortillas, sour cream, guacamole, lettuce and tomato.', 3600, null, null, '{}', true, false, 10)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:mexican-rib-eye', 'food:entrees', 'Mexican Rib Eye', '16oz premium ribeye, flame-grilled and topped with herb butter. Served with street corn, rice, refried beans, grilled jalapeño and onions, with warm tortillas.', 4000, null, null, '{}', false, false, 11)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:torta', 'food:entrees', 'Torta', 'Traditional Mexican sandwich on toasted telera bread with refried beans, lettuce, tomato, sour cream, avocado, mayo and melted cheese with your choice of meat.', 1400, null, null, '{}', true, false, 12)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('food:specialty-tacos', 'food', 'Specialty Tacos', null, 2)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:quesabirrias', 'food:specialty-tacos', 'Our Famous Quesabirrias', 'Three cheesy, crispy tacos filled with slow-braised birria beef and melted cheese, served with a side of rich consommé for dipping.', 1600, null, null, '{}', true, true, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:tinga-tacos', 'food:specialty-tacos', 'Tinga Tacos', 'Two spicy shredded chicken tacos with tomato and sour cream, topped with lettuce and queso fresco.', 1600, null, null, array['spicy']::text[], true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:arrachera-tacos', 'food:specialty-tacos', 'Arrachera Tacos', 'Two tender, juicy skirt steak tacos seasoned and seared just like the taquerías in Mexico. Served on tortillas with onion, cilantro and salsa.', 1600, null, null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:carnitas-tacos', 'food:specialty-tacos', 'Carnitas Tacos', 'Two slow-cooked tacos topped with pickled red onions, cilantro and a squeeze of lime.', 1600, null, null, '{}', true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:shrimp-tacos', 'food:specialty-tacos', 'Shrimp Tacos', 'Two crispy shrimp tacos with fresh turnip slaw, chipotle aioli and tangy lime.', 1600, null, null, '{}', true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:fish-tacos', 'food:specialty-tacos', 'Fish Tacos', 'Two crispy battered fish tacos with fresh turnip slaw, chipotle aioli and tangy lime.', 1600, null, null, '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('food:sides', 'food', 'Sides', null, 3)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:los-esquites', 'food:sides', 'Los Esquites', 'Corn kernels with mayo, chili powder, Cotija cheese and lime.', 600, null, null, array['vegetarian']::text[], true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:side-rice', 'food:sides', 'Rice', null, 300, null, null, array['vegetarian']::text[], true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:side-beans', 'food:sides', 'Beans', null, 300, null, null, array['vegetarian']::text[], true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:side-fries', 'food:sides', 'Fries', null, 600, null, null, array['vegetarian']::text[], true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:side-salad', 'food:sides', 'Salad', null, 500, null, null, array['vegetarian']::text[], true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-
-insert into public.menus (slug, title, note, empty_state, sort) values ('cocktails', 'Cocktails & Bar', null, null, 1)
+insert into public.menus (slug, title, note, empty_state, sort)
+  values ('cocktails', 'Cocktails & Bar', null, null, 1)
   on conflict (slug) do update set title = excluded.title, note = excluded.note, empty_state = excluded.empty_state, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:classic-cocktails', 'cocktails', 'Classic Cocktails', null, 0)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:margarita', 'cocktails:classic-cocktails', 'Margarita', 'Cazadores tequila, triple sec and fresh lime juice, served over ice or frozen.', null, 'Ask your server', 'Flavors', '{}', true, true, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:margarita';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Lime', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Mango', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Strawberry', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Cucumber', null, 3);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Pineapple', null, 4);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita', 'Spicy', null, 5);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:blood-orange-paloma', 'cocktails:classic-cocktails', 'Blood Orange Paloma', 'Tequila, fresh lime, grapefruit soda and blood orange for a bright citrus finish, with a Tajín rim.', 1200, null, null, '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:cafe-de-horchata', 'cocktails:classic-cocktails', 'Café de Horchata', 'A smooth blend of bold coffee and creamy horchata, delivering a rich martini-style sip.', 1200, null, null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:cantarito', 'cocktails:classic-cocktails', 'Cantarito', 'Tequila, fresh citrus juices and grapefruit soda served with a bold chili-lime rim.', 1200, null, null, '{}', true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:mangonada', 'cocktails:classic-cocktails', 'Mangonada', 'Fresh mango purée, lime and tequila layered with chamoy and a Tajín rim — sweet, tangy and vibrant.', 1400, null, null, '{}', true, true, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:mojito', 'cocktails:classic-cocktails', 'Mojito', 'Fresh mint, lime juice, sugar, rum and soda water — crisp, light and refreshing.', 1300, null, null, '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:oasis-old-fashioned', 'cocktails:classic-cocktails', 'Oasis Old Fashioned', 'House bourbon served over a large ice cube with orange peel — smooth, smoky and subtly sweet.', 1400, null, null, '{}', true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:pina-colada', 'cocktails:classic-cocktails', 'Piña Colada', 'Creamy coconut, pineapple juice and white rum blended smooth and topped with pineapple. Also available frozen.', 1200, null, null, '{}', true, false, 7)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:espresso-martini', 'cocktails:classic-cocktails', 'Espresso Martini', 'Premium vodka, fresh espresso and coffee liqueur finished with a silky foam top.', 1400, null, null, '{}', true, false, 8)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:sangria', 'cocktails:classic-cocktails', 'Sangria', 'Red wine, fresh citrus and seasonal fruit with a splash of liqueur — lightly sweet, smooth and refreshing.', 1100, null, null, '{}', true, false, 9)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:shareables', 'cocktails', 'Fiesta Shareables', 'Built for the table.', 1)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:margarita-tower', 'cocktails:shareables', 'Margarita Tower', 'An oversized cocktail served in our signature tower — bold, refreshing and made to share with the table.', null, 'Ask your server', 'Flavors', '{}', true, true, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:margarita-tower';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita-tower', 'Lime', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita-tower', 'Strawberry', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita-tower', 'Mango', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita-tower', 'Pineapple', null, 3);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:margarita-tower', 'Peach', null, 4);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:pitchers', 'cocktails:shareables', 'Pitchers', 'Your favorite margarita served in a generous, shareable pitcher. Sangria pitcher $38.', null, 'Ask your server', 'Flavors', '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:pitchers';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Lime', null, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Strawberry', null, 1);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Mango', null, 2);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Jalapeño', null, 3);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Pineapple', null, 4);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Peach', null, 5);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:pitchers', 'Cucumber', null, 6);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:jumbo-cantarito', 'cocktails:shareables', 'Jumbo Cantarito', 'A jumbo-sized mix of premium tequila, fresh lime, orange and grapefruit juices topped with sparkling citrus soda and a Tajín rim — bright, refreshing and built for sharing.', 9900, null, null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:celebrations', 'cocktails', 'Celebrations', 'Ask your server when you book — the team sets it up.', 2)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:birthday-celebration', 'cocktails:celebrations', 'Birthday Celebration', 'A signature birthday dessert, the staff birthday song and your choice of song, a high-energy LED show from our team, and a confetti popper.', null, 'Ask your server', 'Add champagne', '{}', true, true, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:birthday-celebration';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:birthday-celebration', 'Moët mini bottle', 3500, 0);
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:birthday-celebration', 'Moët 750ml', 15000, 1);
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:beer-seltzers', 'cocktails', 'Beer & Seltzers', 'Seltzer flavors vary based on availability.', 3)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-corona', 'cocktails:beer-seltzers', 'Corona', null, null, 'Ask your server', null, '{}', true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-modelo-especial', 'cocktails:beer-seltzers', 'Modelo Especial', null, null, 'Ask your server', null, '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-modelo-negra', 'cocktails:beer-seltzers', 'Modelo Negra', null, null, 'Ask your server', null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-dos-equis', 'cocktails:beer-seltzers', 'Dos Equis', null, null, 'Ask your server', null, '{}', true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-pacifico', 'cocktails:beer-seltzers', 'Pacifico', null, null, 'Ask your server', null, '{}', true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-victoria', 'cocktails:beer-seltzers', 'Victoria', null, null, 'Ask your server', null, '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-heineken', 'cocktails:beer-seltzers', 'Heineken', null, null, 'Ask your server', null, '{}', true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-stella', 'cocktails:beer-seltzers', 'Stella Artois', null, null, 'Ask your server', null, '{}', true, false, 7)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-bud-light', 'cocktails:beer-seltzers', 'Bud Light', null, null, 'Ask your server', null, '{}', true, false, 8)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-miller-lite', 'cocktails:beer-seltzers', 'Miller Lite', null, null, 'Ask your server', null, '{}', true, false, 9)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-coors-light', 'cocktails:beer-seltzers', 'Coors Light', null, null, 'Ask your server', null, '{}', true, false, 10)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-busch-light', 'cocktails:beer-seltzers', 'Busch Light', null, null, 'Ask your server', null, '{}', true, false, 11)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-ultra', 'cocktails:beer-seltzers', 'Michelob Ultra', null, null, 'Ask your server', null, '{}', true, false, 12)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:seltzer-high-noon', 'cocktails:beer-seltzers', 'High Noon', null, null, 'Ask your server', null, '{}', true, false, 13)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:seltzer-white-claw', 'cocktails:beer-seltzers', 'White Claw', null, null, 'Ask your server', null, '{}', true, false, 14)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:beer-na-corona', 'cocktails:beer-seltzers', 'Corona Non-Alcoholic (21+)', null, null, 'Ask your server', null, '{}', true, false, 15)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:cider-angry-orchard', 'cocktails:beer-seltzers', 'Angry Orchard', null, null, 'Ask your server', null, '{}', true, false, 16)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:craft-blue-moon', 'cocktails:beer-seltzers', 'Blue Moon', null, null, 'Ask your server', null, '{}', true, false, 17)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:wine', 'cocktails', 'Wine', null, 4)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-cabernet', 'cocktails:wine', 'Cabernet', null, null, 'Ask your server', null, '{}', true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-pinot-noir', 'cocktails:wine', 'Pinot Noir', null, null, 'Ask your server', null, '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-merlot', 'cocktails:wine', 'Merlot', null, null, 'Ask your server', null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-chardonnay', 'cocktails:wine', 'Chardonnay', null, null, 'Ask your server', null, '{}', true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-sauvignon-blanc', 'cocktails:wine', 'Sauvignon Blanc', null, null, 'Ask your server', null, '{}', true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-pinot-grigio', 'cocktails:wine', 'Pinot Grigio', null, null, 'Ask your server', null, '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:wine-moscato', 'cocktails:wine', 'Moscato', null, null, 'Ask your server', null, '{}', true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_categories (id, menu_slug, name, note, sort) values ('cocktails:beverages', 'cocktails', 'Non-Alcoholic', null, 5)
-  on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-pepsi', 'cocktails:beverages', 'Pepsi', null, null, 'Ask your server', null, '{}', true, false, 0)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-diet-pepsi', 'cocktails:beverages', 'Diet Pepsi', null, null, 'Ask your server', null, '{}', true, false, 1)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-sprite', 'cocktails:beverages', 'Sprite', null, null, 'Ask your server', null, '{}', true, false, 2)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-dr-pepper', 'cocktails:beverages', 'Dr. Pepper', null, null, 'Ask your server', null, '{}', true, false, 3)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-lemonade', 'cocktails:beverages', 'Lemonade', null, null, 'Ask your server', null, '{}', true, false, 4)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-brisk', 'cocktails:beverages', 'Brisk Sweet / Unsweet Iced Tea', null, null, 'Ask your server', null, '{}', true, false, 5)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-jarritos', 'cocktails:beverages', 'Jarritos', 'Flavors vary based on availability.', 400, null, null, '{}', true, false, 6)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-horchata', 'cocktails:beverages', 'Horchata', null, 400, null, null, array['vegetarian']::text[], true, false, 7)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:na-horchata';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:na-horchata', 'Refill', 100, 0);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-jamaica', 'cocktails:beverages', 'Jamaica', null, 400, null, null, array['vegetarian', 'vegan']::text[], true, false, 8)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-delete from public.menu_modifiers where item_id = 'cocktails:na-jamaica';
-insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('cocktails:na-jamaica', 'Refill', 100, 0);
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-coffee', 'cocktails:beverages', 'Coffee', null, 500, null, null, '{}', true, false, 9)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('cocktails:na-red-bull', 'cocktails:beverages', 'Red Bull', null, 400, null, null, '{}', true, false, 10)
-  on conflict (id) do update set name = excluded.name, description = excluded.description,
-    price_cents = excluded.price_cents, price_note = excluded.price_note,
-    modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
-    available = excluded.available, featured = excluded.featured, sort = excluded.sort;
-
-insert into public.menus (slug, title, note, empty_state, sort) values ('brunch', 'Brunch', 'Served Saturday and Sunday, 10am to 3pm.', 'The full brunch menu is being finalized with the kitchen. Brunch is served every Saturday and Sunday from 10am to 3pm — call us or come in and ask what the kitchen is running this weekend.', 2)
+insert into public.menus (slug, title, note, empty_state, sort)
+  values ('brunch', 'Brunch', 'Served Saturday and Sunday, 10am to 3pm.', 'The full brunch menu is being finalized with the kitchen. Brunch is served every Saturday and Sunday from 10am to 3pm — call us or come in and ask what the kitchen is running this weekend.', 2)
   on conflict (slug) do update set title = excluded.title, note = excluded.note, empty_state = excluded.empty_state, sort = excluded.sort;
 
--- Event series -------------------------------------------------------
--- NOTE: no dates here. Occurrences are generated from cadence at read time.
-insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, price_cents, status, series_ends_on, sort)
-  values ('oasis-fridays', 'Oasis Fridays', 'House, Top 100 and Hip-Hop. 18+, doors at 10.', 'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and late-night energy.', 'weekly:5', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['House', 'Top 100', 'Hip-Hop']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerFridays', 'August 7th', null, 1000, 'scheduled'::public.event_status, null, 0)
-  on conflict (slug) do update set title = excluded.title, summary = excluded.summary,
-    description = excluded.description, cadence = excluded.cadence,
-    start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes,
-    age_min = excluded.age_min, age_note = excluded.age_note,
-    music_formats = excluded.music_formats, artwork_asset_id = excluded.artwork_asset_id,
-    flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date,
-    ticket_url = excluded.ticket_url, price_cents = excluded.price_cents,
-    status = excluded.status, sort = excluded.sort;
-insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, price_cents, status, series_ends_on, sort)
-  values ('oasis-latin-saturdays', 'Oasis Latin Saturdays', 'Reggaetón, corridos and guaracha. 18+, doors at 10.', 'Latin Saturdays at Oasis. Dance to reggaetón, corridos and guaracha in a high-energy room with great music, drinks and late-night vibes. 18+.', 'weekly:6', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['Reggaetón', 'Corridos', 'Guaracha']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerLatinSaturdays', 'August 8th', null, 1000, 'scheduled'::public.event_status, null, 1)
-  on conflict (slug) do update set title = excluded.title, summary = excluded.summary,
-    description = excluded.description, cadence = excluded.cadence,
-    start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes,
-    age_min = excluded.age_min, age_note = excluded.age_note,
-    music_formats = excluded.music_formats, artwork_asset_id = excluded.artwork_asset_id,
-    flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date,
-    ticket_url = excluded.ticket_url, price_cents = excluded.price_cents,
-    status = excluded.status, sort = excluded.sort;
+-- menu_categories
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('starters', 'food', 'Starters', null, 0)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('entrees', 'food', 'Entrees', null, 1)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('specialty-tacos', 'food', 'Specialty Tacos', null, 2)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('sides', 'food', 'Sides', null, 3)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('classic-cocktails', 'cocktails', 'Classic Cocktails', null, 0)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('shareables', 'cocktails', 'Fiesta Shareables', 'Built for the table.', 1)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('celebrations', 'cocktails', 'Celebrations', 'Ask your server when you book — the team sets it up.', 2)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('beer-seltzers', 'cocktails', 'Beer & Seltzers', 'Seltzer flavors vary based on availability.', 3)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('wine', 'cocktails', 'Wine', null, 4)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
+insert into public.menu_categories (id, menu_slug, name, note, sort)
+  values ('beverages', 'cocktails', 'Non-Alcoholic', null, 5)
+  on conflict (id) do update set menu_slug = excluded.menu_slug, name = excluded.name, note = excluded.note, sort = excluded.sort;
 
--- Catering -----------------------------------------------------------
+-- menu_items
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('oasis-wings', 'starters', 'Oasis Wings', '8 wings of your choice of sauce, with ranch.', 'fixed', 1800, null, 'Sauce', '{}'::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('queso-dip', 'starters', 'Queso Dip', 'Queso dip with chorizo & chips: messy, cheesy, and absolutely necessary.', 'fixed', 900, null, null, '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('crispy-shrimps', 'starters', 'Crispy Shrimps', 'Golden-fried shrimp served over a fresh spring mix salad.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('street-corn', 'starters', 'Street Corn', 'Four grilled mini corn cobs with creamy mayo, topped with Cotija cheese and Tajín.', 'fixed', 1000, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('quesadilla', 'starters', 'Quesadilla', 'Melted cheese in a warm tortilla, served with a side salad of lettuce, tomato & sour cream.', 'fixed', 1000, null, 'Add', array['vegetarian']::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('loaded-nachos', 'starters', 'Loaded Nachos', 'Crispy chips topped with nacho cheese, mozzarella, beans, lettuce, tomato, guacamole, sour cream, and jalapeño.', 'fixed', 1200, null, 'Add', array['vegetarian']::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('oasis-fries', 'starters', 'Oasis Fries', 'Fries smothered in nacho cheese, jalapeño, mozzarella, guacamole & sour cream.', 'fixed', 1200, null, 'Add', array['vegetarian']::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('guacamole', 'starters', 'Guacamole', 'A blend of fresh onion, jalapeño, tomato, cilantro, and lime, served with tortilla chips.', 'fixed', 1200, null, null, array['vegetarian', 'vegan']::text[], 'available', null, true, false, null, 7)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('caesar-salad', 'starters', 'Caesar Salad', 'Crisp romaine tossed in creamy Caesar dressing, topped with seasoned croutons and fresh grated Parmesan.', 'fixed', 1200, null, 'Add 8oz', array['vegetarian']::text[], 'available', null, true, false, null, 8)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('taco-dinner', 'entrees', 'Taco Dinner', 'Three street tacos with your choice of meat and toppings, served with rice and beans.', 'fixed', 1400, null, 'Choice of meat', '{}'::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('taco-salad', 'entrees', 'Taco Salad', 'Crisp lettuce layered with seasoned beans, shredded cheese, fresh tomato, and sour cream, topped with your choice of meat and served in a golden crispy tortilla bowl.', 'fixed', 1600, null, 'Add', '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('birria-ramen', 'entrees', 'Birria Ramen', 'A fusion of ramen noodles with flavorful birria, cilantro, onion and cheese.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, true, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('bizza', 'entrees', 'Our Famous Bizza', 'Our unique birria pizza creation, topped with cilantro and onion. Comes with a side of consommé.', 'fixed', 2000, null, null, '{}'::text[], 'available', null, true, true, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('burrito-dinner', 'entrees', 'Burrito Dinner', 'A hearty burrito filled with rice, beans, lettuce, cheese, tomato, sour cream and your choice of meat.', 'fixed', 1400, null, null, '{}'::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('enchiladas-dinner', 'entrees', 'Enchiladas Dinner', 'Stuffed with your choice of meat, smothered in green, poblano, mole or red sauce.', 'fixed', 1600, null, 'Sauce', '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('poblano-pasta', 'entrees', 'Poblano Pasta', 'Grilled chicken in a rich poblano sauce finished with ricotta salata. Shrimp substitution available.', 'fixed', 2000, null, null, '{}'::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('oasis-alfredo', 'entrees', 'Oasis Alfredo Pasta', 'Creamy alfredo pasta tossed with a hint of Mexican spice, topped with grilled chicken and fresh Parmesan. Shrimp substitution available.', 'fixed', 2000, null, null, '{}'::text[], 'available', null, true, false, null, 7)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('fajitas', 'entrees', 'Fajitas', 'Sizzling skillet of grilled bell peppers and onions with your choice of protein. Comes with rice, beans, lettuce, tomato, guacamole, sour cream and warm tortillas.', 'fixed', 2600, null, 'Choice of protein', '{}'::text[], 'available', null, true, false, null, 8)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('carne-asada', 'entrees', 'Carne Asada', 'Tender skirt steak served with rice and refried beans, grilled jalapeño and onions, with warm tortillas, sour cream, guacamole, lettuce and tomato.', 'fixed', 3400, null, null, '{}'::text[], 'available', null, true, false, null, 9)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('tampiquena', 'entrees', 'Tampiqueña Dinner', 'Tender skirt steak served with a mole cheese enchilada topped with sour cream and sesame seeds. Served with rice, refried beans, grilled jalapeño and onions, with warm tortillas, sour cream, guacamole, lettuce and tomato.', 'fixed', 3600, null, null, '{}'::text[], 'available', null, true, false, null, 10)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('mexican-rib-eye', 'entrees', 'Mexican Rib Eye', '16oz premium ribeye, flame-grilled and topped with herb butter. Served with street corn, rice, refried beans, grilled jalapeño and onions, with warm tortillas.', 'fixed', 4000, null, null, '{}'::text[], 'unavailable', null, false, false, null, 11)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('torta', 'entrees', 'Torta', 'Traditional Mexican sandwich on toasted telera bread with refried beans, lettuce, tomato, sour cream, avocado, mayo and melted cheese with your choice of meat.', 'fixed', 1400, null, null, '{}'::text[], 'available', null, true, false, null, 12)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('quesabirrias', 'specialty-tacos', 'Our Famous Quesabirrias', 'Three cheesy, crispy tacos filled with slow-braised birria beef and melted cheese, served with a side of rich consommé for dipping.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, true, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('tinga-tacos', 'specialty-tacos', 'Tinga Tacos', 'Two spicy shredded chicken tacos with tomato and sour cream, topped with lettuce and queso fresco.', 'fixed', 1600, null, null, array['spicy']::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('arrachera-tacos', 'specialty-tacos', 'Arrachera Tacos', 'Two tender, juicy skirt steak tacos seasoned and seared just like the taquerías in Mexico. Served on tortillas with onion, cilantro and salsa.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('carnitas-tacos', 'specialty-tacos', 'Carnitas Tacos', 'Two slow-cooked tacos topped with pickled red onions, cilantro and a squeeze of lime.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('shrimp-tacos', 'specialty-tacos', 'Shrimp Tacos', 'Two crispy shrimp tacos with fresh turnip slaw, chipotle aioli and tangy lime.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('fish-tacos', 'specialty-tacos', 'Fish Tacos', 'Two crispy battered fish tacos with fresh turnip slaw, chipotle aioli and tangy lime.', 'fixed', 1600, null, null, '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('los-esquites', 'sides', 'Los Esquites', 'Corn kernels with mayo, chili powder, Cotija cheese and lime.', 'fixed', 600, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('side-rice', 'sides', 'Rice', null, 'fixed', 300, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('side-beans', 'sides', 'Beans', null, 'fixed', 300, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('side-fries', 'sides', 'Fries', null, 'fixed', 600, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('side-salad', 'sides', 'Salad', null, 'fixed', 500, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('margarita', 'classic-cocktails', 'Margarita', 'Cazadores tequila, triple sec and fresh lime juice, served over ice or frozen.', 'ask-server', null, 'Ask your server', 'Flavors', '{}'::text[], 'available', null, true, true, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('blood-orange-paloma', 'classic-cocktails', 'Blood Orange Paloma', 'Tequila, fresh lime, grapefruit soda and blood orange for a bright citrus finish, with a Tajín rim.', 'fixed', 1200, null, null, '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('cafe-de-horchata', 'classic-cocktails', 'Café de Horchata', 'A smooth blend of bold coffee and creamy horchata, delivering a rich martini-style sip.', 'fixed', 1200, null, null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('cantarito', 'classic-cocktails', 'Cantarito', 'Tequila, fresh citrus juices and grapefruit soda served with a bold chili-lime rim.', 'fixed', 1200, null, null, '{}'::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('mangonada', 'classic-cocktails', 'Mangonada', 'Fresh mango purée, lime and tequila layered with chamoy and a Tajín rim — sweet, tangy and vibrant.', 'fixed', 1400, null, null, '{}'::text[], 'available', null, true, true, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('mojito', 'classic-cocktails', 'Mojito', 'Fresh mint, lime juice, sugar, rum and soda water — crisp, light and refreshing.', 'fixed', 1300, null, null, '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('oasis-old-fashioned', 'classic-cocktails', 'Oasis Old Fashioned', 'House bourbon served over a large ice cube with orange peel — smooth, smoky and subtly sweet.', 'fixed', 1400, null, null, '{}'::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('pina-colada', 'classic-cocktails', 'Piña Colada', 'Creamy coconut, pineapple juice and white rum blended smooth and topped with pineapple. Also available frozen.', 'fixed', 1200, null, null, '{}'::text[], 'available', null, true, false, null, 7)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('espresso-martini', 'classic-cocktails', 'Espresso Martini', 'Premium vodka, fresh espresso and coffee liqueur finished with a silky foam top.', 'fixed', 1400, null, null, '{}'::text[], 'available', null, true, false, null, 8)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('sangria', 'classic-cocktails', 'Sangria', 'Red wine, fresh citrus and seasonal fruit with a splash of liqueur — lightly sweet, smooth and refreshing.', 'fixed', 1100, null, null, '{}'::text[], 'available', null, true, false, null, 9)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('margarita-tower', 'shareables', 'Margarita Tower', 'An oversized cocktail served in our signature tower — bold, refreshing and made to share with the table.', 'ask-server', null, 'Ask your server', 'Flavors', '{}'::text[], 'available', null, true, true, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('pitchers', 'shareables', 'Pitchers', 'Your favorite margarita served in a generous, shareable pitcher. Sangria pitcher $38.', 'ask-server', null, 'Ask your server', 'Flavors', '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('jumbo-cantarito', 'shareables', 'Jumbo Cantarito', 'A jumbo-sized mix of premium tequila, fresh lime, orange and grapefruit juices topped with sparkling citrus soda and a Tajín rim — bright, refreshing and built for sharing.', 'fixed', 9900, null, null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('birthday-celebration', 'celebrations', 'Birthday Celebration', 'A signature birthday dessert, the staff birthday song and your choice of song, a high-energy LED show from our team, and a confetti popper.', 'ask-server', null, 'Ask your server', 'Add champagne', '{}'::text[], 'available', null, true, true, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-corona', 'beer-seltzers', 'Corona', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-modelo-especial', 'beer-seltzers', 'Modelo Especial', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-modelo-negra', 'beer-seltzers', 'Modelo Negra', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-dos-equis', 'beer-seltzers', 'Dos Equis', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-pacifico', 'beer-seltzers', 'Pacifico', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-victoria', 'beer-seltzers', 'Victoria', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-heineken', 'beer-seltzers', 'Heineken', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-stella', 'beer-seltzers', 'Stella Artois', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 7)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-bud-light', 'beer-seltzers', 'Bud Light', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 8)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-miller-lite', 'beer-seltzers', 'Miller Lite', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 9)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-coors-light', 'beer-seltzers', 'Coors Light', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 10)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-busch-light', 'beer-seltzers', 'Busch Light', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 11)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-ultra', 'beer-seltzers', 'Michelob Ultra', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 12)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('seltzer-high-noon', 'beer-seltzers', 'High Noon', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 13)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('seltzer-white-claw', 'beer-seltzers', 'White Claw', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 14)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('beer-na-corona', 'beer-seltzers', 'Corona Non-Alcoholic (21+)', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 15)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('cider-angry-orchard', 'beer-seltzers', 'Angry Orchard', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 16)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('craft-blue-moon', 'beer-seltzers', 'Blue Moon', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 17)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-cabernet', 'wine', 'Cabernet', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-pinot-noir', 'wine', 'Pinot Noir', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-merlot', 'wine', 'Merlot', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-chardonnay', 'wine', 'Chardonnay', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-sauvignon-blanc', 'wine', 'Sauvignon Blanc', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-pinot-grigio', 'wine', 'Pinot Grigio', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('wine-moscato', 'wine', 'Moscato', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-pepsi', 'beverages', 'Pepsi', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 0)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-diet-pepsi', 'beverages', 'Diet Pepsi', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 1)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-sprite', 'beverages', 'Sprite', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 2)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-dr-pepper', 'beverages', 'Dr. Pepper', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 3)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-lemonade', 'beverages', 'Lemonade', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 4)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-brisk', 'beverages', 'Brisk Sweet / Unsweet Iced Tea', null, 'ask-server', null, 'Ask your server', null, '{}'::text[], 'available', null, true, false, null, 5)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-jarritos', 'beverages', 'Jarritos', 'Flavors vary based on availability.', 'fixed', 400, null, null, '{}'::text[], 'available', null, true, false, null, 6)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-horchata', 'beverages', 'Horchata', null, 'fixed', 400, null, null, array['vegetarian']::text[], 'available', null, true, false, null, 7)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-jamaica', 'beverages', 'Jamaica', null, 'fixed', 400, null, null, array['vegetarian', 'vegan']::text[], 'available', null, true, false, null, 8)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-coffee', 'beverages', 'Coffee', null, 'fixed', 500, null, null, '{}'::text[], 'available', null, true, false, null, 9)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+insert into public.menu_items (id, category_id, name, description, price_mode, price_cents, price_note, modifier_group_label, dietary, availability, availability_note, available, featured, media_asset_id, sort)
+  values ('na-red-bull', 'beverages', 'Red Bull', null, 'fixed', 400, null, null, '{}'::text[], 'available', null, true, false, null, 10)
+  on conflict (id) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description, price_mode = excluded.price_mode, price_cents = excluded.price_cents, price_note = excluded.price_note, modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary, availability = excluded.availability, availability_note = excluded.availability_note, available = excluded.available, featured = excluded.featured, media_asset_id = excluded.media_asset_id, sort = excluded.sort;
+
+-- menu_modifiers
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('bd137da0-6f18-5c34-9e4c-61d19f662e22', 'oasis-wings', 'Mole', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('ccd8931b-8ee9-5c9e-a516-c172196b6222', 'oasis-wings', 'Mango Habanero', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('54940016-a067-51af-88e2-b935e0f2095c', 'oasis-wings', 'Buffalo', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('cb27bce5-74a1-5c76-8fb6-27238cb73b23', 'oasis-wings', 'BBQ', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('d1fdd149-36ed-5ec5-b139-1d738fd530f7', 'quesadilla', 'Add meat', 400, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('32a388a9-4bf1-5d6d-9724-ad3a515b4f6a', 'quesadilla', 'Upgrade to dinner', 200, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('32c8391e-70b1-5418-b76b-6107636b0c49', 'loaded-nachos', 'Meat', 400, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('725847f8-7ce9-5bc1-95bc-756f9ae45d2f', 'oasis-fries', 'Meat', 400, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('fce2c38d-9505-5d84-a32b-2ba9ddf537b5', 'caesar-salad', 'Chicken', 400, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('2dd7eca2-9390-5bc2-ab38-00bbe2f2b4f2', 'caesar-salad', 'Shrimp', 600, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('b9702583-d9de-5ee7-ab27-b7357d0301ed', 'taco-dinner', 'Steak', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('3b7518dd-0905-514a-8543-8bdc4c4c67c6', 'taco-dinner', 'Tinga', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('b653c98e-5a78-5f17-92d8-ecd257eb5929', 'taco-dinner', 'Grilled Chicken', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('b044d4c7-626a-5d00-acf7-9baa5ac7df20', 'taco-dinner', 'Ground Beef', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('4966bad4-6442-5792-987b-d69dff96d3d4', 'taco-dinner', 'Pastor', null, 4)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('733b46b2-efdd-5da2-b47a-bb6c2882c61a', 'taco-dinner', 'Birria', null, 5)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('2713654c-c967-5a0d-99c9-d476624d6747', 'taco-dinner', 'Carnitas', null, 6)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('aa5a9a64-b62b-5e7c-bfae-8be41e9f3bd4', 'taco-dinner', 'Veggie — grilled peppers, onions, tomato', null, 7)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('4fe2ef15-d46b-5512-89b7-2a035be90858', 'taco-dinner', 'Sour Cream', 50, 8)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('9f1577a0-5287-508c-99f0-25bc3fc54bfb', 'taco-dinner', 'Guacamole', 50, 9)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('8b9a36a5-acd0-5cc3-b68a-eddd278d1ef2', 'taco-dinner', 'Avocado Slices', 50, 10)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('4825679b-9b83-5bbe-84ab-b5298b19da69', 'taco-salad', 'Upgrade to Fajita Salad', 200, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('0abda8e0-e9b3-5647-83d6-9842203a2e52', 'enchiladas-dinner', 'Green', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('6680e8f7-6202-5c6a-81ec-577ee1f8562b', 'enchiladas-dinner', 'Poblano', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('43075266-57b0-5563-8a12-2b5ef25be36e', 'enchiladas-dinner', 'Mole', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('674b4ecb-27af-5d57-a800-96a6fd875e5a', 'enchiladas-dinner', 'Red', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('3b4c7620-90e3-5883-a817-fc5662593563', 'fajitas', 'Steak', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('f6f249b5-acae-5464-8537-bb44d5b8ec54', 'fajitas', 'Chicken', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('b87afc92-ff89-5d43-abe4-670dcf767549', 'fajitas', 'Shrimp', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('7505c503-ec31-5e6d-b3ac-d0484688e857', 'fajitas', 'Combo', 400, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('cfab2751-9389-5b1a-9a33-89a1b82913b8', 'margarita', 'Lime', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('bd63d0bd-3468-56b6-b8c1-10abf6a65825', 'margarita', 'Mango', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('a9c41b2d-ca20-5ec0-8340-b212eb7ff784', 'margarita', 'Strawberry', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('5b6b1c3b-24d0-5d06-a286-fe50b8cda9f2', 'margarita', 'Cucumber', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('031eb594-7da7-58d9-bda0-9537dc679c3d', 'margarita', 'Pineapple', null, 4)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('5aeac2db-e8db-58fb-b90f-5c736bd006d8', 'margarita', 'Spicy', null, 5)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('989d4d8f-42c9-586a-9e54-1c944aff07c2', 'margarita-tower', 'Lime', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('03d428ac-c313-55e1-b6d5-448e5bb4b114', 'margarita-tower', 'Strawberry', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('ff9169f0-ab02-521c-b892-7e68ff3753e0', 'margarita-tower', 'Mango', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('ecac21fb-793a-5190-99a0-fb565d560c71', 'margarita-tower', 'Pineapple', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('3add84a3-f3b7-5d4c-9134-881f50ec8a6d', 'margarita-tower', 'Peach', null, 4)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('e84b8c5f-dc8f-5032-a54f-20a80929e575', 'pitchers', 'Lime', null, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('9808eaa6-4fe0-50bb-8715-1d978d84e1e3', 'pitchers', 'Strawberry', null, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('c0a93ce5-b6ce-5508-a28c-53674e0f211e', 'pitchers', 'Mango', null, 2)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('a7d40ff2-6633-58b7-8443-141db09120ba', 'pitchers', 'Jalapeño', null, 3)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('b52811fd-54fd-5b4a-a575-27362c0f5b69', 'pitchers', 'Pineapple', null, 4)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('0cd21a44-4857-5fc0-9f2e-210f04ea3be7', 'pitchers', 'Peach', null, 5)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('c0ab3a71-85f7-5ac8-bb4f-63f5abb31ab6', 'pitchers', 'Cucumber', null, 6)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('d9b3f878-7371-58b4-997d-11ad53c7045f', 'birthday-celebration', 'Moët mini bottle', 3500, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('c7c3bb93-6ad6-52d3-aaa9-393b639d660d', 'birthday-celebration', 'Moët 750ml', 15000, 1)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('95a430a6-a04d-55ad-88bd-0ab6ea8af1c3', 'na-horchata', 'Refill', 100, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+insert into public.menu_modifiers (id, item_id, label, price_cents, sort)
+  values ('84ae7bd8-41be-50ea-9dda-2fb2b3fe7a41', 'na-jamaica', 'Refill', 100, 0)
+  on conflict (id) do update set item_id = excluded.item_id, label = excluded.label, price_cents = excluded.price_cents, sort = excluded.sort;
+
+-- event_series
+insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, ticket_policy, price_cents, status, paused, series_ends_on, sort)
+  values ('oasis-fridays', 'Oasis Fridays', 'House, Top 100 and Hip-Hop. 18+, doors at 10.', 'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and late-night energy.', 'weekly:5', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['House', 'Top 100', 'Hip-Hop']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerFridays', 'August 7th', null, 'required', 1000, 'scheduled', false, null, 0)
+  on conflict (slug) do update set title = excluded.title, summary = excluded.summary, description = excluded.description, cadence = excluded.cadence, start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes, age_min = excluded.age_min, age_note = excluded.age_note, music_formats = excluded.music_formats, venue_name = excluded.venue_name, artwork_asset_id = excluded.artwork_asset_id, flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date, ticket_url = excluded.ticket_url, ticket_policy = excluded.ticket_policy, price_cents = excluded.price_cents, status = excluded.status, paused = excluded.paused, series_ends_on = excluded.series_ends_on, sort = excluded.sort;
+insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, ticket_policy, price_cents, status, paused, series_ends_on, sort)
+  values ('oasis-latin-saturdays', 'Oasis Latin Saturdays', 'Reggaetón, corridos and guaracha. 18+, doors at 10.', 'Latin Saturdays at Oasis. Dance to reggaetón, corridos and guaracha in a high-energy room with great music, drinks and late-night vibes. 18+.', 'weekly:6', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['Reggaetón', 'Corridos', 'Guaracha']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerLatinSaturdays', 'August 8th', null, 'required', 1000, 'scheduled', false, null, 1)
+  on conflict (slug) do update set title = excluded.title, summary = excluded.summary, description = excluded.description, cadence = excluded.cadence, start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes, age_min = excluded.age_min, age_note = excluded.age_note, music_formats = excluded.music_formats, venue_name = excluded.venue_name, artwork_asset_id = excluded.artwork_asset_id, flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date, ticket_url = excluded.ticket_url, ticket_policy = excluded.ticket_policy, price_cents = excluded.price_cents, status = excluded.status, paused = excluded.paused, series_ends_on = excluded.series_ends_on, sort = excluded.sort;
+
+-- catering_packages
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
   values ('fiesta-pack', 'Fiesta Pack', 15, 20, 24500, array['40 tacos — steak, chicken, pastor or mix', 'Rice & beans (half tray)', 'Chips & salsa (½ gallon)', 'Red & green salsa included']::text[], 0)
-  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min,
-    serves_max = excluded.serves_max, price_cents = excluded.price_cents,
-    includes = excluded.includes, sort = excluded.sort;
+  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min, serves_max = excluded.serves_max, price_cents = excluded.price_cents, includes = excluded.includes, sort = excluded.sort;
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
   values ('tradicion-pack', 'Tradición Pack', 25, 30, 36500, array['80 tacos (two trays of 40)', 'Rice & beans (full tray)', 'Chips & salsa (1 gallon)', 'Red & green salsa included']::text[], 1)
-  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min,
-    serves_max = excluded.serves_max, price_cents = excluded.price_cents,
-    includes = excluded.includes, sort = excluded.sort;
+  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min, serves_max = excluded.serves_max, price_cents = excluded.price_cents, includes = excluded.includes, sort = excluded.sort;
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
   values ('fajita-fiesta', 'Fajita Fiesta', 25, 30, 39500, array['Fajitas, full tray — steak, chicken or mix', 'Rice & beans (full tray)', 'Tortillas', 'Chips & salsa (1 gallon)', 'Red & green salsa included']::text[], 2)
-  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min,
-    serves_max = excluded.serves_max, price_cents = excluded.price_cents,
-    includes = excluded.includes, sort = excluded.sort;
+  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min, serves_max = excluded.serves_max, price_cents = excluded.price_cents, includes = excluded.includes, sort = excluded.sort;
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
   values ('birria-lovers-pack', 'Birria Lovers Pack', 20, 25, 31000, array['Quesabirria tacos (40 pieces)', 'Rice & beans (full tray)', 'Chips & salsa (½ gallon)', '½ gallon consommé']::text[], 3)
-  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min,
-    serves_max = excluded.serves_max, price_cents = excluded.price_cents,
-    includes = excluded.includes, sort = excluded.sort;
+  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min, serves_max = excluded.serves_max, price_cents = excluded.price_cents, includes = excluded.includes, sort = excluded.sort;
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
   values ('office-lunch-pack', 'Office Lunch Pack', 20, 25, 29500, array['Poblano pasta with chicken', '40 tacos — chicken, pastor or steak', 'Chips & salsa (½ gallon)']::text[], 4)
-  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min,
-    serves_max = excluded.serves_max, price_cents = excluded.price_cents,
-    includes = excluded.includes, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('tray-40-tacos', 'Tray of 40 tacos', 12000, 'Steak, chicken, pastor or mix. All toppings included — lettuce, cheese, tomato, onion, cilantro and limes. Includes 1 pint each of red & green salsa.', 0)
+  on conflict (id) do update set name = excluded.name, serves_min = excluded.serves_min, serves_max = excluded.serves_max, price_cents = excluded.price_cents, includes = excluded.includes, sort = excluded.sort;
+
+-- catering_items
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('tray-40-tacos', 'Tray of 40 tacos', 12000, 'Steak, chicken, pastor or mix. All toppings included — lettuce, cheese, tomato, onion, cilantro and limes. Includes 1 pint each of red & green salsa.', 0)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('tray-40-half-burritos', 'Tray of 40 half burritos', 16500, 'Includes 1 pint each of red & green salsa.', 1)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('tray-40-half-burritos', 'Tray of 40 half burritos', 16500, 'Includes 1 pint each of red & green salsa.', 1)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('tray-40-quesabirria', 'Tray of 40 quesabirria tacos', 13500, 'Includes 1 gallon of consommé.', 2)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('tray-40-quesabirria', 'Tray of 40 quesabirria tacos', 13500, 'Includes 1 gallon of consommé.', 2)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('fajitas-full-tray', 'Fajitas — full tray', 16000, 'Includes 1 pint each of red & green salsa.', 3)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('fajitas-full-tray', 'Fajitas — full tray', 16000, 'Includes 1 pint each of red & green salsa.', 3)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('fajitas-half-tray', 'Fajitas — half tray', 8500, 'Includes 1 pint each of red & green salsa.', 4)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('fajitas-half-tray', 'Fajitas — half tray', 8500, 'Includes 1 pint each of red & green salsa.', 4)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('poblano-pasta-tray', 'Poblano pasta with chicken', 11000, 'Serves 20–25.', 5)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('poblano-pasta-tray', 'Poblano pasta with chicken', 11000, 'Serves 20–25.', 5)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('rice-full-tray', 'Rice — full tray', 6000, null, 6)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('rice-full-tray', 'Rice — full tray', 6000, null, 6)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('rice-half-tray', 'Rice — half tray', 3200, null, 7)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('rice-half-tray', 'Rice — half tray', 3200, null, 7)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('beans-full-tray', 'Beans — full tray', 6000, null, 8)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('beans-full-tray', 'Beans — full tray', 6000, null, 8)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('beans-half-tray', 'Beans — half tray', 3200, null, 9)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('beans-half-tray', 'Beans — half tray', 3200, null, 9)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('chips-salsa-catering', 'Chips & salsa', 3000, 'Includes ½ gallon of salsa.', 10)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('chips-salsa-catering', 'Chips & salsa', 3000, 'Includes ½ gallon of salsa.', 10)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('salsa-half-gallon', '½ gallon salsa', 2000, null, 11)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('salsa-half-gallon', '½ gallon salsa', 2000, null, 11)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
-insert into public.catering_items (id, name, price_cents, note, sort) values ('consomme-half-gallon', '½ gallon consommé', 1500, null, 12)
+insert into public.catering_items (id, name, price_cents, note, sort)
+  values ('consomme-half-gallon', '½ gallon consommé', 1500, null, 12)
   on conflict (id) do update set name = excluded.name, price_cents = excluded.price_cents, note = excluded.note, sort = excluded.sort;
 
--- Page sections ------------------------------------------------------
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'breadth', 'From the kitchen to the bar', 'Come hungry. Stay awhile.', 'Tacos and plates from the kitchen, a bar built on tequila, and brunch on the weekend.', true, 'stagger', 0)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'bar', 'Bar & brunch', 'Margaritas by the tower.', 'A bar built on tequila, and the weekend brunch that fills the room by eleven.', true, 'editorial-right', 1)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'after-dark', 'Oasis After Dark', 'The room changes after ten.', 'Dinner first, music after. Friday and Saturday go later — eighteen and up.', true, 'band', 2)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'two-paths', 'Catering & celebrations', 'Take it with you, or take over the room.', null, true, 'stagger', 3)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
+-- page_sections
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('home:breadth', 'home', 'breadth', 'From the kitchen to the bar', 'Come hungry. Stay awhile.', 'Tacos and plates from the kitchen, a bar built on tequila, and brunch on the weekend.', true, 'stagger', null, null, null, 0)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('home:bar', 'home', 'bar', 'Bar & brunch', 'Margaritas by the tower.', 'A bar built on tequila, and the weekend brunch that fills the room by eleven.', true, 'editorial-right', null, null, null, 1)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('home:after-dark', 'home', 'after-dark', 'Oasis After Dark', 'The room changes after ten.', 'Dinner first, music after. Friday and Saturday go later — eighteen and up.', true, 'band', null, null, null, 2)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('home:two-paths', 'home', 'two-paths', 'Catering & celebrations', 'Take it with you, or take over the room.', null, true, 'stagger', null, null, null, 3)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('menu:opener', 'menu', 'opener', 'Menu', 'Everything we make.', 'Food, cocktails and weekend brunch — all in one place.', true, 'plain', null, null, null, 0)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('events:opener', 'events', 'opener', 'Oasis After Dark', 'Friday and Saturday go later.', 'Dinner first, music after. Friday and Saturday from 10pm.', true, 'plain', null, null, null, 1)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('catering:opener', 'catering', 'opener', 'Catering', 'Trays, packages, and enough food for the whole office.', 'Order catering through our Toast page, or send us the details and we will help you build it.', true, 'plain', null, null, null, 2)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('private-events:opener', 'private-events', 'opener', 'Celebrations', 'Birthdays, quinceañeras, and everything worth making noise about.', 'Tell us the date and the headcount, and someone from Oasis will get back to you with what we can do.', true, 'plain', null, null, null, 3)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('visit:opener', 'visit', 'opener', 'Find us', 'Come and find us.', 'Fresh Mexican flavors and a modern room in the heart of Lockport.', true, 'plain', null, null, null, 4)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('careers:opener', 'careers', 'opener', 'Join the', 'Oasis Familia', 'We are looking for passionate people to help us serve modern Mexican flavors and good vibes.', true, 'plain', null, null, null, 5)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('home:hero', 'home', 'hero', 'Lockport, Illinois', 'Dinner first. Music after.', 'Modern Mexican in Lockport — birria, tortas and margaritas by the tower, in a room that keeps going after the kitchen closes.', true, 'band', 'heroVideo', null, null, -1)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
 
--- Page SEO -----------------------------------------------------------
-insert into public.page_seo (page, title, description, og_asset_id) values ('home', 'Oasis Mexican Kitchen & Bar — Modern Mexican in Lockport, IL', 'Modern Mexican kitchen and bar in Lockport, IL. Birria, quesabirrias, handcrafted cocktails, weekend brunch, and 18+ nightlife Friday and Saturday. Reserve a table or order online.', null)
+-- page_seo
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('home', 'Oasis Mexican Kitchen & Bar — Modern Mexican in Lockport, IL', 'Modern Mexican kitchen and bar in Lockport, IL. Birria, quesabirrias, handcrafted cocktails, weekend brunch, and 18+ nightlife Friday and Saturday. Reserve a table or order online.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('menu', 'Menu — Oasis Mexican Kitchen & Bar, Lockport IL', 'Food, cocktails and weekend brunch at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('menu', 'Menu — Oasis Mexican Kitchen & Bar, Lockport IL', 'Food, cocktails and weekend brunch at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('events', 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL', 'Oasis Fridays and Oasis Latin Saturdays in Lockport, IL. 18+, doors at 10pm. House, Top 100, hip-hop, reggaetón, corridos and guaracha every Friday and Saturday.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('events', 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL', 'Oasis Fridays and Oasis Latin Saturdays in Lockport, IL. 18+, doors at 10pm. House, Top 100, hip-hop, reggaetón, corridos and guaracha every Friday and Saturday.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('catering', 'Catering — Oasis Mexican Kitchen & Bar, Lockport IL', 'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL. Order and see pricing on Toast.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('catering', 'Catering — Oasis Mexican Kitchen & Bar, Lockport IL', 'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL. Order and see pricing on Toast.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('privateEvents', 'Private Events & Celebrations — Oasis Mexican Kitchen & Bar', 'Host your birthday, quinceañera or team celebration at Oasis Mexican Kitchen & Bar in Lockport, IL. Send an inquiry and our team will follow up.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('privateEvents', 'Private Events & Celebrations — Oasis Mexican Kitchen & Bar', 'Host your birthday, quinceañera or team celebration at Oasis Mexican Kitchen & Bar in Lockport, IL. Send an inquiry and our team will follow up.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('visit', 'Visit — Oasis Mexican Kitchen & Bar, 1250 E. 9th St., Lockport IL', 'Hours, address, directions and phone for Oasis Mexican Kitchen & Bar at 1250 E. 9th St., Lockport, IL 60441.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('visit', 'Visit — Oasis Mexican Kitchen & Bar, 1250 E. 9th St., Lockport IL', 'Hours, address, directions and phone for Oasis Mexican Kitchen & Bar at 1250 E. 9th St., Lockport, IL 60441.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('careers', 'Join Our Team — Oasis Mexican Kitchen & Bar, Lockport IL', 'Now hiring at Oasis Mexican Kitchen & Bar in Lockport, IL. Flexible shifts, staff meals, and a crew that feels like familia.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('careers', 'Join Our Team — Oasis Mexican Kitchen & Bar, Lockport IL', 'Now hiring at Oasis Mexican Kitchen & Bar in Lockport, IL. Flexible shifts, staff meals, and a crew that feels like familia.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('privacy', 'Privacy — Oasis Mexican Kitchen & Bar', 'How Oasis Mexican Kitchen & Bar handles information submitted through this website.', null)
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('privacy', 'Privacy — Oasis Mexican Kitchen & Bar', 'How Oasis Mexican Kitchen & Bar handles information submitted through this website.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
 
--- Media assets -------------------------------------------------------
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('brandLogo', '/media/brand/oasis-logo.png', 'Oasis Mexican Kitchen & Bar', 1200, 483, '1200:483', '50% 50%', null, 'brand')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('brandGrain', '/media/brand/paper-grain.png', null, 160, 160, '1:1', '50% 50%', null, 'final')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('heroVideo', '/media/video/hero-loop.mp4', null, 720, 1280, '9:16', '50% 50%', '/media/home/hero-poster.jpg', 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('heroPoster', '/media/home/hero-poster.jpg', null, 720, 1280, '9:16', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('backBar', '/media/home/back-bar.jpg', 'The back bar at Oasis, stocked with tequila, whiskey and vodka under warm light', 1069, 1600, '1069:1600', '50% 45%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('exteriorSign', '/media/home/exterior-sign.jpg', 'The Oasis Mexican Restaurant sign on the building exterior', 720, 540, '4:3', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('diningRoom', '/media/home/dining-room.jpg', 'The Oasis dining room full at service, under rattan pendant lights, with the greenery wall behind', 1143, 1728, '1143:1728', '50% 55%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('plateTorta', '/media/menu/plate-torta.jpg', 'A torta served with rice, refried beans and salsa', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('roomAtmosphere', '/media/home/room-atmosphere.jpg', 'The Oasis dining room, with the greenery wall and rattan pendant lights', 720, 480, '3:2', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('bartender', '/media/home/gallery-02.jpg', 'A bartender holding a freshly made margarita', 720, 720, '1:1', '50% 40%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('dishQuesabirria', '/media/menu/quesabirria.jpg', 'A plate of quesabirria tacos with a cup of consommé for dipping', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('consommeDip', '/media/menu/consomme-dip.jpg', 'A quesabirria taco being dipped into a cup of consommé', 720, 900, '4:5', '50% 45%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('cocktailPour', '/media/menu/cocktail-pour.jpg', 'A mango margarita being poured from a shaker into a Tajín-rimmed glass', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('margaritaTajin', '/media/menu/margarita-tajin.jpg', 'A finished mango margarita with a Tajín rim and a fan of fresh mango', 720, 720, '1:1', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('roomCrowd', '/media/home/room-crowd.jpg', 'A full dining room at service under the greenery wall and rattan lights', 720, 480, '3:2', '50% 55%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('cocktailPair', '/media/menu/cocktail-pair.jpg', 'A margarita with a Tajín rim being finished at the bar', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('flyerFridays', '/media/events/oasis-fridays-flyer.jpg', 'Oasis Fridays flyer artwork', 1080, 1080, '1:1', '50% 50%', null, 'final')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('flyerLatinSaturdays', '/media/events/oasis-latin-saturdays-flyer.jpg', 'Oasis Latin Saturdays flyer artwork', 1080, 1080, '1:1', '50% 50%', null, 'final')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('privateEvents', null, 'A celebration table set up at Oasis', 1800, 1200, '3:2', '50% 42%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('birthdayCelebration', null, 'The Oasis team bringing out a birthday dessert', 1200, 1500, '4:5', '50% 40%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('teamEnergy', '/media/careers/team-energy.jpg', 'A server carrying a tray of drinks through the dining room', 720, 480, '3:2', '50% 50%', null, 'temp-wix')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+-- page_lists
+insert into public.page_lists (id, page, key, label, items)
+  values ('careers:positions', 'careers', 'positions', 'Positions people can apply for', '["Server","Bartender","Host","Line cook","Prep cook","Dishwasher","Busser","Something else"]'::jsonb)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;
+insert into public.page_lists (id, page, key, label, items)
+  values ('careers:perks', 'careers', 'perks', 'Perks listed on the careers page', '["Flexible shifts","Staff meals","Vibrant atmosphere"]'::jsonb)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;
+insert into public.page_lists (id, page, key, label, items)
+  values ('private-events:types', 'private-events', 'types', 'Celebration types in the enquiry form', '["Birthday","Quinceañera","Graduation","Corporate / team","Rehearsal dinner","Other celebration"]'::jsonb)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;
 
 commit;

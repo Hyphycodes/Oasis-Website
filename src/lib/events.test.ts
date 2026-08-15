@@ -237,6 +237,7 @@ describe('one-time events', () => {
     published: true,
     musicFormats: ['Latin', 'Top 100'],
     ageMin: 21,
+    flyerAssetId: 'nye-artwork',
   };
 
   it('appears alongside the recurring nights', () => {
@@ -246,6 +247,7 @@ describe('one-time events', () => {
     expect(found!.seriesSlug).toBeNull();
     expect(found!.title).toBe('New Year’s Eve at Oasis');
     expect(found!.musicFormats).toEqual(['Latin', 'Top 100']);
+    expect(found!.flyerAssetId).toBe('nye-artwork');
   });
 
   it('stays out of the public list while it is a draft', () => {

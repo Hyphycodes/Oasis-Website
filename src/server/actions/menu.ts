@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import type { Row } from '@/lib/db/types';
+import { stableUuid } from '@/lib/stable-uuid';
 import { staffCan } from '../auth';
 import {
   archive,
@@ -184,7 +185,13 @@ async function replaceModifiers(
   let sort = 0;
 
   for (const label of choices.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)) {
-    rows.push({ id: `${itemId}:${sort}`, item_id: itemId, label, price_cents: null, sort });
+    rows.push({
+      id: stableUuid('menu-modifier', `${itemId}:${sort}`),
+      item_id: itemId,
+      label,
+      price_cents: null,
+      sort,
+    });
     sort += 1;
   }
 
@@ -193,7 +200,7 @@ async function replaceModifiers(
     const match = /^(.*?)\s*\+?\$?(\d+(?:\.\d{1,2})?)\s*$/.exec(line);
     if (!match) continue;
     rows.push({
-      id: `${itemId}:${sort}`,
+      id: stableUuid('menu-modifier', `${itemId}:${sort}`),
       item_id: itemId,
       label: match[1]!.trim(),
       price_cents: Math.round(Number(match[2]) * 100),

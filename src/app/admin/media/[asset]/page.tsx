@@ -19,8 +19,8 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
   const local = isLocalDb();
   if (!canOpen({ role: staff.role, sections: staff.sections }, 'media')) {
     return (
-      <AdminShell staff={staff} local={local} title="Photos">
-        <NoAccess what="photos" />
+      <AdminShell staff={staff} local={local} title="Photos & videos">
+        <NoAccess what="photos and videos" />
       </AdminShell>
     );
   }
@@ -34,7 +34,13 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
 
   const library = await getMediaLibrary(db);
   const alternatives = library
-    .filter((other) => other.assetId !== assetId && other.path && !other.archivedAt)
+    .filter(
+      (other) =>
+        other.assetId !== assetId &&
+        other.kind === entry.kind &&
+        other.path &&
+        !other.archivedAt,
+    )
     .map((other) => ({ id: other.assetId, label: other.title }));
 
   const problems = mediaProblems(entry);
@@ -45,24 +51,29 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
       staff={staff}
       local={local}
       title={entry.title}
-      description={
-        entry.path
-          ? `${entry.width} × ${entry.height} · ${entry.kind}${entry.sizeBytes ? ` · ${(entry.sizeBytes / 1024).toFixed(0)}KB` : ''}`
-          : 'No file yet — this slot shows a branded placeholder.'
-      }
+      description={entry.kind === 'video' ? 'Video' : 'Photo'}
       actions={
         <Link
           href="/admin/media"
           className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
         >
-          All photos
+          All photos & videos
         </Link>
       }
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
         <div className="grid gap-4">
           <div className="overflow-hidden rounded-(--radius-md) border border-brown/20 bg-ivory-deep">
-            {entry.path ? (
+            {entry.path && entry.kind === 'video' ? (
+              <video
+                src={entry.path}
+                poster={entry.poster ?? undefined}
+                controls
+                playsInline
+                preload="metadata"
+                className="aspect-square w-full bg-espresso object-contain"
+              />
+            ) : entry.path ? (
               <div className="relative aspect-square w-full">
                 <Image
                   src={entry.path}
@@ -74,7 +85,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
               </div>
             ) : (
               <div className="flex aspect-square items-center justify-center text-[0.875rem] text-brown-soft">
-                No photo yet
+                No file yet
               </div>
             )}
           </div>
@@ -103,11 +114,10 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
 
             {entry.registryUsage.length > 0 ? (
               <div className={entry.usage.length > 0 ? 'mt-4 border-t border-brown/12 pt-3' : ''}>
-                <p className="text-[0.8125rem] font-semibold text-brown">Placed by the design</p>
+                <p className="text-[0.8125rem] font-semibold text-brown">Used automatically</p>
                 <p className="mt-1 text-[0.8125rem] leading-relaxed text-brown-soft">
-                  {entry.registryUsage.join(', ')}. The design decides where these go and what
-                  shape they are, so they cannot be moved — but you can change which photo sits in
-                  the slot, below.
+                  This appears on {entry.registryUsage.join(', ')}. You can replace it below and the
+                  website keeps the right size and crop automatically.
                 </p>
               </div>
             ) : null}

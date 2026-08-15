@@ -36,7 +36,7 @@ export function MediaDetails({
 }) {
   return (
     <div className="grid gap-5">
-      <Card title="Details">
+      <Card title="Name & description">
         <ActionForm action={saveMediaDetails} className="grid gap-4">
           <input type="hidden" name="assetId" value={entry.assetId} />
 
@@ -50,7 +50,11 @@ export function MediaDetails({
           <div>
             <Label
               htmlFor="alt"
-              hint="What is in the picture. Someone using a screen reader hears this instead of seeing it."
+              hint={
+                entry.kind === 'video'
+                  ? 'A short description of what happens in the video.'
+                  : 'A short description of what the photo shows.'
+              }
             >
               Description
             </Label>
@@ -61,29 +65,33 @@ export function MediaDetails({
             This is decoration and carries no information
           </Checkbox>
 
-          <div>
-            <Label htmlFor="tags" hint={`Any of: ${MEDIA_TAGS.join(', ')}`}>
-              Tags
-            </Label>
-            <TextInput id="tags" name="tags" defaultValue={entry.tags.join(', ')} maxLength={200} />
-          </div>
+          <details className="rounded-(--radius-sm) border border-brown/15 bg-ivory px-3 py-2">
+            <summary className="min-h-11 cursor-pointer py-2 text-[0.875rem] font-semibold text-brown">
+              More options
+            </summary>
+            <div className="grid gap-4 pb-2">
+              <div>
+                <Label htmlFor="tags" hint={`Choose simple words such as ${MEDIA_TAGS.slice(0, 4).join(', ')}.`}>
+                  Help me find it later
+                </Label>
+                <TextInput id="tags" name="tags" defaultValue={entry.tags.join(', ')} maxLength={200} />
+              </div>
 
-          <div>
-            <Label htmlFor="focal" hint="Which part to keep when the picture is cropped.">
-              Focal point
-            </Label>
-            <TextInput
-              id="focal"
-              name="focal"
-              defaultValue={entry.focal}
-              placeholder="50% 50%"
-              aria-describedby="focal-note"
-            />
-            <FieldNote id="focal-note">
-              Across, then down. “50% 40%” keeps the middle, a little above centre — useful when
-              there are faces.
-            </FieldNote>
-          </div>
+              <div>
+                <Label htmlFor="focal" hint="The part of a photo to keep when it is cropped.">
+                  Crop focus
+                </Label>
+                <TextInput
+                  id="focal"
+                  name="focal"
+                  defaultValue={entry.focal}
+                  placeholder="50% 50%"
+                  aria-describedby="focal-note"
+                />
+                <FieldNote id="focal-note">Leave this as it is unless a face is being cropped out.</FieldNote>
+              </div>
+            </div>
+          </details>
 
           <div>
             <SubmitButton>Save</SubmitButton>
@@ -92,7 +100,7 @@ export function MediaDetails({
       </Card>
 
       {entry.usage.length > 0 && alternatives.length > 0 ? (
-        <Card title="Swap this photo">
+        <Card title={`Swap this ${entry.kind === 'video' ? 'video' : 'photo'}`}>
           <ActionForm action={replaceMedia} className="grid gap-4">
             <input type="hidden" name="assetId" value={entry.assetId} />
 
@@ -100,7 +108,7 @@ export function MediaDetails({
               <Label htmlFor="replacementId">Use this instead</Label>
               <Select id="replacementId" name="replacementId" defaultValue="">
                 <option value="" disabled>
-                  Pick a photo
+                  Pick a {entry.kind === 'video' ? 'video' : 'photo'}
                 </option>
                 {alternatives.map((option) => (
                   <option key={option.id} value={option.id}>
@@ -150,11 +158,11 @@ export function MediaDetails({
           changes which FILE the slot holds — which is the only way to swap a
           photograph the layout asks for by name. */}
       {entry.registryUsage.length > 0 && alternatives.length > 0 ? (
-        <Card title="Change the photo in this slot">
+        <Card title={`Change the ${entry.kind === 'video' ? 'video' : 'photo'} in this spot`}>
           <p className="text-[0.9375rem] leading-relaxed text-brown-soft">
-            The design puts this photo on {entry.registryUsage.join(', ')}. Picking a different one
-            here changes it in {entry.registryUsage.length === 1 ? 'that place' : 'all of those places'} —
-            the shape and the crop stay exactly as they are.
+            This appears on {entry.registryUsage.join(', ')}. Picking a different one changes it in{' '}
+            {entry.registryUsage.length === 1 ? 'that place' : 'all of those places'} and keeps the
+            layout looking right.
           </p>
 
           <ActionForm action={repointMedia} className="mt-4 grid gap-4">
@@ -163,7 +171,7 @@ export function MediaDetails({
               <Label htmlFor="repointId">Show this photo instead</Label>
               <Select id="repointId" name="replacementId" defaultValue="" aria-describedby="repoint-note">
                 <option value="" disabled>
-                  Pick a photo
+                  Pick a {entry.kind === 'video' ? 'video' : 'photo'}
                 </option>
                 {alternatives.map((option) => (
                   <option key={option.id} value={option.id}>

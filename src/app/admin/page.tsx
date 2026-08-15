@@ -61,35 +61,49 @@ export default async function AdminDashboard() {
     <AdminShell
       staff={staff}
       local={isLocalDb()}
-      title="What do you want to update?"
+      title="What would you like to change?"
       description={
         openState.open
           ? `You are open now — ${openState.label.toLowerCase()}.`
           : openState.label
       }
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <TaskLink href="/admin/menu" title="Change a price" hint="Menu · edit it in the list" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <TaskLink
+          href="/admin/events?new=1"
+          number="1"
+          title="Add an event"
+          hint="Add the date, photo and details in one place"
+        />
         <TaskLink
           href="/admin/menu"
-          title="Mark something sold out"
-          hint="Menu · one tap, guests see it straight away"
+          number="2"
+          title="Update the menu"
+          hint="Change a price, description or sold-out item"
         />
-        <TaskLink href="/admin/events" title="Add or edit an event" hint="Events · dates and tickets" />
-        <TaskLink href="/admin/settings" title="Update hours" hint="Settings · including a holiday" />
-        <TaskLink href="/admin/media" title="Replace a photo" hint="Photos · upload and swap" />
-        <TaskLink href="/admin/website" title="Change a headline" hint="Website · and preview it" />
-        {/* Enquiries are not in the top navigation — six destinations is the
-            ceiling — so this is how you reach them. */}
         <TaskLink
-          href="/admin/inquiries"
-          title={
-            waiting > 0
-              ? `Read ${waiting} new ${waiting === 1 ? 'enquiry' : 'enquiries'}`
-              : 'Read enquiries'
-          }
-          hint="Catering, celebrations and job applications"
+          href="/admin/media?upload=1"
+          number="3"
+          title="Add a photo or video"
+          hint="Choose a file and the site handles the rest"
         />
+        <TaskLink
+          href="/admin/settings"
+          number="4"
+          title="Hours & contact"
+          hint="Update opening times, holidays and contact details"
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.875rem]">
+        <Link href="/admin/website" className="font-semibold text-clay underline underline-offset-4">
+          Change page words or pictures
+        </Link>
+        <Link href="/admin/inquiries" className="font-semibold text-clay underline underline-offset-4">
+          {waiting > 0
+            ? `Read ${waiting} new ${waiting === 1 ? 'enquiry' : 'enquiries'}`
+            : 'Read enquiries'}
+        </Link>
       </div>
 
       {attention.length > 0 ? (

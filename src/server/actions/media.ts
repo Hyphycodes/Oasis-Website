@@ -1,11 +1,8 @@
 'use server';
 
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { z } from 'zod';
-import { isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
-import { getSessionClient } from '@/lib/supabase/server';
+import { registerDirectMedia, storeMediaFile } from '@/server/media-files';
 import { archive, publishDirect, unarchive } from '../content/editorial';
 import { getMedia, routesOfRegistryUsage, usageOf } from '../content/media';
 import { done, run, type ActionState } from './shared';
@@ -23,28 +20,6 @@ import { done, run, type ActionState } from './shared';
  *     public site reads.
  */
 
-/** Formats the frontend can genuinely render. Anything else is refused clearly. */
-const ACCEPTED: Record<string, 'image' | 'video'> = {
-  'image/jpeg': 'image',
-  'image/png': 'image',
-  'image/webp': 'image',
-  'image/avif': 'image',
-  'video/mp4': 'video',
-  'video/webm': 'video',
-};
-
-const MAX_IMAGE_BYTES = 8_000_000;
-const MAX_VIDEO_BYTES = 40_000_000;
-
-function slugOf(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\.[^.]+$/, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 48);
-}
-
 const uploadSchema = z.object({
   title: z.string().trim().max(80),
   alt: z.string().trim().max(200),
@@ -52,119 +27,56 @@ const uploadSchema = z.object({
   tags: z.string().trim().max(200),
 });
 
+const directUploadSchema = z.object({
+  uploadedUrl: z.string().url(),
+  uploadedMime: z.string().min(1),
+  uploadedSize: z.coerce.number().int().nonnegative(),
+  uploadedOriginalName: z.string().min(1).max(255),
+  uploadedWidth: z.coerce.number().int().nonnegative(),
+  uploadedHeight: z.coerce.number().int().nonnegative(),
+});
+
 export async function uploadMedia(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return run('media.upload', async ({ db, staff }) => {
-    const file = formData.get('file');
-    if (!(file instanceof File) || file.size === 0) {
-      return { ok: false, message: 'Choose a photo or video to upload.' };
-    }
-
-    const kind = ACCEPTED[file.type];
-    if (!kind) {
-      return {
-        ok: false,
-        message: `We cannot use ${file.type || 'that kind of file'}. Send a JPEG, PNG, WebP, AVIF, MP4 or WebM.`,
-      };
-    }
-
-    const limit = kind === 'video' ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-    if (file.size > limit) {
-      return {
-        ok: false,
-        message: `That file is ${(file.size / 1_000_000).toFixed(1)}MB. The limit for a ${kind} is ${limit / 1_000_000}MB — try exporting it smaller.`,
-      };
-    }
-
     const parsed = uploadSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { ok: false, message: 'Please check the description.' };
     const value = parsed.data;
 
-    if (!value.decorative && !value.alt.trim()) {
-      return {
-        ok: false,
-        message:
-          'Add a short description of what the photo shows, or tick “decorative” if it carries no information.',
-      };
+    const tags = value.tags ? value.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
+    const direct = directUploadSchema.safeParse(Object.fromEntries(formData));
+    const file = formData.get('file');
+    const result = direct.success
+      ? await registerDirectMedia({
+          db,
+          staff,
+          upload: {
+            url: direct.data.uploadedUrl,
+            mime: direct.data.uploadedMime,
+            size: direct.data.uploadedSize,
+            originalName: direct.data.uploadedOriginalName,
+            width: direct.data.uploadedWidth,
+            height: direct.data.uploadedHeight,
+          },
+          title: value.title,
+          alt: value.decorative ? 'Decorative media' : value.alt,
+          tags,
+        })
+      : file instanceof File && file.size > 0
+        ? await storeMediaFile({
+            db,
+            staff,
+            file,
+            title: value.title,
+            alt: value.decorative ? 'Decorative media' : value.alt,
+            tags,
+          })
+        : { ok: false as const, message: 'Choose a photo or video to upload.' };
+    if (!result.ok) return result;
+    if (value.decorative) {
+      await db.update('media_assets', result.assetId, { alt: null, decorative: true });
     }
-    if (kind === 'video') {
-      return {
-        ok: false,
-        message:
-          'Videos need a still poster frame and a matching crop, so a developer places them. Send the file to them and it will be wired up.',
-      };
-    }
-
-    const base = slugOf(file.name) || 'upload';
-    const existing = await db.list<Row>('media_assets');
-    let assetId = base;
-    let n = 2;
-    while (existing.some((row) => row.asset_id === assetId)) assetId = `${base}-${n++}`;
-
-    const extension = file.name.match(/\.[a-z0-9]+$/i)?.[0] ?? '.jpg';
-    const filename = `${assetId}${extension}`;
-    const bytes = Buffer.from(await file.arrayBuffer());
-
-    let publicPath: string;
-    if (isLocalDb()) {
-      // Development only. In production this branch is unreachable, because
-      // `getWriteDb` refuses to hand back a local database there.
-      const dir = path.join(process.cwd(), 'public', 'media', 'uploads');
-      await mkdir(dir, { recursive: true });
-      await writeFile(path.join(dir, filename), bytes);
-      publicPath = `/media/uploads/${filename}`;
-    } else {
-      const supabase = await getSessionClient();
-      if (!supabase) return { ok: false, message: 'Could not reach the file store.' };
-      const { error } = await supabase.storage
-        .from('media')
-        .upload(filename, bytes, { contentType: file.type, upsert: false });
-      if (error) return { ok: false, message: `Upload failed: ${error.message}` };
-      publicPath = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
-    }
-
-    const size = await imageSize(bytes);
-
-    await db.insert('media_assets', {
-      asset_id: assetId,
-      path: publicPath,
-      title: value.title || file.name,
-      alt: value.decorative ? null : value.alt,
-      decorative: value.decorative,
-      kind,
-      width: size?.width ?? 0,
-      height: size?.height ?? 0,
-      ratio: size ? `${size.width}:${size.height}` : '',
-      focal: '50% 50%',
-      poster: null,
-      status: 'final',
-      tags: value.tags ? value.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-      size_bytes: file.size,
-      mime: file.type,
-      duration_seconds: null,
-      uploaded_by: staff.source === 'supabase' ? staff.id : null,
-      draft: null,
-      archived_at: null,
-    });
-
-    return done(`Uploaded “${value.title || file.name}”. You can use it anywhere now.`, 'media');
+    return done(`Added “${result.title}”. It is ready to use.`, 'media');
   });
-}
-
-/**
- * Pixel dimensions, read from the file header.
- *
- * Recorded so the admin can warn about a photo that is too small for the slot it
- * is dropped into, and so the layout can reserve the right space before the image
- * arrives. Unknown dimensions are stored as zero rather than guessed.
- */
-async function imageSize(bytes: Buffer): Promise<{ width: number; height: number } | null> {
-  try {
-    const { default: sharp } = await import('sharp');
-    const meta = await sharp(bytes).metadata();
-    return meta.width && meta.height ? { width: meta.width, height: meta.height } : null;
-  } catch {
-    return null;
-  }
 }
 
 const repointSchema = z.object({

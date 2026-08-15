@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, type ReactNode } from 'react';
+import { useActionState, type FormEventHandler, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import type { ActionState } from '@/content/admin-types';
 
@@ -23,16 +23,18 @@ export function ActionForm({
   className = '',
   /** Rendered after a successful save; receives the result. */
   onDone,
+  onSubmit,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   children: ReactNode | ((state: ActionState) => ReactNode);
   className?: string;
   onDone?: (state: ActionState) => ReactNode;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
 }) {
   const [state, formAction] = useActionState(action, { ok: true, message: '' });
 
   return (
-    <form action={formAction} className={className}>
+    <form action={formAction} className={className} onSubmit={onSubmit}>
       {typeof children === 'function' ? children(state) : children}
 
       <div aria-live="polite" className="empty:hidden">
@@ -40,7 +42,7 @@ export function ActionForm({
           <p
             className={`mt-3 rounded-(--radius-sm) border px-3 py-2 text-[0.875rem] leading-relaxed ${
               state.ok
-                ? 'border-success/50 bg-success/8 text-success'
+                ? 'border-teal/20 bg-teal/6 text-brown'
                 : 'border-danger/50 bg-danger/8 text-danger'
             }`}
           >

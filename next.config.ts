@@ -3,10 +3,22 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '26mb',
+    },
+  },
+
   images: {
     formats: ['image/avif', 'image/webp'],
-    // No remotePatterns. Every production image is served from /public/media.
-    // Adding a remote host here would reintroduce the Wix hotlinking this rebuild removes.
+    // Staff uploads are stored in Oasis's own Supabase media bucket.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'yrfvnqgybbvbkwonvycw.supabase.co',
+        pathname: '/storage/v1/object/public/media/**',
+      },
+    ],
   },
 
   async redirects() {

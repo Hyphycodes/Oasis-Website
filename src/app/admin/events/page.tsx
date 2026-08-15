@@ -37,7 +37,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default async function AdminEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; window?: string }>;
+  searchParams: Promise<{ tab?: string; window?: string; new?: string }>;
 }) {
   const staff = await getStaff();
   if (!staff) redirect('/admin/login');
@@ -57,12 +57,21 @@ export default async function AdminEventsPage({
   const now = new Date();
   const canPublish = staffCan(staff, 'content.publish');
 
-  const events = db ? await getEditableEvents(db) : { series: [], occurrences: [] };
-  const overrides = db ? await db.list<Row>('event_occurrences', { orderBy: 'starts_at' }) : [];
+  const [events, overrides, mediaRows, media] = db
+    ? await Promise.all([
+        getEditableEvents(db),
+        db.list<Row>('event_occurrences', { orderBy: 'starts_at' }),
+        db.list<Row>('media_assets'),
+        getMediaMap(),
+      ])
+    : [{ series: [], occurrences: [] }, [], [], await getMediaMap()];
+  const flyerOptions = mediaRows
+        .filter((row) => row.kind === 'image' && row.path && !row.archived_at)
+        .map((row) => ({ id: String(row.asset_id), label: String(row.title ?? row.asset_id) }))
+        .sort((a, b) => a.label.localeCompare(b.label));
 
   const upcoming = getUpcomingEvents(events, now, 40);
   // Resolved once for every row on the page rather than per thumbnail.
-  const media = await getMediaMap();
   // A month by default. Forty rows of "Friday, then Saturday, then Friday" is a
   // list nobody reads; the next four weeks is the window a restaurant works in.
   const windowDays = params.window === '7' ? 7 : params.window === 'all' ? null : 30;
@@ -83,15 +92,23 @@ export default async function AdminEventsPage({
       staff={staff}
       local={local}
       title="Events"
-      description="Your Friday and Saturday nights repeat on their own, so the dates on the website are always right. Change one night when you need to."
+      description="Add a special event, or update one of your regular Friday and Saturday nights."
       actions={
-        <Link
-          href="/events"
-          target="_blank"
-          className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-        >
-          View on the website
-        </Link>
+        <>
+          <Link
+            href="/admin/events?new=1"
+            className="inline-flex min-h-11 items-center rounded-(--radius-sm) bg-coral px-4 text-[0.9375rem] font-semibold text-on-orange"
+          >
+            Add an event
+          </Link>
+          <Link
+            href="/events"
+            target="_blank"
+            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
+          >
+            View website
+          </Link>
+        </>
       }
     >
       {!db ? (
@@ -100,6 +117,12 @@ export default async function AdminEventsPage({
         </EmptyState>
       ) : (
         <>
+          {params.new === '1' ? (
+            <div className="mb-6">
+              <NewOneTimeEvent flyerOptions={flyerOptions} canPublish={canPublish} />
+            </div>
+          ) : null}
+
           <nav aria-label="Which events" className="mb-5">
             <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {TABS.map((entry) => (
@@ -206,7 +229,6 @@ export default async function AdminEventsPage({
                 );
               })}
 
-              {canPublish ? <NewOneTimeEvent /> : null}
             </div>
           ) : null}
 

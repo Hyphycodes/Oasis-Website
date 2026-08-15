@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { signOut } from '@/server/actions/team';
 import type { Staff } from '@/server/auth';
 import { canOpen, ROLE_LABEL, type Section } from '@/server/permissions';
+import { AdminNav } from './AdminNav';
 import { Notice } from './ui';
 
 /**
@@ -15,13 +16,13 @@ import { Notice } from './ui';
  */
 
 const NAV: { href: string; label: string; section?: Section; ownerOnly?: boolean }[] = [
-  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin', label: 'Home' },
   { href: '/admin/menu', label: 'Menu', section: 'menu' },
   { href: '/admin/events', label: 'Events', section: 'events' },
-  { href: '/admin/website', label: 'Website', section: 'website' },
-  { href: '/admin/media', label: 'Photos', section: 'media' },
-  { href: '/admin/settings', label: 'Settings', section: 'settings' },
-  { href: '/admin/team', label: 'Team & permissions', ownerOnly: true },
+  { href: '/admin/website', label: 'Pages', section: 'website' },
+  { href: '/admin/media', label: 'Photos & videos', section: 'media' },
+  { href: '/admin/settings', label: 'Hours & contact', section: 'settings' },
+  { href: '/admin/team', label: 'Staff', ownerOnly: true },
 ];
 
 export function AdminShell({
@@ -48,69 +49,50 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh bg-ivory">
-      <header className="border-b border-brown/15 bg-linen">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
-          <Link href="/admin" className="text-[1.0625rem] font-semibold text-brown">
-            Oasis admin
+      <header className="sticky top-0 z-40 border-b border-teal/20 bg-teal shadow-[0_8px_30px_rgba(10,48,43,0.12)]">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 sm:px-6">
+          <Link href="/admin" className="shrink-0 text-[1.0625rem] font-semibold text-linen">
+            Oasis
+            <span className="ml-1 font-normal text-linen/60">admin</span>
           </Link>
 
-          <nav aria-label="Admin sections" className="order-3 w-full sm:order-none sm:w-auto">
-            <ul className="-mx-1 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {items.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-(--radius-sm) px-3 text-[0.9375rem] font-medium text-brown-soft transition-colors hover:bg-brown/8 hover:text-brown"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <AdminNav items={items.map(({ href, label }) => ({ href, label }))} />
 
           <div className="ml-auto flex items-center gap-3 text-[0.8125rem]">
             {/* The way back to the website, and the most-used control after a
                 change — so it is a button, not a link buried among the others. */}
             <Link
               href="/"
-              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-(--radius-sm) border border-brown/30 bg-ivory px-4 text-[0.9375rem] font-semibold text-brown transition-colors hover:border-coral hover:text-clay"
+              className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-linen/25 bg-linen/8 px-4 text-[0.875rem] font-semibold text-linen transition-colors hover:bg-linen/15"
             >
               View the website
               <span aria-hidden="true">→</span>
             </Link>
 
-            {staff.source === 'open' ? (
-              <span className="hidden whitespace-nowrap text-brown-soft sm:inline">
-                No sign-in required
-              </span>
-            ) : (
+            {staff.source !== 'open' ? (
               <>
-                <span className="hidden text-brown-soft sm:inline">
+                <span className="hidden text-linen/65 xl:inline">
                   {staff.name || staff.email} · {ROLE_LABEL[staff.role]}
                 </span>
                 <form action={signOut}>
                   <button
                     type="submit"
-                    className="inline-flex min-h-11 items-center text-brown-soft underline underline-offset-4"
+                    className="inline-flex min-h-10 items-center text-linen/70 underline underline-offset-4"
                   >
                     Sign out
                   </button>
                 </form>
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-[1280px] px-4 py-7 sm:px-6 sm:py-9">
         {local ? (
-          <div className="mb-6">
-            <Notice tone="warning">
-              You are on the local development copy. Changes are saved to a file on this machine and
-              are not on the real website.
-            </Notice>
-          </div>
+          <p className="mb-5 rounded-full bg-brown/5 px-4 py-2 text-[0.8125rem] text-brown-soft">
+            Preview copy — changes here do not affect the live website.
+          </p>
         ) : null}
 
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -129,21 +111,6 @@ export function AdminShell({
 
         <div className="mt-7">{children}</div>
 
-        {/* The same way out, at the bottom. After a long edit the header is a
-            scroll away, and "did that work?" is answered by looking at the
-            actual page. */}
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-brown/15 pt-6">
-          <p className="text-[0.9375rem] text-brown-soft">
-            Finished? Have a look at how it turned out.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-sm) bg-coral px-5 text-[0.9375rem] font-semibold text-on-orange transition-colors hover:bg-coral-deep hover:text-linen"
-          >
-            View the website
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
       </main>
     </div>
   );

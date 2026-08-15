@@ -26,7 +26,7 @@ export default async function WebsitePage() {
   const local = isLocalDb();
   if (!canOpen({ role: staff.role, sections: staff.sections }, 'website')) {
     return (
-      <AdminShell staff={staff} local={local} title="Website">
+      <AdminShell staff={staff} local={local} title="Pages">
         <NoAccess what="the website pages" />
       </AdminShell>
     );
@@ -46,12 +46,12 @@ export default async function WebsitePage() {
     <AdminShell
       staff={staff}
       local={local}
-      title="Website"
-      description="The words and photographs on each page. Addresses, hours and phone numbers live in Settings, so they are only ever typed once."
+      title="Pages"
+      description="Choose a page to change its words or pictures."
     >
       {!db ? (
         <EmptyState>
-          The content system is not connected, so pages are read from the built-in content.
+          The page editor is not available right now. Please try again in a moment.
         </EmptyState>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -71,9 +71,11 @@ export default async function WebsitePage() {
                     {waiting > 0 ? <StateChip state="changed" /> : null}
                   </span>
                   <span className="mt-1 text-[0.875rem] text-brown-soft">{page.hint}</span>
-                  <span className="mt-3 text-[0.8125rem] text-brown-soft">
-                    {owned.length} {owned.length === 1 ? 'section' : 'sections'} · {page.route}
-                  </span>
+                  {owned.length > 0 ? (
+                    <span className="mt-3 text-[0.8125rem] text-brown-soft">
+                      {owned.length} editable {owned.length === 1 ? 'area' : 'areas'}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             );
