@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { isAdminOpen } from '@/server/admin-access';
 import { buildRecords } from '@/server/migration/records';
 import { getServiceClient, getSessionClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { LocalDb } from './local';
@@ -54,10 +55,17 @@ export function getReadDb(): Db | null {
  *
  * Returns null when there is nowhere safe to write — production without Supabase
  * — so callers fail closed rather than silently writing somewhere unexpected.
+ *
+ * WHILE THE ADMIN IS OPEN there is no session to carry, so writes use the
+ * service client instead. That bypasses Row Level Security, which is the honest
+ * consequence of turning the gate off: with no account there is no role for the
+ * database to check. Turn sign-in back on (src/server/admin-access.ts) and every
+ * write goes back through the signed-in user's session, RLS and the publish
+ * guard — none of which has been removed.
  */
 export async function getWriteDb(): Promise<Db | null> {
   if (isSupabaseConfigured()) {
-    const client = await getSessionClient();
+    const client = isAdminOpen() ? getServiceClient() : await getSessionClient();
     return client ? new SupabaseDb(client) : null;
   }
   return isLocalDb() ? localDb() : null;

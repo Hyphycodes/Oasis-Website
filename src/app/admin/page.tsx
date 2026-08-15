@@ -87,6 +87,19 @@ export default async function AdminDashboard() {
         />
       </div>
 
+      {/* Said once, on the dashboard, rather than on every screen — it matters
+          before this goes on a public address, and nagging gets ignored. */}
+      {staff.source === 'open' ? (
+        <div className="mt-6">
+          <Notice tone="warning">
+            The admin has no password on it at the moment, so anyone who knows the address can edit
+            the website. That is fine while it is only running on this machine — turn sign-in back
+            on in <code className="font-mono">src/server/admin-access.ts</code> before it goes to a
+            public address.
+          </Notice>
+        </div>
+      ) : null}
+
       {attention.length > 0 ? (
         <section className="mt-9">
           <h2 className="text-[1.0625rem] font-semibold text-brown">Needs attention</h2>

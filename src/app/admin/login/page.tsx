@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation';
 import { isLocalDb } from '@/lib/db';
 import { isSupabaseConfigured } from '@/lib/supabase/server';
+import { isAdminOpen } from '@/server/admin-access';
 import { LOCAL_STAFF } from '@/server/auth';
 import { ROLE_SUMMARY, type Role } from '@/server/permissions';
 import { LocalSignIn, LoginForm } from './LoginForm';
@@ -7,6 +9,10 @@ import { LocalSignIn, LoginForm } from './LoginForm';
 export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
+  // Nothing to sign in to while the admin is open. Anyone landing here from an
+  // old bookmark goes straight through rather than staring at a dead form.
+  if (isAdminOpen()) redirect('/admin');
+
   const configured = isSupabaseConfigured();
   const local = isLocalDb();
 

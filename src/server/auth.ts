@@ -3,6 +3,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { isLocalDb } from '@/lib/db';
 import { getSessionClient, isSupabaseConfigured } from '@/lib/supabase/server';
+import { isAdminOpen } from './admin-access';
 import { can, type Actor, type Capability, type Role, DENIED_MESSAGE } from './permissions';
 
 /**
@@ -28,8 +29,25 @@ export interface Staff {
   sections: string[];
   active: boolean;
   /** Which identity source answered. The admin says so out loud. */
-  source: 'supabase' | 'local';
+  source: 'supabase' | 'local' | 'open';
 }
+
+/**
+ * Who you are when the admin has no sign-in.
+ *
+ * Full access, because a gate that is off should not also pretend to be a
+ * limited account — half-open is just confusing. The admin header says "no
+ * sign-in required" rather than showing a name nobody chose.
+ */
+const OPEN_STAFF: Staff = {
+  id: 'open-access',
+  email: '',
+  name: 'Signed in as everyone',
+  role: 'owner',
+  sections: [],
+  active: true,
+  source: 'open',
+};
 
 const LOCAL_COOKIE = 'oasis_local_staff';
 
@@ -65,6 +83,10 @@ export const LOCAL_STAFF: Record<Role, Staff> = {
 };
 
 export async function getStaff(): Promise<Staff | null> {
+  // Checked first, and on purpose: with the gate off there is nothing to look
+  // up, so no cookie, no session round-trip and no way to be "signed out".
+  if (isAdminOpen()) return OPEN_STAFF;
+
   if (isSupabaseConfigured()) {
     const supabase = await getSessionClient();
     if (!supabase) return null;

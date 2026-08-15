@@ -4,15 +4,33 @@ For the Oasis team. No technical knowledge assumed.
 
 ---
 
-## Signing in
+## Getting in
 
-Go to **yoursite.com/admin** and enter your email and password.
+Go to **/admin**. There is no password on it at the moment — you go straight in, with full access.
 
-If you have forgotten your password, ask whoever set up your account to reset it — there is no
-self-service reset, on purpose.
+That is deliberate while the site is being built, so you can use the admin without accounts being
+set up first. **Before the website goes to a public address, ask your developer to turn sign-in back
+on.** Until then, anyone who knows the address can change the website.
+
+Everything needed for sign-in already exists — accounts, roles, the rules about who can publish —
+it is only the gate that is switched off. Turning it on is one line
+(`src/server/admin-access.ts`) or one environment variable (`ADMIN_REQUIRE_SIGN_IN=true`).
 
 If you see *"The content system is not connected yet"*, the developer has not finished the setup.
 The website is still working normally for guests; only editing is unavailable.
+
+---
+
+## Seeing your changes on the website
+
+Two ways, on every screen:
+
+- **View the website →** at the top right, and again at the bottom of every page.
+- After you publish something, the message tells you exactly which pages changed and links to
+  them — those open in a new tab, so the admin stays where you left it.
+
+Individual sections also have their own preview: *Preview Food* on the menu, *View on the website*
+on a section, *Preview the page* in Website.
 
 ---
 
@@ -34,6 +52,9 @@ Enquiries — catering, celebrations and job applications — are reached from t
 ---
 
 ## Who can do what
+
+While the admin is open, everyone has Owner access — there is no account to attach a role to. The
+table below is what applies once sign-in is turned on.
 
 | | Owner | Manager | Contributor |
 |---|---|---|---|

@@ -109,6 +109,30 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
 
 ---
 
+## The admin is currently open
+
+**There is no sign-in on `/admin` right now.** Anyone who can reach the URL has full access, and
+with Supabase configured, writes use the service key — because with no account there is no role for
+Row Level Security to check. That is the honest consequence of turning the gate off, not an
+oversight.
+
+It is fine on a local machine. It is not fine on a public address.
+
+| To require sign-in | Where |
+|---|---|
+| Without a code change (**use this in a deployment**) | `ADMIN_REQUIRE_SIGN_IN=true` |
+| In code | `OPEN_ADMIN = false` in `src/server/admin-access.ts`, and the matching `OPEN_ADMIN_DEFAULT` in `src/middleware.ts` |
+
+The environment variable wins over the constant, so turning it on in production cannot be undone by
+redeploying an older commit. Nothing was removed to open the gate: accounts, roles, RLS and the
+publish guard are all still there and start working again the moment it closes.
+
+| Name | Required | Secret | Purpose |
+|---|---|---|---|
+| `ADMIN_REQUIRE_SIGN_IN` | Before launch | No | `true` puts the password back on `/admin` |
+
+---
+
 ## Roles
 
 The stored values are `owner` / `admin` / `editor`; the admin shows them as **Owner**, **Manager**

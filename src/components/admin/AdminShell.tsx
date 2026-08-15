@@ -69,24 +69,36 @@ export function AdminShell({
             </ul>
           </nav>
 
-          <div className="ml-auto flex items-center gap-4 text-[0.8125rem]">
+          <div className="ml-auto flex items-center gap-3 text-[0.8125rem]">
+            {/* The way back to the website, and the most-used control after a
+                change — so it is a button, not a link buried among the others. */}
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center whitespace-nowrap font-medium text-clay underline underline-offset-4"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-(--radius-sm) border border-brown/30 bg-ivory px-4 text-[0.9375rem] font-semibold text-brown transition-colors hover:border-coral hover:text-clay"
             >
-              View live site
+              View the website
+              <span aria-hidden="true">→</span>
             </Link>
-            <span className="hidden text-brown-soft sm:inline">
-              {staff.name || staff.email} · {ROLE_LABEL[staff.role]}
-            </span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="inline-flex min-h-11 items-center text-brown-soft underline underline-offset-4"
-              >
-                Sign out
-              </button>
-            </form>
+
+            {staff.source === 'open' ? (
+              <span className="hidden whitespace-nowrap text-brown-soft sm:inline">
+                No sign-in required
+              </span>
+            ) : (
+              <>
+                <span className="hidden text-brown-soft sm:inline">
+                  {staff.name || staff.email} · {ROLE_LABEL[staff.role]}
+                </span>
+                <form action={signOut}>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 items-center text-brown-soft underline underline-offset-4"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -116,6 +128,22 @@ export function AdminShell({
         </div>
 
         <div className="mt-7">{children}</div>
+
+        {/* The same way out, at the bottom. After a long edit the header is a
+            scroll away, and "did that work?" is answered by looking at the
+            actual page. */}
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-brown/15 pt-6">
+          <p className="text-[0.9375rem] text-brown-soft">
+            Finished? Have a look at how it turned out.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-sm) bg-coral px-5 text-[0.9375rem] font-semibold text-on-orange transition-colors hover:bg-coral-deep hover:text-linen"
+          >
+            View the website
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </main>
     </div>
   );

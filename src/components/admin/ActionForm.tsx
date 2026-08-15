@@ -48,17 +48,20 @@ export function ActionForm({
           </p>
         ) : null}
 
+        {/* Which pages this actually changed, as links. Opening in a new tab is
+            the point: you check the page and the form is still where you left
+            it, mid-edit. */}
         {state.ok && state.affected?.length ? (
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 text-[0.8125rem] text-brown-soft">
-            <span>Changed on:</span>
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-brown-soft">
+            <span>See it on:</span>
             {state.affected.map((route) => (
               <Link
                 key={route}
                 href={route}
-                className="text-clay underline underline-offset-4"
+                className="font-semibold text-clay underline underline-offset-4"
                 target="_blank"
               >
-                {route === '/' ? 'Homepage' : route}
+                {route === '/' ? 'the homepage' : route} ↗
               </Link>
             ))}
           </p>
