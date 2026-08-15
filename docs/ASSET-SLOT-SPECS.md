@@ -41,22 +41,32 @@ the actual files, so this document and the code cannot drift apart.
 
 | Slot | Ratio | Min size | Focal | Safe area | Text | Notes |
 |---|---|---|---|---|---|---|
-| `brunchTable` | 4:5 | 1200 × 1500 | 50% 45% | plates | `none` | **Reserved.** Placed on `/menu/brunch` once a brunch menu exists. |
+| `consommeDip` | 4:5 | 720 × 900 | 50% 45% | the dip | `none` | First tile of the `/menu` masthead strip. |
+| `plateTorta` | 4:5 | 720 × 900 | 50% 50% | the plate | `none` | Second tile of the strip; the non-birria plate. |
+| `cocktailPour` | 4:5 | 720 × 900 | 50% 50% | the pour | `none` | Third tile of the strip, standing in for the bar. |
+
+**Wanted:** a brunch plate and a starters shot. The masthead strip runs
+food/food/bar rather than food/bar/brunch, and the Starters and Weekend brunch
+tiles on the homepage are colour fields, because neither exists. A birria
+photograph will not be used to stand for either. See
+[`ASSET-HANDOFF.md`](./ASSET-HANDOFF.md) §2.
 
 ## Events
 
 | Slot | Ratio | Min size | Focal | Safe area | Text | Notes |
 |---|---|---|---|---|---|---|
-| `eventFridays` | 4:5 | 1200 × 1500 | 50% 45% | **avoid top-left 30%** | `none` 🚨 | The live date chip overlays the top-left corner. Artwork tagged `date` fails the build. |
-| `eventLatinSaturdays` | 4:5 | 1200 × 1500 | 50% 45% | **avoid top-left 30%** | `none` 🚨 | Same. |
-| `nightlifeCrowd` | 3:2 | 1800 × 1200 | 50% 40% | faces | `none` | **Reserved** for the After Dark band. Needs a genuine late-night frame; a daytime room shot would misrepresent it. |
+| `flyerFridays` | 1:1 | 1080 × 1080 | 50% 50% | **the whole frame** | `date` 🚨 | Shown with `object-fit: contain`, so nothing is cropped — but nothing protects edge text either. Tagged `date`, so it cannot fill `artworkAssetId` and requires `flyerPrintedDate` on the series. |
+| `flyerLatinSaturdays` | 1:1 | 1080 × 1080 | 50% 50% | **the whole frame** | `date` 🚨 | Same. |
+
+**Wanted:** undated exports of both, same geometry. Artwork tagged `date` fails
+the build in the authoritative slot, and only reaches the flyer slot on condition
+that its printed date is declared and captioned. Undated artwork drops the
+caption entirely.
 
 ## Catering & private events
 
 | Slot | Ratio | Min size | Focal | Safe area | Text | Notes |
 |---|---|---|---|---|---|---|
-| `cateringSpread` | 3:2 | 1800 × 1200 | 50% 50% | full spread | `none` | **Reserved** for the `/catering` header. |
-| `cateringTray` | 1:1 | 1200 × 1200 | 50% 50% | tray edges | `none` | **Reserved** for package cards. |
 | `privateEvents` | 3:2 | 1800 × 1200 | 50% 42% | table + guests | `none` | Homepage catering promo. |
 | `birthdayCelebration` | 4:5 | 1200 × 1500 | 50% 40% | **faces + dessert** | `none` | `/private-events`. Focal above centre — this shot will have people in it. |
 

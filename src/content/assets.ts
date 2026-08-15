@@ -305,6 +305,42 @@ export const assets = {
   },
 
   /* --------------------------------------------------------------- events */
+  /**
+   * Owner-supplied series flyers, 1:1, re-encoded from the original PNGs.
+   *
+   * BOTH have a date printed into the pixels (August 7th / August 8th), which is
+   * why they are tagged `containsText: 'date'` and are wired to `flyerAssetId`
+   * rather than `artworkAssetId`. The registry guard and the asset checker both
+   * refuse dated art in the authoritative slot; the flyer slot instead REQUIRES
+   * `flyerPrintedDate` on the series, so the printed date is always captioned and
+   * can never be mistaken for the next date. See PLAN.md §4.1.
+   */
+  flyerFridays: {
+    path: '/media/events/oasis-fridays-flyer.jpg',
+    kind: 'image',
+    alt: 'Oasis Fridays flyer artwork',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    focal: '50% 50%',
+    status: 'final',
+    usage: ['/events Fridays feature', '/events/oasis-fridays'],
+    containsText: 'date',
+    maxBytes: 400_000,
+  },
+  flyerLatinSaturdays: {
+    path: '/media/events/oasis-latin-saturdays-flyer.jpg',
+    kind: 'image',
+    alt: 'Oasis Latin Saturdays flyer artwork',
+    width: 1080,
+    height: 1080,
+    ratio: '1:1',
+    focal: '50% 50%',
+    status: 'final',
+    usage: ['/events Latin Saturdays feature', '/events/oasis-latin-saturdays'],
+    containsText: 'date',
+    maxBytes: 400_000,
+  },
 
   /* ------------------------------------------------- catering & private */
   privateEvents: {

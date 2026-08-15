@@ -132,14 +132,16 @@ lines.push('-- NOTE: no dates here. Occurrences are generated from cadence at re
 eventSeries.forEach((series, index) => {
   const cadence = series.cadence.kind === 'weekly' ? `weekly:${series.cadence.weekday}` : 'one-time';
   lines.push(
-    `insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, ticket_url, price_cents, fee_cents, status, series_ends_on, sort)`,
+    `insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, price_cents, status, series_ends_on, sort)`,
     `  values (${sql(series.slug)}, ${sql(series.title)}, ${sql(series.summary)}, ${sql(
       series.description,
     )}, ${sql(cadence)}, ${series.startMinutes}, ${series.endMinutes}, ${sql(series.ageMin)}, ${sql(
       series.ageNote,
     )}, ${sql(series.musicFormats)}, ${sql(series.venueName)}, ${sql(
       series.artworkAssetId,
-    )}, ${sql(series.ticketUrl)}, ${sql(series.priceCents)}, ${sql(series.feeCents)}, ${sql(
+    )}, ${sql(series.flyerAssetId)}, ${sql(series.flyerPrintedDate)}, ${sql(
+      series.ticketUrl,
+    )}, ${sql(series.priceCents)}, ${sql(
       series.status,
     )}::public.event_status, ${sql(series.seriesEndsOn)}, ${index})`,
     '  on conflict (slug) do update set title = excluded.title, summary = excluded.summary,',
@@ -147,8 +149,9 @@ eventSeries.forEach((series, index) => {
     '    start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes,',
     '    age_min = excluded.age_min, age_note = excluded.age_note,',
     '    music_formats = excluded.music_formats, artwork_asset_id = excluded.artwork_asset_id,',
+    '    flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date,',
     '    ticket_url = excluded.ticket_url, price_cents = excluded.price_cents,',
-    '    fee_cents = excluded.fee_cents, status = excluded.status, sort = excluded.sort;',
+    '    status = excluded.status, sort = excluded.sort;',
   );
 });
 lines.push('');

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { EventPoster } from '@/components/media/EventPoster';
+import { Flyer } from '@/components/events/Flyer';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
@@ -47,12 +47,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   if (!series) notFound();
 
   const now = new Date();
-  const occurrences = getSeriesOccurrences(slug, now, 10);
+  // Six weeks, not a quarter. Occurrences are generated from cadence, so the
+  // list could run indefinitely — but publishing months of nights the owner has
+  // not looked at turns a schedule into a promise. Six is "the next few weeks".
+  const occurrences = getSeriesOccurrences(slug, now, 6);
   const next = occurrences[0];
+  // The series keeps its own identity across the site: Friday is teal, Latin
+  // Saturday is plum, on the listing and on its own page alike.
+  const tone = series.cadence.kind === 'weekly' && series.cadence.weekday === 5 ? 'teal' : 'plum';
 
   return (
     <>
-      <Band surface="espresso" size="sm" topRule>
+      <Band surface={tone} size="sm" topRule>
         <Frame wide>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
@@ -88,13 +94,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                 </div>
                 <div>
                   <dt className="eyebrow text-night-text/50">Entry</dt>
+                  {/* Base entry only. Any service fee is whatever the ticket page
+                      charges on the day — quoting it here would go stale. */}
                   <dd className="tabular mt-1.5 text-night-text">
                     {series.priceCents != null ? formatPrice(series.priceCents) : 'Ask at the door'}
-                    {series.feeCents ? (
-                      <span className="block text-[0.875rem] text-night-soft">
-                        plus {formatPrice(series.feeCents)} ticket service fee
-                      </span>
-                    ) : null}
                   </dd>
                 </div>
                 <div className="sm:col-span-2">
@@ -132,10 +135,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
             </div>
 
             <div className="lg:col-span-4 lg:col-start-9">
-              <EventPoster
-                series={series}
-                className="aspect-4/5 w-full rounded-(--radius-lg)"
-              />
+              <Flyer series={series} tone={tone} priority sizes="(min-width: 1024px) 32vw, 90vw" />
               <p className="mt-3 text-[0.8125rem] text-night-soft">
                 {series.venueName}, {site.street}, {site.locality}, {site.region}{' '}
                 {site.postalCode}
@@ -147,8 +147,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
 
       <Band surface="cream">
         <Frame>
+          {/* This series only. Fridays and Latin Saturdays are never merged into
+              one schedule — that was the list nobody could read. */}
           <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
-            Upcoming dates
+            All upcoming {series.title.replace('Oasis ', '')}
           </h2>
           {/* Dates come from generated occurrences. Nothing here is read from the
               flyer artwork, which is why this list cannot go stale. */}
@@ -166,28 +168,27 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   <p className="tabular text-[0.9375rem] text-brown-soft">
                     {formatTimeRange(occurrence.startsAt, occurrence.endsAt)}
                   </p>
+                  {/* No price per row. Entry is the same every week and is stated
+                      once above; ten copies of it are ten things to keep right. */}
                   {statusLabel ? (
                     <p className="text-[0.875rem] font-semibold text-danger">{statusLabel}</p>
-                  ) : (
-                    <span className="flex items-center gap-4">
-                      <span className="tabular text-[0.9375rem] font-semibold text-brown">
-                        {occurrence.priceCents != null ? formatPrice(occurrence.priceCents) : ''}
-                      </span>
-                      {occurrence.ticketUrl ? (
-                        <ExternalTextLink
-                          href={occurrence.ticketUrl}
-                          destination={`${series.title} tickets`}
-                          className="text-clay"
-                        >
-                          Tickets
-                        </ExternalTextLink>
-                      ) : null}
-                    </span>
-                  )}
+                  ) : occurrence.ticketUrl ? (
+                    <ExternalTextLink
+                      href={occurrence.ticketUrl}
+                      destination={`${series.title} tickets`}
+                      className="text-clay"
+                    >
+                      Tickets
+                    </ExternalTextLink>
+                  ) : null}
                 </li>
               );
             })}
           </ul>
+
+          <p className="measure mt-5 text-[0.875rem] leading-relaxed text-brown-soft">
+            {series.title} runs every week. Dates further out are added as they are confirmed.
+          </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
             <ButtonLink href="/events" variant="secondary">

@@ -71,7 +71,9 @@ async function main() {
     .filter((f) => /\.(tsx?|css)$/.test(f) && !f.endsWith(path.join('content', 'assets.ts')))
     .map((f) => readFile(f, 'utf8'));
   const allSource = (await Promise.all(componentSource)).join('\n');
-  const dynamicIds = new Set(eventSeries.map((s) => s.artworkAssetId).filter(Boolean) as string[]);
+  const dynamicIds = new Set(
+    eventSeries.flatMap((s) => [s.artworkAssetId, s.flyerAssetId]).filter(Boolean) as string[],
+  );
   // A poster is rendered by AssetVideo via `asset.poster`, never by its own ID.
   const posterPaths = new Set(entries.map(([, a]) => a.poster).filter(Boolean) as string[]);
 
@@ -190,6 +192,31 @@ async function main() {
       fail(
         `Event series "${series.slug}" uses artwork tagged containsText:'date'. ` +
           'Recurring artwork can never be the authoritative date source — request an undated export.',
+      );
+    }
+  }
+
+  // ---- a dated flyer must declare the date it prints ---------------------
+  // The flyer slot exists precisely so the restaurant's real, dated artwork can
+  // be published. The trade is that the printed date must be declared, so the UI
+  // can caption it and no visitor is left reconciling two dates alone.
+  for (const series of eventSeries) {
+    if (!series.flyerAssetId) {
+      if (series.flyerPrintedDate) {
+        fail(`Event series "${series.slug}" declares a printed date but has no flyer.`);
+      }
+      continue;
+    }
+
+    const flyer = assets[series.flyerAssetId as keyof typeof assets] as AssetRecord | undefined;
+    if (!flyer) {
+      fail(`Event series "${series.slug}" points at unknown flyer asset "${series.flyerAssetId}".`);
+      continue;
+    }
+    if (flyer.containsText === 'date' && !series.flyerPrintedDate) {
+      fail(
+        `Event series "${series.slug}" uses a flyer tagged containsText:'date' without ` +
+          '`flyerPrintedDate`. The printed date must be declared so the artwork can be captioned.',
       );
     }
   }

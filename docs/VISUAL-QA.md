@@ -87,20 +87,43 @@ supplies a height.
 
 ### Homepage — six movements
 
-1. Hero · 2. Action rail · 3. What we're known for · 4. Bar & brunch ·
+1. Hero · 2. Action rail · 3. Offerings · 4. Bar & brunch ·
 5. After Dark preview · 6. Catering, celebrations and arrival
 
 The hero is now **one** visual — the reel, full-bleed — instead of the reel beside
 a near-identical taco-dipping still. Arrival merged into the catering movement,
 and the footer no longer repeats the hours table.
 
-### Signature trio — one birria, not three
+### Offerings — range, not a ranking
 
-| Slot | Item | Why |
+"What we are known for: Birria, a torta, and a margarita" declared a permanent top
+three for a kitchen with 38 items and a full bar, and the owner never approved
+those three. It is replaced by six real categories in one strip — a snap-scrolling
+rail below `sm`, a six-across grid above `lg` — each linking into its own part of
+the menu.
+
+| Tile | Links to | Media |
 |---|---|---|
-| The signature | **Our Famous Quesabirrias** $16 | The one birria dish |
-| From the kitchen | **Torta** $14 | Non-birria savoury, and the only other plated dish with real photography |
-| From the bar | **Margarita** | The house cocktail; flavour list carries it because no Oasis system publishes a price |
+| Quesabirrias | `/menu#specialty-tacos` | `dishQuesabirria` |
+| Plates & entrées | `/menu#entrees` | `plateTorta` |
+| Starters | `/menu#starters` | Sand colour field — no approved photograph |
+| Margaritas | `/menu#classic-cocktails` | `cocktailPour` |
+| The bar | `/menu#shareables` | `backBar` |
+| Weekend brunch | `/menu#brunch` | Plum colour field — no approved photograph |
+
+One birria-led feature, not three. The two colour fields are a deliberate choice
+over reusing a birria photograph to stand for starters or for brunch; both are
+logged in [`ASSET-HANDOFF.md`](./ASSET-HANDOFF.md) §2.
+
+### Hero tint — directional, not a blanket
+
+The plum stays; the opacity does not. The previous pair of scrims ran to solid plum
+along the bottom **and** 75% plum across the whole left half, which put nearly every
+pixel at the same muddy value. Now ~92% plum at the bottom edge where the headline
+sits, falling to 12% over the top of the frame, plus a left-edge wash on `lg` that
+clears entirely by 55% of the width. The tacos, the pendant lights and the movement
+read within a second; the headline still sits inside the strong end of the gradient,
+over a poster that is always painted.
 
 ### Palette — beyond cream/tan/brown/black
 

@@ -34,16 +34,29 @@ export function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
         />
       </div>
 
-      {/* Two scrims, tuned so the left column is effectively solid plum behind the
-          type while the right side stays legible as food. Contrast for the
-          headline therefore does not depend on which frame is showing. */}
+      {/* Directional scrims, not a blanket.
+
+          The previous pair ran to solid plum at the bottom AND to 75% plum across
+          the whole left half, which put every pixel at roughly the same muddy
+          value — the tacos and the room lights were technically on screen and
+          effectively invisible.
+
+          Now the darkening is concentrated where the type actually sits: ~85%
+          plum along the bottom edge, falling away to ~10% over the top two
+          thirds, plus a left-edge wash on wide screens that clears entirely by
+          55% of the width. The focal area of the loop keeps a light tint, so the
+          plum mood survives while the food, the glassware and the movement read.
+
+          Legibility still does not depend on the video: the headline block sits
+          inside the strong end of the vertical gradient, over a poster that is
+          always painted. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-linear-to-t from-plum via-plum/55 to-plum/20"
+        className="absolute inset-0 bg-linear-to-t from-plum/92 from-5% via-plum/45 via-40% to-plum/12"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-0 hidden bg-linear-to-r from-plum via-plum/75 to-transparent lg:block"
+        className="absolute inset-0 hidden bg-linear-to-r from-plum/85 via-plum/35 via-30% to-transparent to-55% lg:block"
       />
 
       <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">

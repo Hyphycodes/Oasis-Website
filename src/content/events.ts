@@ -23,12 +23,17 @@ export const eventSeries: EventSeries[] = [
     musicFormats: ['House', 'Top 100', 'Hip-Hop'],
     venueName: 'Oasis Mexican Kitchen & Bar',
     artworkAssetId: null,
+    // The owner-supplied flyer prints "Friday, August 7th". It is the only
+    // approved Fridays artwork, so it is featured as series artwork and the
+    // printed date is captioned beside it — never presented as the next date,
+    // which is always rendered from a generated occurrence.
+    flyerAssetId: 'flyerFridays',
+    flyerPrintedDate: 'August 7th',
     // null = compose the correct per-night URL. A single series-level link cannot
     // be right for every date, and the date-less slug resolved to the WRONG
     // event entirely. See ticketUrlForOccurrence in src/lib/events.ts.
     ticketUrl: null,
     priceCents: 1000,
-    feeCents: 25,
     status: 'scheduled',
     seriesEndsOn: null,
   },
@@ -49,9 +54,11 @@ export const eventSeries: EventSeries[] = [
     musicFormats: ['Reggaetón', 'Corridos', 'Guaracha'],
     venueName: 'Oasis Mexican Kitchen & Bar',
     artworkAssetId: null,
+    // Prints "Saturday, August 8th". Captioned, exactly as Fridays is.
+    flyerAssetId: 'flyerLatinSaturdays',
+    flyerPrintedDate: 'August 8th',
     ticketUrl: null,
     priceCents: 1000,
-    feeCents: 25,
     status: 'scheduled',
     seriesEndsOn: null,
   },

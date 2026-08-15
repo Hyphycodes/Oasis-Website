@@ -34,21 +34,28 @@ against the actual files by `npm run assets:check`, so the two cannot silently d
 | `backBar` | `home/back-bar.jpg` | image | 1069 × 1600 | 1069:1600 | `temp-wix` |
 | `exteriorSign` | `home/exterior-sign.jpg` | image | 720 × 540 | 4:3 | `temp-wix` |
 | `diningRoom` | `home/dining-room.jpg` | image | 1143 × 1728 | 1143:1728 | `temp-wix` |
+| `plateTorta` | `menu/plate-torta.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
 | `roomAtmosphere` | `home/room-atmosphere.jpg` | image | 720 × 480 | 3:2 | `temp-wix` |
 | `bartender` | `home/gallery-02.jpg` | image | 720 × 720 | 1:1 | `temp-wix` |
-| `plateTorta` | `menu/plate-torta.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
+| `dishQuesabirria` | `menu/quesabirria.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
+| `consommeDip` | `menu/consomme-dip.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
+| `cocktailPour` | `menu/cocktail-pour.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
+| `margaritaTajin` | `menu/margarita-tajin.jpg` | image | 720 × 720 | 1:1 | `temp-wix` |
+| `roomCrowd` | `home/room-crowd.jpg` | image | 720 × 480 | 3:2 | `temp-wix` |
 | `cocktailPair` | `menu/cocktail-pair.jpg` | image | 720 × 900 | 4:5 | `temp-wix` |
-| `teamEnergy` | `careers/team-energy.jpg` | image | 720 × 480 | 3:2 | `temp-wix` |
-| `brunchTable` | — | image | 1200 × 1500 | 4:5 | `placeholder` |
-| `nightlifeCrowd` | — | image | 1800 × 1200 | 3:2 | `placeholder` |
-| `eventFridays` | — | image | 1200 × 1500 | 4:5 | `placeholder` |
-| `eventLatinSaturdays` | — | image | 1200 × 1500 | 4:5 | `placeholder` |
-| `cateringSpread` | — | image | 1800 × 1200 | 3:2 | `placeholder` |
-| `cateringTray` | — | image | 1200 × 1200 | 1:1 | `placeholder` |
+| `flyerFridays` | `events/oasis-fridays-flyer.jpg` | image | 1080 × 1080 | 1:1 | `final` |
+| `flyerLatinSaturdays` | `events/oasis-latin-saturdays-flyer.jpg` | image | 1080 × 1080 | 1:1 | `final` |
 | `privateEvents` | — | image | 1800 × 1200 | 3:2 | `placeholder` |
 | `birthdayCelebration` | — | image | 1200 × 1500 | 4:5 | `placeholder` |
+| `teamEnergy` | `careers/team-energy.jpg` | image | 720 × 480 | 3:2 | `temp-wix` |
 
-**Totals:** 20 registered — 1 `brand`, 1 `final`, 10 `temp-wix`, 8 `placeholder`.
+**Totals:** 21 registered — 1 `brand`, 3 `final`, 15 `temp-wix`, 2 `placeholder`.
+
+The two flyers are owner-supplied artwork, re-encoded from the original PNGs to
+1080 × 1080 JPEG. Both are tagged `containsText: 'date'`, which bars them from the
+authoritative `artworkAssetId` slot and requires a declared `flyerPrintedDate` on
+the series so the printed date is always captioned. See
+[`ASSET-HANDOFF.md`](./ASSET-HANDOFF.md) §4.
 
 ---
 

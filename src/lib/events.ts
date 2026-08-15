@@ -136,7 +136,6 @@ export function generateOccurrences(
       // Composed per night. `series.ticketUrl` is only a manual override.
       ticketUrl: override?.ticketUrl ?? series.ticketUrl ?? ticketUrlForOccurrence(series.slug, startsAt),
       priceCents: override?.priceCents !== undefined ? override.priceCents : series.priceCents,
-      feeCents: series.feeCents,
     });
 
     if (occurrences.length >= weeks) break;

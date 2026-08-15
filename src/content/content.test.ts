@@ -117,6 +117,34 @@ describe('event series', () => {
     }
   });
 
+  it('captions every flyer that has a date printed into it', () => {
+    for (const series of eventSeries) {
+      if (!series.flyerAssetId) {
+        expect(
+          series.flyerPrintedDate,
+          `${series.slug} declares a printed date with no flyer`,
+        ).toBeNull();
+        continue;
+      }
+      const flyer = assets[series.flyerAssetId];
+      expect(flyer, `${series.slug} flyer missing`).toBeDefined();
+      if (flyer?.containsText === 'date') {
+        // Without this the artwork's printed date would sit beside a different
+        // generated date with nothing to explain the gap.
+        expect(
+          series.flyerPrintedDate,
+          `${series.slug} uses dated artwork with no printed date declared`,
+        ).toBeTruthy();
+      }
+    }
+  });
+
+  it('publishes no ticket fee, which only the checkout can be right about', () => {
+    for (const series of eventSeries) {
+      expect(Object.keys(series), `${series.slug} exposes feeCents`).not.toContain('feeCents');
+    }
+  });
+
   it('has a unique slug per series', () => {
     const slugs = eventSeries.map((series) => series.slug);
     expect(new Set(slugs).size).toBe(slugs.length);

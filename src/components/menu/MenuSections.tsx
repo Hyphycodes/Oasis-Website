@@ -33,11 +33,13 @@ function Item({ item }: { item: MenuItem }) {
 
   return (
     <li
-      className={`border-b border-brown/12 py-4 last:border-b-0 ${
+      // break-inside-avoid keeps a dish, its description and its modifiers in one
+      // piece when the list flows into the second column.
+      className={`mb-5 break-inside-avoid border-b border-brown/12 pb-5 lg:mb-6 lg:pb-6 ${
         item.available ? '' : 'opacity-60'
       }`}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1">
         <h3 className="text-[1.0625rem] font-semibold leading-snug text-brown">
           {item.name}
           {!item.available ? (
@@ -50,9 +52,7 @@ function Item({ item }: { item: MenuItem }) {
       </div>
 
       {item.description ? (
-        <p className="measure mt-1 text-[0.875rem] leading-relaxed text-brown-soft">
-          {item.description}
-        </p>
+        <p className="mt-1 text-[0.875rem] leading-relaxed text-brown-soft">{item.description}</p>
       ) : null}
 
       {item.dietary.length > 0 ? (
@@ -91,17 +91,27 @@ function Item({ item }: { item: MenuItem }) {
 }
 
 /**
- * The categories and rows for one menu. Rendered inside a tab panel by MenuTabs.
+ * The categories and rows for one menu.
+ *
+ * Desktop runs two columns inside a controlled measure, because one column of
+ * short dish names down the left of a 1440px page left the prices stranded
+ * halfway across an empty field. CSS multi-column — not masonry — is what does
+ * it: the reading order stays exactly the DOM order (down column one, then down
+ * column two, the way a printed menu reads) and the browser balances the height,
+ * so no category ends with one full column beside an empty one.
  *
  * Modifiers render as compressed inline runs rather than full-width rows with the
  * same weight as dishes, so a 40-item menu reads as 40 items and not as 90.
  */
-export function MenuSections({ menu }: { menu: Menu }) {
+export function MenuSections({ menu, footNote }: { menu: Menu; footNote?: string | null }) {
   if (menu.categories.length === 0) {
     return (
       <Frame>
-        <div className="border-y border-brown/15 py-12 text-center">
-          <p className="measure mx-auto text-[length:var(--text-body-lg)] leading-relaxed text-brown-soft">
+        <div className="py-(--spacing-band-sm)">
+          {menu.note ? (
+            <p className="eyebrow text-clay">{menu.note}</p>
+          ) : null}
+          <p className="measure mt-4 text-[length:var(--text-body-lg)] leading-relaxed text-brown-soft">
             {menu.emptyState}
           </p>
         </div>
@@ -110,36 +120,50 @@ export function MenuSections({ menu }: { menu: Menu }) {
   }
 
   return (
-    <>
-      <Frame>
-        <div className="pb-(--spacing-band) pt-2">
-          {menu.categories.map((category) => (
-            <section
-              key={category.id}
-              id={category.id}
-              aria-labelledby={`${category.id}-heading`}
-              className="pt-8 first:pt-5"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-4 border-b-2 border-brown/25 pb-3">
-                <h2
-                  id={`${category.id}-heading`}
-                  className="display text-[clamp(1.375rem,2vw,1.625rem)] text-brown"
-                >
-                  {category.name}
-                </h2>
-                {category.note ? (
-                  <p className="text-[0.875rem] text-brown-soft">{category.note}</p>
-                ) : null}
-              </div>
-              <ul>
-                {category.items.map((item) => (
-                  <Item key={item.id} item={item} />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </Frame>
-    </>
+    <Frame>
+      <div className="pb-(--spacing-band)">
+        {menu.note ? (
+          <p className="eyebrow pt-6 text-clay">{menu.note}</p>
+        ) : null}
+
+        {menu.categories.map((category) => (
+          <section
+            key={category.id}
+            id={category.id}
+            aria-labelledby={`${category.id}-heading`}
+            // The sticky menu navigation must not cover the heading it jumps to.
+            className="scroll-mt-[calc(var(--o-header-h)+7rem)] pt-10 first:pt-7 lg:pt-14"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-brown/25 pb-3">
+              <h2
+                id={`${category.id}-heading`}
+                className="display text-[clamp(1.375rem,2vw,1.625rem)] text-brown"
+              >
+                {category.name}
+              </h2>
+              {category.note ? (
+                <p className="text-[0.875rem] text-brown-soft">{category.note}</p>
+              ) : null}
+            </div>
+            {/* Two columns from 768 up. Below that a single column is the only
+                honest option; above it, one column leaves a short dish name at
+                the left of the measure and its price stranded at the far right. */}
+            <ul className="mt-5 gap-x-10 md:columns-2 lg:gap-x-14">
+              {category.items.map((item) => (
+                <Item key={item.id} item={item} />
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        {/* Operational notes sit at the foot of the one menu they concern, not in
+            front of every visitor before they have seen a dish. */}
+        {footNote ? (
+          <p className="measure mt-8 border-t border-brown/15 pt-5 text-[0.875rem] leading-relaxed text-brown-soft">
+            {footNote}
+          </p>
+        ) : null}
+      </div>
+    </Frame>
   );
 }

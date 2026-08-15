@@ -6,7 +6,7 @@ import { Reveal } from '@/components/primitives/Reveal';
 import { Eyebrow } from '@/components/primitives/Type';
 import { site } from '@/content/site';
 import type { CateringPackage, PageSection } from '@/content/types';
-import { formatPhoneHref, formatPrice, formatPriceRange } from '@/lib/format';
+import { formatPhoneHref, formatPriceRange } from '@/lib/format';
 import { groupHours } from '@/lib/hours';
 
 /**
@@ -58,11 +58,10 @@ export function CateringAndVisit({
                         className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-brown/12 py-2.5 text-[0.9375rem]"
                       >
                         <span className="font-medium text-brown">{pkg.name}</span>
+                        {/* Serving range, not price. Catering pricing lives on
+                            Toast — see the note in src/app/(site)/catering/page.tsx. */}
                         <span className="tabular text-[0.8125rem] text-brown-soft">
                           Serves {formatPriceRange(pkg.servesMin, pkg.servesMax)}
-                        </span>
-                        <span className="tabular font-semibold text-brown">
-                          {formatPrice(pkg.priceCents)}
                         </span>
                       </li>
                     ))}

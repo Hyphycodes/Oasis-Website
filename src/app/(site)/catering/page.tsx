@@ -1,17 +1,31 @@
 import type { Metadata } from 'next';
 import { CateringForm } from '@/components/forms/CateringForm';
 import { Band, Frame } from '@/components/primitives/Band';
-import { ExternalButtonLink } from '@/components/primitives/Button';
+import { ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { PageHeader } from '@/components/primitives/PageHeader';
 import { Eyebrow } from '@/components/primitives/Type';
 import { pageCopy, seo } from '@/content/pages';
 import { getCateringItems, getCateringPackages } from '@/content/resolve';
 import { site } from '@/content/site';
-import { formatPrice, formatPriceRange } from '@/lib/format';
+import { formatPriceRange } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildMetadata({ ...seo.catering!, path: '/catering' });
 export const revalidate = 3600;
+
+/**
+ * Catering.
+ *
+ * NO PRICE IS RENDERED ON THIS PAGE, by decision. Catering prices live on Toast
+ * and change there; a copy printed here goes stale the first time the kitchen
+ * adjusts a tray, and a guest who plans around a stale number is a guest the
+ * restaurant has to disappoint. The page sells the capability — what exists,
+ * what is in it, how many it feeds — and Toast is the single source of truth for
+ * current packages and pricing.
+ *
+ * `formatPrice` is deliberately not imported here. Ordinary restaurant menu
+ * prices are unaffected; this rule is about catering only.
+ */
 
 export default async function CateringPage() {
   const [packages, items] = await Promise.all([getCateringPackages(), getCateringItems()]);
@@ -28,7 +42,7 @@ export default async function CateringPage() {
             destination="Toast ordering"
             size="lg"
           >
-            Order catering on Toast
+            View catering menu &amp; pricing on Toast
           </ExternalButtonLink>
         }
       />
@@ -51,18 +65,29 @@ export default async function CateringPage() {
                       </p>
                     ) : null}
                   </div>
-                  <ul className="space-y-1 text-[0.9375rem] text-brown-soft sm:col-span-6">
+                  <ul className="space-y-1 text-[0.9375rem] text-brown-soft sm:col-span-8">
                     {pkg.includes.map((line) => (
                       <li key={line}>{line}</li>
                     ))}
                   </ul>
-                  <p className="tabular text-[1.375rem] font-semibold text-brown sm:col-span-2 sm:text-right">
-                    {formatPrice(pkg.priceCents)}
-                  </p>
                 </div>
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <p className="measure-lead text-[0.9375rem] leading-relaxed text-brown-soft">
+              Current pricing for every package is on our Toast catering page, where you can also
+              place the order.
+            </p>
+            <ExternalTextLink
+              href={site.cateringOrderUrl}
+              destination="Toast ordering"
+              className="text-clay"
+            >
+              See package pricing
+            </ExternalTextLink>
+          </div>
         </Frame>
       </Band>
 
@@ -72,12 +97,7 @@ export default async function CateringPage() {
           <ul className="mt-8 columns-1 gap-x-12 sm:columns-2">
             {items.map((item) => (
               <li key={item.id} className="mb-5 break-inside-avoid border-b border-brown/12 pb-4">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="text-[0.9375rem] font-semibold text-brown">{item.name}</h3>
-                  <p className="tabular shrink-0 text-[0.9375rem] font-semibold text-brown">
-                    {formatPrice(item.priceCents)}
-                  </p>
-                </div>
+                <h3 className="text-[0.9375rem] font-semibold text-brown">{item.name}</h3>
                 {item.note ? (
                   <p className="mt-1.5 text-[0.875rem] leading-relaxed text-brown-soft">
                     {item.note}

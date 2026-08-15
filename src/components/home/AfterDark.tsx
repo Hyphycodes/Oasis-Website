@@ -3,7 +3,7 @@ import { ButtonLink } from '@/components/primitives/Button';
 import { Reveal } from '@/components/primitives/Reveal';
 import { Eyebrow } from '@/components/primitives/Type';
 import type { PageSection, ResolvedEvent } from '@/content/types';
-import { formatEventDate, formatPrice, formatEventTime } from '@/lib/format';
+import { formatEventDate, formatEventTime } from '@/lib/format';
 
 /**
  * Oasis After Dark — a preview, not the events page.
@@ -82,9 +82,11 @@ export function AfterDark({
                         <p className="mt-1 text-[0.875rem] text-teal-soft">
                           {event.series.musicFormats.join(' · ')}
                         </p>
+                        {/* Age only. The door price is stated once, on the event
+                            feature at /events, so there is one place to keep
+                            right rather than three. */}
                         <p className="tabular mt-1 text-[0.875rem] text-teal-soft">
                           {event.series.ageMin ? `${event.series.ageMin}+` : 'All ages'}
-                          {event.priceCents != null ? ` · ${formatPrice(event.priceCents)}` : ''}
                         </p>
                       </div>
                     </Reveal>

@@ -53,7 +53,7 @@ insert into public.menu_items (id, category_id, name, description, price_cents, 
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
     available = excluded.available, featured = excluded.featured, sort = excluded.sort;
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:quesadilla', 'food:starters', 'Quesadilla', 'Melted cheese in a warm tortilla, served with a side salad of lettuce, tomato & sour cream.', null, 'Ask your server', 'Add', array['vegetarian']::text[], true, false, 4)
+  values ('food:quesadilla', 'food:starters', 'Quesadilla', 'Melted cheese in a warm tortilla, served with a side salad of lettuce, tomato & sour cream.', 1000, null, 'Add', array['vegetarian']::text[], true, false, 4)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -62,7 +62,7 @@ delete from public.menu_modifiers where item_id = 'food:quesadilla';
 insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:quesadilla', 'Add meat', 400, 0);
 insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:quesadilla', 'Upgrade to dinner', 200, 1);
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:loaded-nachos', 'food:starters', 'Loaded Nachos', 'Crispy chips topped with nacho cheese, mozzarella, beans, lettuce, tomato, guacamole, sour cream, and jalapeño.', null, 'Ask your server', 'Add', array['vegetarian']::text[], true, false, 5)
+  values ('food:loaded-nachos', 'food:starters', 'Loaded Nachos', 'Crispy chips topped with nacho cheese, mozzarella, beans, lettuce, tomato, guacamole, sour cream, and jalapeño.', 1200, null, 'Add', array['vegetarian']::text[], true, false, 5)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -70,7 +70,7 @@ insert into public.menu_items (id, category_id, name, description, price_cents, 
 delete from public.menu_modifiers where item_id = 'food:loaded-nachos';
 insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:loaded-nachos', 'Meat', 400, 0);
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:oasis-fries', 'food:starters', 'Oasis Fries', 'Fries smothered in nacho cheese, jalapeño, mozzarella, guacamole & sour cream.', null, 'Ask your server', 'Add', array['vegetarian']::text[], true, false, 6)
+  values ('food:oasis-fries', 'food:starters', 'Oasis Fries', 'Fries smothered in nacho cheese, jalapeño, mozzarella, guacamole & sour cream.', 1200, null, 'Add', array['vegetarian']::text[], true, false, 6)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -84,7 +84,7 @@ insert into public.menu_items (id, category_id, name, description, price_cents, 
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
     available = excluded.available, featured = excluded.featured, sort = excluded.sort;
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:caesar-salad', 'food:starters', 'Caesar Salad', 'Crisp romaine tossed in creamy Caesar dressing, topped with seasoned croutons and fresh grated Parmesan.', null, 'Ask your server', 'Add 8oz', array['vegetarian']::text[], true, false, 8)
+  values ('food:caesar-salad', 'food:starters', 'Caesar Salad', 'Crisp romaine tossed in creamy Caesar dressing, topped with seasoned croutons and fresh grated Parmesan.', 1200, null, 'Add 8oz', array['vegetarian']::text[], true, false, 8)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -95,7 +95,7 @@ insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('f
 insert into public.menu_categories (id, menu_slug, name, note, sort) values ('food:entrees', 'food', 'Entrees', null, 1)
   on conflict (id) do update set name = excluded.name, note = excluded.note, sort = excluded.sort;
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:taco-dinner', 'food:entrees', 'Taco Dinner', 'Three street tacos with your choice of meat and toppings, served with rice and beans.', null, 'Ask your server', 'Choice of meat', '{}', true, false, 0)
+  values ('food:taco-dinner', 'food:entrees', 'Taco Dinner', 'Three street tacos with your choice of meat and toppings, served with rice and beans.', 1400, null, 'Choice of meat', '{}', true, false, 0)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -113,7 +113,7 @@ insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('f
 insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Guacamole', 50, 9);
 insert into public.menu_modifiers (item_id, label, price_cents, sort) values ('food:taco-dinner', 'Avocado Slices', 50, 10);
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:taco-salad', 'food:entrees', 'Taco Salad', 'Crisp lettuce layered with seasoned beans, shredded cheese, fresh tomato, and sour cream, topped with your choice of meat and served in a golden crispy tortilla bowl.', null, 'Ask your server', 'Add', '{}', true, false, 1)
+  values ('food:taco-salad', 'food:entrees', 'Taco Salad', 'Crisp lettuce layered with seasoned beans, shredded cheese, fresh tomato, and sour cream, topped with your choice of meat and served in a golden crispy tortilla bowl.', 1600, null, 'Add', '{}', true, false, 1)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -156,13 +156,13 @@ insert into public.menu_items (id, category_id, name, description, price_cents, 
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
     available = excluded.available, featured = excluded.featured, sort = excluded.sort;
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:oasis-alfredo', 'food:entrees', 'Oasis Alfredo Pasta', 'Creamy alfredo pasta tossed with a hint of Mexican spice, topped with grilled chicken and fresh Parmesan. Shrimp substitution available.', null, 'Ask your server', null, '{}', true, false, 7)
+  values ('food:oasis-alfredo', 'food:entrees', 'Oasis Alfredo Pasta', 'Creamy alfredo pasta tossed with a hint of Mexican spice, topped with grilled chicken and fresh Parmesan. Shrimp substitution available.', 2000, null, null, '{}', true, false, 7)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
     available = excluded.available, featured = excluded.featured, sort = excluded.sort;
 insert into public.menu_items (id, category_id, name, description, price_cents, price_note, modifier_group_label, dietary, available, featured, sort)
-  values ('food:fajitas', 'food:entrees', 'Fajitas', 'Sizzling skillet of grilled bell peppers and onions with your choice of protein. Comes with rice, beans, lettuce, tomato, guacamole, sour cream and warm tortillas.', null, 'Ask your server', 'Choice of protein', '{}', true, false, 8)
+  values ('food:fajitas', 'food:entrees', 'Fajitas', 'Sizzling skillet of grilled bell peppers and onions with your choice of protein. Comes with rice, beans, lettuce, tomato, guacamole, sour cream and warm tortillas.', 2600, null, 'Choice of protein', '{}', true, false, 8)
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     price_cents = excluded.price_cents, price_note = excluded.price_note,
     modifier_group_label = excluded.modifier_group_label, dietary = excluded.dietary,
@@ -615,24 +615,26 @@ insert into public.menus (slug, title, note, empty_state, sort) values ('brunch'
 
 -- Event series -------------------------------------------------------
 -- NOTE: no dates here. Occurrences are generated from cadence at read time.
-insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, ticket_url, price_cents, fee_cents, status, series_ends_on, sort)
-  values ('oasis-fridays', 'Oasis Fridays', 'House, Top 100 and Hip-Hop. 18+, doors at 10.', 'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and a nightclub atmosphere.', 'weekly:5', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['House', 'Top 100', 'Hip-Hop']::text[], 'Oasis Mexican Kitchen & Bar', 'eventFridays', 'https://www.oasismexicankitchenbar.com/event-details/oasis-fridays', 1000, 25, 'scheduled'::public.event_status, null, 0)
+insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, price_cents, status, series_ends_on, sort)
+  values ('oasis-fridays', 'Oasis Fridays', 'House, Top 100 and Hip-Hop. 18+, doors at 10.', 'Oasis Fridays is an 18+ Friday night party at Oasis. Expect a high-energy night of House, Top 100 and some Hip-Hop, with dancing, drinks and late-night energy.', 'weekly:5', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['House', 'Top 100', 'Hip-Hop']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerFridays', 'August 7th', null, 1000, 'scheduled'::public.event_status, null, 0)
   on conflict (slug) do update set title = excluded.title, summary = excluded.summary,
     description = excluded.description, cadence = excluded.cadence,
     start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes,
     age_min = excluded.age_min, age_note = excluded.age_note,
     music_formats = excluded.music_formats, artwork_asset_id = excluded.artwork_asset_id,
+    flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date,
     ticket_url = excluded.ticket_url, price_cents = excluded.price_cents,
-    fee_cents = excluded.fee_cents, status = excluded.status, sort = excluded.sort;
-insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, ticket_url, price_cents, fee_cents, status, series_ends_on, sort)
-  values ('oasis-latin-saturdays', 'Oasis Latin Saturdays', 'Reggaetón, corridos and guaracha. 18+, doors at 10.', 'Latin Saturdays at Oasis. Dance to reggaetón, corridos and guaracha in a high-energy room with great music, drinks and late-night vibes. 18+.', 'weekly:6', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['Reggaetón', 'Corridos', 'Guaracha']::text[], 'Oasis Mexican Kitchen & Bar', 'eventLatinSaturdays', 'https://www.oasismexicankitchenbar.com/event-details/oasis-latin-saturdays', 1000, 25, 'scheduled'::public.event_status, null, 1)
+    status = excluded.status, sort = excluded.sort;
+insert into public.event_series (slug, title, summary, description, cadence, start_minutes, end_minutes, age_min, age_note, music_formats, venue_name, artwork_asset_id, flyer_asset_id, flyer_printed_date, ticket_url, price_cents, status, series_ends_on, sort)
+  values ('oasis-latin-saturdays', 'Oasis Latin Saturdays', 'Reggaetón, corridos and guaracha. 18+, doors at 10.', 'Latin Saturdays at Oasis. Dance to reggaetón, corridos and guaracha in a high-energy room with great music, drinks and late-night vibes. 18+.', 'weekly:6', 1320, 1560, 18, 'Drinks 21+ with valid ID.', array['Reggaetón', 'Corridos', 'Guaracha']::text[], 'Oasis Mexican Kitchen & Bar', null, 'flyerLatinSaturdays', 'August 8th', null, 1000, 'scheduled'::public.event_status, null, 1)
   on conflict (slug) do update set title = excluded.title, summary = excluded.summary,
     description = excluded.description, cadence = excluded.cadence,
     start_minutes = excluded.start_minutes, end_minutes = excluded.end_minutes,
     age_min = excluded.age_min, age_note = excluded.age_note,
     music_formats = excluded.music_formats, artwork_asset_id = excluded.artwork_asset_id,
+    flyer_asset_id = excluded.flyer_asset_id, flyer_printed_date = excluded.flyer_printed_date,
     ticket_url = excluded.ticket_url, price_cents = excluded.price_cents,
-    fee_cents = excluded.fee_cents, status = excluded.status, sort = excluded.sort;
+    status = excluded.status, sort = excluded.sort;
 
 -- Catering -----------------------------------------------------------
 insert into public.catering_packages (id, name, serves_min, serves_max, price_cents, includes, sort)
@@ -689,42 +691,30 @@ insert into public.catering_items (id, name, price_cents, note, sort) values ('c
 
 -- Page sections ------------------------------------------------------
 insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'experience', 'What goes on here', 'A kitchen, a bar, and a room that changes character after ten.', 'Lunch and dinner every day. Brunch on the weekend. Cocktails all night. And on Friday and Saturday the dining room turns into something else entirely.', true, 'stagger', 0)
+  values ('home', 'breadth', 'From the kitchen to the bar', 'Come hungry. Stay awhile.', 'Tacos and plates from the kitchen, a bar built on tequila, and brunch on the weekend.', true, 'stagger', 0)
   on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
     body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
 insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'signatures', 'Oasis originals', 'The three you came for.', 'Everything on the menu is worth ordering. These are the ones people drive out to Lockport for.', true, 'editorial-left', 1)
+  values ('home', 'bar', 'Bar & brunch', 'Margaritas by the tower.', 'A bar built on tequila, and the weekend brunch that fills the room by eleven.', true, 'editorial-right', 1)
   on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
     body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
 insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'bar', 'Bar & brunch', 'Margaritas by the tower. Brunch on the weekend.', 'A full bar built around tequila, plus the shareables that show up at every good table — the tower, the pitchers, the jumbo cantarito.', true, 'editorial-right', 2)
+  values ('home', 'after-dark', 'Oasis After Dark', 'The room changes after ten.', 'Dinner first, music after. Friday and Saturday go later — eighteen and up.', true, 'band', 2)
   on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
     body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
 insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'after-dark', 'Oasis After Dark', 'Friday and Saturday, the lights go down.', 'Two nights a week, doors at ten, eighteen and up. House and Top 100 on Friday. Reggaetón, corridos and guaracha on Saturday.', true, 'band', 3)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'catering', 'Catering & celebrations', 'Feed twenty. Or throw the whole party here.', 'Trays, packages and full spreads for pickup — or bring the celebration to us and let the team handle the rest.', true, 'editorial-left', 4)
-  on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
-    body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
-insert into public.page_sections (page, key, eyebrow, heading, body, visible, variant, sort)
-  values ('home', 'gallery', 'The room', 'Come see it.', null, true, 'plain', 5)
+  values ('home', 'two-paths', 'Catering & celebrations', 'Take it with you, or take over the room.', null, true, 'stagger', 3)
   on conflict (page, key) do update set eyebrow = excluded.eyebrow, heading = excluded.heading,
     body = excluded.body, visible = excluded.visible, variant = excluded.variant, sort = excluded.sort;
 
 -- Page SEO -----------------------------------------------------------
 insert into public.page_seo (page, title, description, og_asset_id) values ('home', 'Oasis Mexican Kitchen & Bar — Modern Mexican in Lockport, IL', 'Modern Mexican kitchen and bar in Lockport, IL. Birria, quesabirrias, handcrafted cocktails, weekend brunch, and 18+ nightlife Friday and Saturday. Reserve a table or order online.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('menu', 'Food Menu — Oasis Mexican Kitchen & Bar, Lockport IL', 'Starters, entrees, specialty tacos and sides at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada and more.', null)
+insert into public.page_seo (page, title, description, og_asset_id) values ('menu', 'Menu — Oasis Mexican Kitchen & Bar, Lockport IL', 'Food, cocktails and weekend brunch at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('cocktails', 'Cocktails & Bar — Oasis Mexican Kitchen & Bar, Lockport IL', 'Margaritas, palomas, cantaritos, margarita towers and pitchers, plus a full beer and wine list at Oasis in Lockport, IL.', null)
+insert into public.page_seo (page, title, description, og_asset_id) values ('events', 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL', 'Oasis Fridays and Oasis Latin Saturdays in Lockport, IL. 18+, doors at 10pm. House, Top 100, hip-hop, reggaetón, corridos and guaracha every Friday and Saturday.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('brunch', 'Weekend Brunch — Oasis Mexican Kitchen & Bar, Lockport IL', 'Brunch served Saturday and Sunday, 10am to 3pm, at Oasis Mexican Kitchen & Bar in Lockport, IL.', null)
-  on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('events', 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL', 'Oasis Fridays and Oasis Latin Saturdays. 18+, doors at 10pm, $10 general admission. House, Top 100, reggaetón, corridos and guaracha in Lockport, IL.', null)
-  on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
-insert into public.page_seo (page, title, description, og_asset_id) values ('catering', 'Catering — Oasis Mexican Kitchen & Bar, Lockport IL', 'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL.', null)
+insert into public.page_seo (page, title, description, og_asset_id) values ('catering', 'Catering — Oasis Mexican Kitchen & Bar, Lockport IL', 'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL. Order and see pricing on Toast.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
 insert into public.page_seo (page, title, description, og_asset_id) values ('privateEvents', 'Private Events & Celebrations — Oasis Mexican Kitchen & Bar', 'Host your birthday, quinceañera or team celebration at Oasis Mexican Kitchen & Bar in Lockport, IL. Send an inquiry and our team will follow up.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
@@ -787,37 +777,42 @@ insert into public.media_assets (asset_id, path, alt, width, height, ratio, foca
     width = excluded.width, height = excluded.height, ratio = excluded.ratio,
     focal = excluded.focal, poster = excluded.poster, status = excluded.status;
 insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
+  values ('dishQuesabirria', '/media/menu/quesabirria.jpg', 'A plate of quesabirria tacos with a cup of consommé for dipping', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
+    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
+    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
+  values ('consommeDip', '/media/menu/consomme-dip.jpg', 'A quesabirria taco being dipped into a cup of consommé', 720, 900, '4:5', '50% 45%', null, 'temp-wix')
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
+    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
+    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
+  values ('cocktailPour', '/media/menu/cocktail-pour.jpg', 'A mango margarita being poured from a shaker into a Tajín-rimmed glass', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
+    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
+    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
+  values ('margaritaTajin', '/media/menu/margarita-tajin.jpg', 'A finished mango margarita with a Tajín rim and a fan of fresh mango', 720, 720, '1:1', '50% 50%', null, 'temp-wix')
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
+    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
+    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
+  values ('roomCrowd', '/media/home/room-crowd.jpg', 'A full dining room at service under the greenery wall and rattan lights', 720, 480, '3:2', '50% 55%', null, 'temp-wix')
+  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
+    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
+    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
+insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
   values ('cocktailPair', '/media/menu/cocktail-pair.jpg', 'A margarita with a Tajín rim being finished at the bar', 720, 900, '4:5', '50% 50%', null, 'temp-wix')
   on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
     width = excluded.width, height = excluded.height, ratio = excluded.ratio,
     focal = excluded.focal, poster = excluded.poster, status = excluded.status;
 insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('brunchTable', null, 'A brunch table at Oasis', 1200, 1500, '4:5', '50% 45%', null, 'placeholder')
+  values ('flyerFridays', '/media/events/oasis-fridays-flyer.jpg', 'Oasis Fridays flyer artwork', 1080, 1080, '1:1', '50% 50%', null, 'final')
   on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
     width = excluded.width, height = excluded.height, ratio = excluded.ratio,
     focal = excluded.focal, poster = excluded.poster, status = excluded.status;
 insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('nightlifeCrowd', null, 'A busy night on the floor at Oasis', 1800, 1200, '3:2', '50% 40%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('eventFridays', null, 'Oasis Fridays', 1200, 1500, '4:5', '50% 45%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('eventLatinSaturdays', null, 'Oasis Latin Saturdays', 1200, 1500, '4:5', '50% 45%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('cateringSpread', null, 'Catering trays laid out for a party', 1800, 1200, '3:2', '50% 50%', null, 'placeholder')
-  on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
-    width = excluded.width, height = excluded.height, ratio = excluded.ratio,
-    focal = excluded.focal, poster = excluded.poster, status = excluded.status;
-insert into public.media_assets (asset_id, path, alt, width, height, ratio, focal, poster, status)
-  values ('cateringTray', null, 'A full tray of tacos ready for pickup', 1200, 1200, '1:1', '50% 50%', null, 'placeholder')
+  values ('flyerLatinSaturdays', '/media/events/oasis-latin-saturdays-flyer.jpg', 'Oasis Latin Saturdays flyer artwork', 1080, 1080, '1:1', '50% 50%', null, 'final')
   on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt,
     width = excluded.width, height = excluded.height, ratio = excluded.ratio,
     focal = excluded.focal, poster = excluded.poster, status = excluded.status;

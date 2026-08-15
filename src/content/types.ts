@@ -168,11 +168,26 @@ export interface EventSeries {
   ageNote: string | null;
   musicFormats: string[];
   venueName: string;
-  /** Optional. When absent the poster is composed from event data instead. */
+  /**
+   * UNDATED series artwork. Anything tagged `containsText: 'date'` is rejected
+   * here by both the content test and the asset checker.
+   */
   artworkAssetId: string | null;
+  /**
+   * The restaurant's own flyer for the series. These DO carry a printed date, so
+   * this slot is deliberately separate from `artworkAssetId` and is only legal
+   * alongside `flyerPrintedDate`.
+   */
+  flyerAssetId: string | null;
+  /**
+   * The date printed on `flyerAssetId`, in the venue's own wording ("August 8th").
+   * Required whenever the flyer image is tagged `containsText: 'date'`, so the UI
+   * can caption the artwork and the printed date can never be read as the next
+   * date. null only when the flyer genuinely carries no date.
+   */
+  flyerPrintedDate: string | null;
   ticketUrl: string | null;
   priceCents: number | null;
-  feeCents: number | null;
   status: EventStatus;
   /** Generated occurrences stop here. null = open-ended. */
   seriesEndsOn: string | null;
@@ -187,7 +202,6 @@ export interface EventOccurrence {
   status: EventStatus;
   ticketUrl: string | null;
   priceCents: number | null;
-  feeCents: number | null;
 }
 
 export interface ResolvedEvent extends EventOccurrence {

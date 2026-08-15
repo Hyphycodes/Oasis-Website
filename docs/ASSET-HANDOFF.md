@@ -21,8 +21,19 @@ screenshots and not anything that has been through Instagram.
 
 ## 2. Food photography — biggest visible gap
 
-**There is currently no photograph of any dish on the website.** Not one. The signature section on
-the homepage is built as a typographic list precisely because there is nothing to show.
+The site currently runs on three dish photographs pulled from your promo reel: quesabirria tacos,
+the same tacos being dipped, and a torta plate. That is enough to fill the homepage strip and the
+menu masthead, and no more — two of the three are the same dish.
+
+Two places are visibly waiting on a photograph right now:
+
+- **Starters** on the homepage is a plain colour tile, not a photo, because there is no shot of the
+  wings, the queso, the street corn, or the nachos.
+- **Brunch** is the same — a colour tile — and the menu masthead runs food/food/bar instead of
+  food/bar/brunch for the same reason.
+
+Both are deliberate. We would rather show a colour field than use a birria photograph to stand for
+a dish that is not birria.
 
 Please shoot these, in this order:
 
@@ -65,16 +76,26 @@ Please get **written permission from anyone recognisable** in a photo before sen
 
 🚨 **Send flyers with NO DATE printed on the image.**
 
-The current site pairs "Oasis Fridays" artwork that has an old date baked into the picture with a
-live, correct date underneath it. Guests see two different dates and trust neither.
+**What is published today:** the two flyers you supplied are live on `/events` and on each series
+page, shown whole. They print *Friday, August 7th* and *Saturday, August 8th*, so each one carries a
+caption saying exactly that — "Series artwork, printed for August 7th. Fridays runs every week — the
+next date and tickets are listed on this page." The date a guest is asked to act on is always the
+generated one, in live text, never the one in the picture.
 
-The new site draws every date from the calendar and prints it over the artwork as live text. That
-only works if the artwork itself is undated. The build will **refuse to publish** artwork flagged
-as containing a date.
+That caption is the compromise, not the goal. It is there because we will not show a guest two
+dates and let them work it out, and we will not paint over your artwork either.
+
+**What removes it:** undated artwork. The site draws every date from the calendar; if the flyer
+itself carries no date, the caption disappears and the artwork stands on its own. The build
+**refuses** to treat dated artwork as the authoritative date source, and refuses to publish a dated
+flyer at all unless the printed date is declared so it can be captioned.
 
 - One undated flyer for **Oasis Fridays**
 - One undated flyer for **Oasis Latin Saturdays**
-- Portrait, 4:5, at least 1200 × 1500px
+- Square, 1:1, at least 1080 × 1080px (that is what the current flyers are, and the layout is built
+  around a square)
+- Keep the address, time, and age line inside the frame — nothing is cropped, so nothing is lost,
+  but anything printed hard against the edge sits hard against the edge on the site too
 
 ---
 

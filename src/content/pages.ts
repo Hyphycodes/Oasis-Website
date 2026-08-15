@@ -13,10 +13,13 @@ import type { PageSection, PageSeo } from './types';
 
 export const homeSections: PageSection[] = [
   {
-    key: 'known-for',
-    eyebrow: 'What we are known for',
-    heading: 'Birria, a torta, and a margarita.',
-    body: null,
+    // Was "What we are known for: Birria, a torta, and a margarita" — a claim
+    // that three items define a restaurant with 38 of them, and one the owner
+    // never approved. This section now shows the range instead of ranking it.
+    key: 'breadth',
+    eyebrow: 'From the kitchen to the bar',
+    heading: 'Come hungry. Stay awhile.',
+    body: 'Tacos and plates from the kitchen, a bar built on tequila, and brunch on the weekend.',
     visible: true,
     variant: 'stagger',
   },
@@ -34,7 +37,9 @@ export const homeSections: PageSection[] = [
     // Deliberately NOT "becomes a club" — Oasis is a restaurant and bar that
     // goes late, and describing it as a nightclub misrepresents the business.
     heading: 'The room changes after ten.',
-    body: 'Dinner first, music after. Friday and Saturday go later — eighteen and up, ten dollars at the door.',
+    // No door price here. It is stated once, on the event feature, and the
+    // ticket page is what settles the final total.
+    body: 'Dinner first, music after. Friday and Saturday go later — eighteen and up.',
     visible: true,
     variant: 'band',
   },
@@ -59,9 +64,14 @@ export const pageCopy = {
   },
 
   menu: {
-    eyebrow: 'The menu',
+    eyebrow: 'Menu',
     heading: 'Everything we make.',
-    body: 'Starters, entrees, specialty tacos and sides. Ask your server about anything that is not listed with a price — a few things move with the market.',
+    // One sentence about the unified menu. The old line opened the page with an
+    // operational disclaimer about unpriced items; that note now sits at the
+    // foot of the one menu it actually concerns.
+    body: 'Food, cocktails and weekend brunch — all in one place.',
+    unpricedNote:
+      'A few things on the bar list are priced by the pour or by the bottle. Where a price is not shown, ask your server — we would rather tell you than print a number that moves.',
   },
 
   cocktails: {
@@ -80,7 +90,9 @@ export const pageCopy = {
     eyebrow: 'Oasis After Dark',
     // Restaurant-and-bar language. Not "turns into a club".
     heading: 'Friday and Saturday go later.',
-    body: 'Dinner first, music after. Doors at ten, eighteen and up, ten dollars. Drinks are 21+ with valid ID.',
+    // Entry price, ID rules and fees belong on the event feature and the ticket
+    // page — not in a hero that has to be right about all three forever.
+    body: 'Dinner first, music after. Friday and Saturday from 10pm.',
   },
 
   catering: {
@@ -127,21 +139,21 @@ export const seo: Record<string, PageSeo> = {
     ogAssetId: null,
   },
   menu: {
-    title: 'Food Menu — Oasis Mexican Kitchen & Bar, Lockport IL',
+    title: 'Menu — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Starters, entrees, specialty tacos and sides at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada and more.',
+      'Food, cocktails and weekend brunch at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.',
     ogAssetId: null,
   },
   events: {
     title: 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Oasis Fridays and Oasis Latin Saturdays. 18+, doors at 10pm, $10 general admission. House, Top 100, reggaetón, corridos and guaracha in Lockport, IL.',
+      'Oasis Fridays and Oasis Latin Saturdays in Lockport, IL. 18+, doors at 10pm. House, Top 100, hip-hop, reggaetón, corridos and guaracha every Friday and Saturday.',
     ogAssetId: null,
   },
   catering: {
     title: 'Catering — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL.',
+      'Taco trays, fajita trays, quesabirria trays and party packages serving 15–30 from Oasis Mexican Kitchen & Bar in Lockport, IL. Order and see pricing on Toast.',
     ogAssetId: null,
   },
   privateEvents: {

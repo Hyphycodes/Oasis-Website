@@ -14,6 +14,12 @@ interface AssetProps {
   rounded?: boolean;
   /** Keeps a missing-asset placeholder inside the surrounding surface's ramp. */
   tone?: 'light' | 'dark';
+  /**
+   * `contain` shows the WHOLE image inside the frame. Required for artwork whose
+   * edges carry information — an event flyer cropped to a landscape card loses
+   * its address and age line.
+   */
+  fit?: 'cover' | 'contain';
 }
 
 /**
@@ -34,6 +40,7 @@ export function Asset({
   alt,
   rounded = true,
   tone = 'light',
+  fit = 'cover',
 }: AssetProps) {
   const asset = getAsset(id);
   const radius = rounded ? 'rounded-(--radius-lg)' : '';
@@ -76,8 +83,10 @@ export function Asset({
         sizes={sizes}
         priority={priority}
         loading={priority ? undefined : 'lazy'}
-        className="object-cover"
-        style={{ objectPosition: asset.focal }}
+        className={fit === 'contain' ? 'object-contain' : 'object-cover'}
+        // A contained image is centred in its frame; a focal point only means
+        // something when the frame is cropping.
+        style={fit === 'contain' ? undefined : { objectPosition: asset.focal }}
       />
     </div>
   );
