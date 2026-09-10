@@ -176,7 +176,16 @@ function SupportingEvent({
       className="group flex h-full gap-4 overflow-hidden rounded-(--radius-lg) border border-night-text/12 bg-obsidian/60 p-3 transition-colors hover:border-[color:var(--e-accent)]/45 sm:flex-col sm:p-0"
       style={presetVars(event.presentation.visualPreset)}
     >
-      <Link href={eventHref(event)} className="w-28 shrink-0 sm:w-full">
+      {/* The picture and the title link to the same place. Giving the picture
+          its own label would make a screen reader announce the event twice and
+          add a tab stop that goes nowhere new, so it is hidden from assistive
+          technology instead — it stays clickable for a pointer. */}
+      <Link
+        href={eventHref(event)}
+        className="w-28 shrink-0 sm:w-full"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
         <EventArt
           art={artwork}
           title={event.title}

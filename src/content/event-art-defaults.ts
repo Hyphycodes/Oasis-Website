@@ -30,11 +30,31 @@ const SPARES = ['generic-nightlife', 'generic-celebration', 'generic-comedy'] as
 /** Every shipped file, for the asset check and the docs. */
 export const EVENT_ART_FILES: string[] = [...SLUGS, ...SPARES].flatMap((slug) => [
   `${DIR}/${slug}.webp`,
+  `${DIR}/${slug}-640.webp`,
   `${DIR}/${slug}-tall.webp`,
+  `${DIR}/${slug}-tall-448.webp`,
 ]);
 
-function asset(path: string, width: number, height: number, ratio: string): PublicAsset {
+/**
+ * A shipped background, with the widths it exists at.
+ *
+ * `srcSet` is the whole reason these are plain `<img>` elements rather than
+ * `next/image`: art direction between the wide and upright crops needs
+ * `<picture>`, and `<picture>` needs the widths written out.
+ */
+export interface EventArtImage extends PublicAsset {
+  srcSet: string;
+}
+
+function asset(
+  path: string,
+  width: number,
+  height: number,
+  ratio: string,
+  small: { path: string; width: number },
+): EventArtImage {
   return {
+    srcSet: `${small.path} ${small.width}w, ${path} ${width}w`,
     path,
     kind: 'image' as AssetKind,
     // Decorative by definition: everything it conveys — the event's name, date,
@@ -49,16 +69,22 @@ function asset(path: string, width: number, height: number, ratio: string): Publ
 }
 
 export interface DefaultEventArt {
-  wide: PublicAsset;
-  tall: PublicAsset;
+  wide: EventArtImage;
+  tall: EventArtImage;
 }
 
 const DEFAULTS: Record<string, DefaultEventArt> = Object.fromEntries(
   [...SLUGS, ...SPARES].map((slug) => [
     slug,
     {
-      wide: asset(`${DIR}/${slug}.webp`, 1600, 900, '16:9'),
-      tall: asset(`${DIR}/${slug}-tall.webp`, 900, 1125, '4:5'),
+      wide: asset(`${DIR}/${slug}.webp`, 1600, 900, '16:9', {
+        path: `${DIR}/${slug}-640.webp`,
+        width: 640,
+      }),
+      tall: asset(`${DIR}/${slug}-tall.webp`, 900, 1125, '4:5', {
+        path: `${DIR}/${slug}-tall-448.webp`,
+        width: 448,
+      }),
     },
   ]),
 );

@@ -29,6 +29,11 @@ const OUT = path.resolve(import.meta.dirname, '..', 'public', 'events');
 
 const WIDE = { w: 1600, h: 900 };
 const TALL = { w: 900, h: 1125 };
+// A second, small rendering of the same frame. The events page puts key art in
+// a 112px thumbnail; handing that slot a 1600px file is indefensible however
+// few kilobytes it is, and a `srcset` needs something to choose between.
+const WIDE_SM = { w: 640, h: 360 };
+const TALL_SM = { w: 448, h: 560 };
 
 /* ------------------------------------------------------------------- rng -- */
 
@@ -519,6 +524,15 @@ async function main() {
       `${event.slug}.webp`,
       72,
     );
+    const wideSm = await render(
+      // The SAME seed, so the small variant is the same composition rather than
+      // a different picture that happens to be smaller.
+      frame(event.preset, event.motif, event.seed, WIDE_SM),
+      WIDE_SM,
+      event.seed,
+      `${event.slug}-640.webp`,
+      70,
+    );
     const tall = await render(
       frame(event.preset, event.motif, event.seed + 1, TALL),
       TALL,
@@ -526,13 +540,20 @@ async function main() {
       `${event.slug}-tall.webp`,
       70,
     );
-    total += wide + tall;
+    const tallSm = await render(
+      frame(event.preset, event.motif, event.seed + 1, TALL_SM),
+      TALL_SM,
+      event.seed,
+      `${event.slug}-tall-448.webp`,
+      68,
+    );
+    total += wide + wideSm + tall + tallSm;
     console.log(
-      `${event.slug.padEnd(24)} ${String(Math.round(wide / 1024)).padStart(3)}KB wide · ${String(Math.round(tall / 1024)).padStart(3)}KB tall · ${event.preset}/${event.motif}`,
+      `${event.slug.padEnd(24)} ${String(Math.round((wide + wideSm) / 1024)).padStart(3)}KB wide · ${String(Math.round((tall + tallSm) / 1024)).padStart(3)}KB tall · ${event.preset}/${event.motif}`,
     );
   }
 
-  console.log(`\n${EVENTS.length * 2} files, ${Math.round(total / 1024)}KB total.`);
+  console.log(`\n${EVENTS.length * 4} files, ${Math.round(total / 1024)}KB total.`);
 }
 
 main().catch((error) => {

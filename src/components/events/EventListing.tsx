@@ -109,7 +109,11 @@ export function EventCard({ event, artwork }: { event: ResolvedEvent; artwork: E
       className="group flex h-full flex-col overflow-hidden rounded-(--radius-lg) border border-night-text/12 bg-obsidian/60 transition-colors hover:border-[color:var(--e-accent)]/45"
       style={presetVars(event.presentation.visualPreset)}
     >
-      <Link href={eventHref(event)} className="block">
+      {/* The picture and the title link to the same place. Giving the picture
+          its own label would make a screen reader announce the event twice and
+          add a tab stop that goes nowhere new, so it is hidden from assistive
+          technology instead — it stays clickable for a pointer. */}
+      <Link href={eventHref(event)} className="block" aria-hidden="true" tabIndex={-1}>
         <EventArt
           art={artwork}
           title={event.title}
@@ -186,13 +190,22 @@ export function EventRow({ event, artwork }: { event: ResolvedEvent; artwork: Ev
         </span>
       </p>
 
-      <Link href={eventHref(event)} className="hidden w-28 sm:block">
+      {/* The picture and the title link to the same place. Giving the picture
+          its own label would make a screen reader announce the event twice and
+          add a tab stop that goes nowhere new, so it is hidden from assistive
+          technology instead — it stays clickable for a pointer. */}
+      <Link
+        href={eventHref(event)}
+        className="hidden w-28 sm:block"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
         <EventArt
           art={artwork}
           title={event.title}
           preset={event.presentation.visualPreset}
           size="card"
-          sizes="7rem"
+          sizes="112px"
         />
       </Link>
 

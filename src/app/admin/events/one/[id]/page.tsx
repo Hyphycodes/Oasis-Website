@@ -51,7 +51,16 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
 
   const { id } = await params;
   const eventId = decodeURIComponent(id);
-  const row = await db.get<Row>('event_occurrences', eventId);
+  // Accept BOTH shapes of id. The stored row id is `tickeri:xvt4...`; the
+  // resolver prefixes standalone events with `one-time:` so that an event id is
+  // unique across series and specials, and the lists link with that. Taking
+  // either here means a link from anywhere in the admin opens the editor,
+  // rather than silently bouncing back to the list.
+  const row =
+    (await db.get<Row>('event_occurrences', eventId)) ??
+    (eventId.startsWith('one-time:')
+      ? await db.get<Row>('event_occurrences', eventId.slice('one-time:'.length))
+      : null);
   if (!row) notFound();
 
   const record = occurrenceFromRow(row, 'working');

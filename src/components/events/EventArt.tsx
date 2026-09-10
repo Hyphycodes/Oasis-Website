@@ -21,8 +21,9 @@ import type { CSSProperties } from 'react';
 
 export interface EventArtwork {
   flyer: PublicAsset | null;
-  keyArt: PublicAsset | null;
-  keyArtMobile: PublicAsset | null;
+  /** Shipped art carries a `srcSet`; art uploaded through the admin does not. */
+  keyArt: (PublicAsset & { srcSet?: string }) | null;
+  keyArtMobile: (PublicAsset & { srcSet?: string }) | null;
   foreground: PublicAsset | null;
 }
 
@@ -94,10 +95,16 @@ export function EventArt({
               the composition. */}
           <picture className="event-art-bg">
             {art.keyArtMobile?.path ? (
-              <source media={uprightMedia} srcSet={art.keyArtMobile.path} />
+              <source
+                media={uprightMedia}
+                srcSet={art.keyArtMobile.srcSet ?? art.keyArtMobile.path}
+                sizes={art.keyArtMobile.srcSet ? resolvedSizes : undefined}
+              />
             ) : null}
             <img
               src={wide.path}
+              srcSet={wide.srcSet}
+              sizes={wide.srcSet ? resolvedSizes : undefined}
               alt=""
               width={wide.width || undefined}
               height={wide.height || undefined}
@@ -119,7 +126,17 @@ export function EventArt({
             fit="contain"
             rounded={false}
             tone="dark"
-            sizes={hasKeyArt ? '(min-width: 1024px) 18vw, 40vw' : resolvedSizes}
+            // Beside key art the flyer is a corner card that CSS caps at
+            // 190px, so a viewport-fraction hint just over-fetches: `40vw` on a
+            // phone asks for 156px for a slot that is 43px wide. Alone, it is
+            // the whole composition and takes the composition's own sizes.
+            sizes={
+              hasKeyArt
+                ? size === 'lead'
+                  ? '(min-width: 640px) 190px, 140px'
+                  : '(min-width: 640px) 190px, 48px'
+                : resolvedSizes
+            }
             priority={priority && !hasKeyArt}
             alt={`Official flyer for ${title}`}
             className="event-art-flyer-img"
