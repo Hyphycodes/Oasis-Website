@@ -1,12 +1,52 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { eventSeries as staticSeries } from '@/content/events';
+import { eventSeries as staticSeries, oneTimeEvents } from '@/content/events';
 import type { EventSeries, EventStatus } from '@/content/types';
 import { getReadDb } from '@/lib/db';
 import type { Db, Row } from '@/lib/db/types';
-import type { EventInput, OccurrenceRecord } from '@/lib/events';
+import { occurrenceFromSeed, type EventInput, type OccurrenceRecord } from '@/lib/events';
+import {
+  DEFAULT_PRESET,
+  isEventCategory,
+  isEventTreatment,
+  isVisualPreset,
+} from '@/content/event-presentation';
+import type { EventPresentation, EventProvenance } from '@/content/types';
 import { liveValues, workingValues, type EditorialRow } from './editorial';
+
+/**
+ * The presentation columns, read off any row that carries them.
+ *
+ * Lenient on purpose, exactly like the theme config: an unrecognised category or
+ * preset becomes "not set" rather than throwing, because a typo in one event's
+ * styling must never be able to take the events page down.
+ */
+function presentationFromRow(source: Row): EventPresentation {
+  return {
+    category: isEventCategory(source.category) ? source.category : null,
+    priceText: (source.price_text as string | null) ?? null,
+    // Three separate slots. None of them is the flyer.
+    keyArtAssetId: (source.key_art_asset_id as string | null) ?? null,
+    keyArtMobileAssetId: (source.key_art_mobile_asset_id as string | null) ?? null,
+    foregroundAssetId: (source.foreground_asset_id as string | null) ?? null,
+    visualPreset: isVisualPreset(source.visual_preset) ? source.visual_preset : DEFAULT_PRESET,
+    featured: Boolean(source.featured),
+    priority: Number.isFinite(Number(source.priority)) ? Number(source.priority) : 0,
+    treatment: isEventTreatment(source.treatment) ? source.treatment : 'standard',
+    takeoverStartAt: (source.takeover_start_at as string | null) ?? null,
+    takeoverEndAt: (source.takeover_end_at as string | null) ?? null,
+  };
+}
+
+function provenanceFromRow(source: Row): EventProvenance {
+  return {
+    source: source.source === 'tickeri' ? 'tickeri' : 'manual',
+    sourceEventId: (source.source_event_id as string | null) ?? null,
+    sourceUrl: (source.source_url as string | null) ?? null,
+    syncedAt: (source.synced_at as string | null) ?? null,
+  };
+}
 
 /**
  * Loading events for the selector.
@@ -49,6 +89,7 @@ function seriesFromRow(row: Row, mode: Mode): EventSeries {
     paused: Boolean(source.paused),
     archivedAt: (source.archived_at as string | null) ?? null,
     ticketPolicy: (source.ticket_policy as EventSeries['ticketPolicy']) ?? 'required',
+    presentation: presentationFromRow(source),
   };
 }
 
@@ -75,12 +116,14 @@ function occurrenceFromRow(row: Row, mode: Mode): OccurrenceRecord {
     venueName: (source.venue_name as string | null) ?? null,
     flyerAssetId: (source.flyer_asset_id as string | null) ?? null,
     note: (source.note as string | null) ?? null,
+    presentation: presentationFromRow(source),
+    provenance: provenanceFromRow(source),
   };
 }
 
 /** The typed static content, used when no database is reachable. */
 function staticInput(): EventInput {
-  return { series: staticSeries, occurrences: [] };
+  return { series: staticSeries, occurrences: oneTimeEvents.map(occurrenceFromSeed) };
 }
 
 async function load(db: Db, mode: Mode): Promise<EventInput> {

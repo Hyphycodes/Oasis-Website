@@ -292,7 +292,10 @@ describe('one night, changed', () => {
     expect(first).toHaveLength(6);
     expect(new Set(first.map((e) => e.id)).size).toBe(6);
     expect(second.map((e) => e.id)).toEqual(first.map((e) => e.id));
-    expect((await db.list('event_occurrences')).length).toBe(0);
+    // Generating dates must not write rows. Standalone one-off events live in
+    // the same table, so the assertion is about this series, not the table.
+    const rows = await db.list<{ series_slug: string | null }>('event_occurrences');
+    expect(rows.filter((row) => row.series_slug === 'oasis-fridays')).toHaveLength(0);
   });
 });
 

@@ -12,6 +12,7 @@ import { getStaff, staffCan } from '@/server/auth';
 import { getEditableEvents } from '@/server/content/events';
 import { canOpen } from '@/server/permissions';
 import { NewOneTimeEvent } from './NewOneTimeEvent';
+import { TickeriSync } from './TickeriSync';
 import { OccurrencePublish } from './OccurrencePublish';
 
 export const dynamic = 'force-dynamic';
@@ -82,6 +83,16 @@ export default async function AdminEventsPage({
   const cancelled = visible.filter((event) => event.status === 'cancelled');
   const ready = visible.filter((event) => event.published && event.status !== 'cancelled');
 
+  // Special events are the one-off rows: everything on the calendar that is not
+  // a Friday or a Saturday. They are what staff actually add and dress up.
+  const specials = getUpcomingEvents(events, now, 60).filter((event) => !event.seriesSlug);
+  const lastSynced = overrides
+    .map((row) => (row.synced_at ? String(row.synced_at) : null))
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
+  const lastSyncedLabel = lastSynced ? formatEventDateLong(lastSynced) : null;
+
   const past = overrides
     .filter((row) => String(row.starts_at).slice(0, 10) < venueIsoDate(now.toISOString()))
     .slice(-15)
@@ -120,6 +131,50 @@ export default async function AdminEventsPage({
           {params.new === '1' ? (
             <div className="mb-6">
               <NewOneTimeEvent flyerOptions={flyerOptions} canPublish={canPublish} />
+            </div>
+          ) : null}
+
+          {canPublish ? (
+            <div className="mb-6">
+              <TickeriSync lastSyncedLabel={lastSyncedLabel} />
+            </div>
+          ) : null}
+
+          {specials.length > 0 ? (
+            <div className="mb-6">
+              <Card title={`${specials.length} special ${specials.length === 1 ? 'event' : 'events'}`}>
+                <ul className="divide-y divide-brown/12">
+                  {specials.map((special) => (
+                    <li key={special.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
+                      <span className="tabular w-28 shrink-0 text-[0.875rem] font-semibold text-brown">
+                        {formatEventDateLong(special.startsAt)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[0.9375rem] text-brown">
+                          {special.title}
+                        </span>
+                        <span className="text-[0.75rem] text-brown-soft">
+                          {special.flyerAssetId ? 'Official flyer ✓' : 'No flyer yet'}
+                          {special.presentation.treatment !== 'standard'
+                            ? ` · ${special.presentation.treatment === 'takeover' ? 'Hero takeover' : 'Featured'}`
+                            : ''}
+                        </span>
+                      </span>
+                      {special.status === 'sold-out' ? (
+                        <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
+                          Sold out
+                        </span>
+                      ) : null}
+                      <Link
+                        href={`/admin/events/one/${encodeURIComponent(special.id)}`}
+                        className="text-[0.8125rem] font-semibold text-clay underline underline-offset-4"
+                      >
+                        Edit
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             </div>
           ) : null}
 

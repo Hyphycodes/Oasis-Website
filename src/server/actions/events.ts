@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import type { Row } from '@/lib/db/types';
-import { venueIsoDate } from '@/lib/events';
+import { venueIsoDate, venueLocalIso } from '@/lib/events';
 import { registerDirectMedia, storeMediaFile } from '@/server/media-files';
 import { staffCan } from '../auth';
 import { archive, publishDirect, saveDraft } from '../content/editorial';
@@ -456,3 +456,67 @@ export async function archiveOccurrence(
 }
 
 export { venueIsoDate };
+
+/* ------------------------------------------------------- one-off events */
+
+const oneOffSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1, 'The event needs a name.').max(120),
+  summary: z.string().trim().max(200),
+  description: z.string().trim().max(1200),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date.'),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 19:00.'),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 22:00.'),
+  ticketUrl: httpsUrl,
+  status: z.enum(['scheduled', 'sold-out', 'cancelled', 'postponed', 'free']),
+  ageMin: z.string().trim().max(3),
+  venueName: z.string().trim().max(120),
+  publish: z.string().optional(),
+});
+
+/**
+ * Edit one special event.
+ *
+ * Only the facts. The artwork columns are absent from the patch on purpose —
+ * including `flyer_asset_id`, so no amount of editing the date can lose the
+ * event's official flyer. Artwork is changed in its own place, deliberately.
+ */
+export async function saveOneTimeEvent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.edit', async ({ db, staff }) => {
+    const parsed = oneOffSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? 'Please check the form.' };
+    }
+    const value = parsed.data;
+
+    const existing = await db.get<Row>('event_occurrences', value.id);
+    if (!existing) return { ok: false, message: 'That event no longer exists.' };
+
+    const [y, m, d] = value.date.split('-').map(Number);
+    const startMinutes = minutesOf(value.startTime);
+    let endMinutes = minutesOf(value.endTime);
+    // A finish before the start means it runs past midnight, which is normal.
+    if (endMinutes <= startMinutes) endMinutes += 1440;
+
+    const fields: Row = {
+      title: value.title,
+      summary: value.summary || null,
+      description: value.description || null,
+      starts_at: venueLocalIso(y!, m!, d!, startMinutes),
+      ends_at: venueLocalIso(y!, m!, d!, endMinutes),
+      ticket_url: value.ticketUrl || null,
+      status: value.status,
+      age_min: value.ageMin ? Number(value.ageMin) : null,
+      venue_name: value.venueName || null,
+    };
+
+    const wantsPublish = value.publish === 'true' && staffCan(staff, 'content.publish');
+    if (wantsPublish) {
+      await publishDirect(db, 'event_occurrences', value.id, { ...fields, published: true }, staff);
+      return done(`${value.title} is on the website.`, 'events', [`/events/${existing.slug ?? ''}`]);
+    }
+
+    await saveDraft(db, 'event_occurrences', value.id, fields, staff);
+    return saved('Saved as a draft. A manager needs to publish it.');
+  });
+}

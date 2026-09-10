@@ -1,4 +1,13 @@
-import type { EventSeries, EventStatus, ResolvedEvent } from '@/content/types';
+import {
+  DEFAULT_PRESENTATION,
+  DEFAULT_PROVENANCE,
+  type EventPresentation,
+  type EventProvenance,
+  type EventSeries,
+  type EventStatus,
+  type OneTimeEventSeed,
+  type ResolvedEvent,
+} from '@/content/types';
 
 /**
  * Occurrence generation and the next-event selector.
@@ -54,6 +63,9 @@ export interface OccurrenceRecord {
   venueName?: string | null;
   flyerAssetId?: string | null;
   note?: string | null;
+  /** Sparse presentation override. A null field inherits from the series. */
+  presentation?: Partial<EventPresentation> | null;
+  provenance?: EventProvenance | null;
 }
 
 export interface EventInput {
@@ -238,7 +250,55 @@ function resolve(
     flyerPrintedDate: occurrence?.flyerAssetId ? null : (series?.flyerPrintedDate ?? null),
     note: occurrence?.note ?? null,
     overriddenFields: overridden,
+    // Presentation resolves field by field, occurrence over series over the
+    // defaults, so featuring ONE night of a weekly series does not require
+    // restating everything else that night inherits.
+    presentation: mergePresentation(series?.presentation, occurrence?.presentation),
+    provenance: occurrence?.provenance ?? DEFAULT_PROVENANCE,
   };
+}
+
+/**
+ * Occurrence over series over defaults, per field.
+ *
+ * `featured` and `treatment` deliberately do NOT fall back to the series when
+ * the occurrence says 'standard': the whole point of featuring one night is
+ * that the other nights of the same series are not featured. A series-level
+ * feature still reaches every night, because the series value is the base.
+ */
+export function mergePresentation(
+  series: EventPresentation | undefined,
+  occurrence: Partial<EventPresentation> | null | undefined,
+): EventPresentation {
+  const base: EventPresentation = { ...DEFAULT_PRESENTATION, ...(series ?? {}) };
+  if (!occurrence) return base;
+
+  const merged = { ...base };
+  for (const [key, value] of Object.entries(occurrence) as [
+    keyof EventPresentation,
+    EventPresentation[keyof EventPresentation],
+  ][]) {
+    if (value === null || value === undefined) continue;
+    Object.assign(merged, { [key]: value });
+  }
+  return merged;
+}
+
+/**
+ * Whether an event's hero takeover is running right now.
+ *
+ * Fails closed: a takeover with a missing or unparseable window is not running,
+ * because a hero stuck on a finished event is the failure that matters.
+ */
+export function takeoverIsLive(event: ResolvedEvent, now: Date): boolean {
+  const { treatment, takeoverStartAt, takeoverEndAt } = event.presentation;
+  if (treatment !== 'takeover') return false;
+  if (!takeoverStartAt || !takeoverEndAt) return false;
+  const start = Date.parse(takeoverStartAt);
+  const end = Date.parse(takeoverEndAt);
+  if (Number.isNaN(start) || Number.isNaN(end)) return false;
+  const at = now.getTime();
+  return at >= start && at < end;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -285,6 +345,59 @@ export function generateOccurrences(
   }
 
   return results;
+}
+
+/**
+ * A typed one-off event declaration → the occurrence record the selector reads.
+ *
+ * The seed states a venue-local date and clock times; the instants are computed
+ * here for that specific date, so an event either side of a daylight-saving
+ * change keeps the door time the flyer printed.
+ */
+export function occurrenceFromSeed(seed: OneTimeEventSeed): OccurrenceRecord {
+  const [year, month, day] = seed.date.split('-').map(Number);
+  const startsAt = venueLocalIso(year!, month!, day!, seed.startMinutes);
+  const endMinutes = seed.endMinutes <= seed.startMinutes ? seed.endMinutes + 1440 : seed.endMinutes;
+  const endsAt = venueLocalIso(year!, month!, day!, endMinutes);
+
+  return {
+    id: seed.id,
+    seriesSlug: null,
+    startsAt,
+    endsAt,
+    status: seed.status ?? null,
+    published: true,
+    archivedAt: null,
+    ticketUrl: seed.ticketUrl,
+    ticketLabel: null,
+    priceCents: null,
+    title: seed.title,
+    slug: seed.slug,
+    summary: seed.summary,
+    description: seed.description,
+    ageMin: seed.ageMin ?? null,
+    ageNote: seed.ageNote ?? null,
+    musicFormats: null,
+    venueName: null,
+    // Null, and deliberately so: the OFFICIAL flyer for these events lives on
+    // Tickeri and arrives through the import, which fills this slot once.
+    flyerAssetId: null,
+    note: null,
+    presentation: {
+      category: seed.category,
+      priceText: seed.priceText ?? null,
+      visualPreset: seed.visualPreset,
+      featured: seed.featured ?? false,
+      treatment: seed.treatment ?? 'standard',
+      priority: seed.priority ?? 0,
+    },
+    provenance: {
+      source: 'tickeri',
+      sourceEventId: seed.sourceEventId,
+      sourceUrl: seed.ticketUrl,
+      syncedAt: null,
+    },
+  };
 }
 
 /** One-time events: occurrence rows with no series behind them. */

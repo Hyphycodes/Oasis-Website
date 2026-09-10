@@ -1,6 +1,7 @@
 import { assets, type AssetRecord } from '@/content/assets';
 import { cateringItems, cateringPackages } from '@/content/catering';
-import { eventOverrides, eventSeries } from '@/content/events';
+import { eventOverrides, eventSeries, oneTimeEvents } from '@/content/events';
+import { occurrenceFromSeed } from '@/lib/events';
 import { allMenus } from '@/content/menu';
 import { homeSections, pageCopy, seo } from '@/content/pages';
 import { announcements, site } from '@/content/site';
@@ -224,6 +225,53 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
       archived_at: null,
     })),
   );
+
+  // One-off events sit in the same table with no series behind them. Their
+  // instants are computed for the venue's own date, so the seed is correct on
+  // either side of a daylight-saving change.
+  tables.event_occurrences = [
+    ...(tables.event_occurrences ?? []),
+    ...oneTimeEvents.map((seed) => {
+      const record = occurrenceFromSeed(seed);
+      return {
+        id: record.id,
+        series_slug: null,
+        slug: record.slug,
+        starts_at: record.startsAt,
+        ends_at: record.endsAt,
+        title: record.title,
+        summary: record.summary,
+        description: record.description,
+        status: record.status ?? 'scheduled',
+        ticket_url: record.ticketUrl,
+        price_cents: null,
+        price_text: record.presentation?.priceText ?? null,
+        age_min: record.ageMin,
+        age_note: record.ageNote,
+        venue_name: record.venueName,
+        // The official flyer slot starts EMPTY and is filled once by the
+        // Tickeri import. Nothing else may write it.
+        flyer_asset_id: null,
+        key_art_asset_id: null,
+        key_art_mobile_asset_id: null,
+        foreground_asset_id: null,
+        category: record.presentation?.category ?? null,
+        visual_preset: record.presentation?.visualPreset ?? 'marigold',
+        featured: record.presentation?.featured ?? false,
+        priority: record.presentation?.priority ?? 0,
+        treatment: record.presentation?.treatment ?? 'standard',
+        takeover_start_at: null,
+        takeover_end_at: null,
+        source: 'tickeri',
+        source_event_id: record.provenance?.sourceEventId ?? null,
+        source_url: record.provenance?.sourceUrl ?? null,
+        synced_at: null,
+        published: true,
+        draft: null,
+        archived_at: null,
+      };
+    }),
+  ];
 
   /* ------------------------------------------------------------- catering */
 

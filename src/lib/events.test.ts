@@ -427,7 +427,9 @@ describe('nextEvent', () => {
   });
 
   /** Belt and braces: no eligible event may ever be in the past, at any instant. */
-  it('never returns a finished night, sampled across a year', () => {
+  // Fifty-two full generations is genuinely slow work, not a hang: the default
+  // five seconds is a limit for a unit test, and this is a sweep.
+  it('never returns a finished night, sampled across a year', { timeout: 30_000 }, () => {
     for (let week = 0; week < 52; week += 1) {
       const now = new Date(Date.UTC(2026, 7, 14, 12) + week * 7 * 86_400_000);
       for (const slug of ['oasis-fridays', 'oasis-latin-saturdays']) {

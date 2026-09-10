@@ -6,6 +6,8 @@
  * public site AND the source used to generate supabase/seed.sql.
  */
 
+import type { EventCategory, EventTreatment, VisualPreset } from './event-presentation';
+
 export type Provisional<T> = {
   value: T;
   /** True when the value is disputed or unconfirmed. See docs/CONTENT-QUESTIONS.md. */
@@ -145,6 +147,45 @@ export interface Menu {
 
 export type EventStatus = 'scheduled' | 'sold-out' | 'cancelled' | 'postponed' | 'free';
 
+/**
+ * How an event is presented, as opposed to what it is.
+ *
+ * Shared by series and occurrences so a recurring night and a one-off event are
+ * dressed by exactly the same vocabulary. Every field is optional in the sense
+ * that a null takes the default — an event with none of this set still renders.
+ */
+export interface EventPresentation {
+  category: EventCategory | null;
+  /** What entry costs, in words, when a number cannot say it. */
+  priceText: string | null;
+  /**
+   * SECONDARY website art. Wide background used behind the event's own type.
+   * When it is null the official flyer is shown instead — key art never
+   * replaces the flyer, it only gives the website something wider to work with.
+   */
+  keyArtAssetId: string | null;
+  /** A taller crop of the same idea, for phones. */
+  keyArtMobileAssetId: string | null;
+  /** Transparent cut-out allowed to lean past the edge of its own card. */
+  foregroundAssetId: string | null;
+  visualPreset: VisualPreset;
+  featured: boolean;
+  /** Tie-break inside a treatment. Higher wins. */
+  priority: number;
+  treatment: EventTreatment;
+  /** Only meaningful for `treatment: 'takeover'`. ISO instants. */
+  takeoverStartAt: string | null;
+  takeoverEndAt: string | null;
+}
+
+/** Where a record came from. Tickeri rows are matched on re-import, not copied. */
+export interface EventProvenance {
+  source: 'manual' | 'tickeri';
+  sourceEventId: string | null;
+  sourceUrl: string | null;
+  syncedAt: string | null;
+}
+
 /** `weekly:5` = every Friday. Weekday uses the same 0=Sunday indexing as Date. */
 export type Cadence = { kind: 'weekly'; weekday: Weekday } | { kind: 'one-time' };
 
@@ -196,6 +237,7 @@ export interface EventSeries {
   archivedAt?: string | null;
   /** What the guest is expected to do about entry. */
   ticketPolicy?: 'required' | 'door' | 'free' | 'later';
+  presentation?: EventPresentation;
 }
 
 /**
@@ -228,12 +270,72 @@ export interface ResolvedEvent {
   ageNote: string | null;
   musicFormats: string[];
   venueName: string;
+  /**
+   * The OFFICIAL flyer. This is the artwork the event was promoted with and the
+   * website always has a way to show it; nothing else in the model may write it.
+   */
   flyerAssetId: string | null;
   /** Only set when the flyer is the series' own dated artwork. */
   flyerPrintedDate: string | null;
   note: string | null;
   overriddenFields: string[];
+  presentation: EventPresentation;
+  provenance: EventProvenance;
 }
+
+/** The defaults an event takes when it has expressed no preference. */
+export const DEFAULT_PRESENTATION: EventPresentation = {
+  category: null,
+  priceText: null,
+  keyArtAssetId: null,
+  keyArtMobileAssetId: null,
+  foregroundAssetId: null,
+  visualPreset: 'marigold',
+  featured: false,
+  priority: 0,
+  treatment: 'standard',
+  takeoverStartAt: null,
+  takeoverEndAt: null,
+};
+
+/**
+ * A one-off event as the typed content declares it.
+ *
+ * Flatter than an `OccurrenceRecord` on purpose: the seed states a venue-local
+ * DATE and start/end minutes rather than an instant, so the same declaration is
+ * correct either side of a daylight-saving change and nobody has to hand-write
+ * an offset.
+ */
+export interface OneTimeEventSeed {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  /** Venue-local ISO date. */
+  date: string;
+  startMinutes: number;
+  endMinutes: number;
+  category: EventCategory;
+  visualPreset: VisualPreset;
+  featured?: boolean;
+  treatment?: EventTreatment;
+  priority?: number;
+  ticketUrl: string;
+  priceText?: string | null;
+  ageMin?: number | null;
+  ageNote?: string | null;
+  status?: EventStatus;
+  /** Tickeri's id, so a later sync updates this row instead of copying it. */
+  sourceEventId: string;
+}
+
+export const DEFAULT_PROVENANCE: EventProvenance = {
+  source: 'manual',
+  sourceEventId: null,
+  sourceUrl: null,
+  syncedAt: null,
+};
 
 /* -------------------------------------------------------------------------- */
 /* Catering                                                                   */
