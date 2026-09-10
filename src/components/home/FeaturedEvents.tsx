@@ -103,26 +103,41 @@ function eventHref(event: ResolvedEvent): string {
   return event.slug ? `/events/${event.slug}` : '/events';
 }
 
+/**
+ * The dominant card: full-bleed artwork with the type set over it.
+ *
+ * Deliberately not "picture on top, words underneath". The supporting column
+ * decides how tall this row is, and a fixed-ratio picture with a text block
+ * under it answers a tall row by opening a gap above the buttons. Here the
+ * artwork simply becomes as tall as the row — which is also what the module is
+ * supposed to look like: one big editorial image with a headline on it.
+ */
 function LeadEvent({ event, artwork }: { event: ResolvedEvent; artwork: Parameters<typeof EventArt>[0]['art'] }) {
   const price = priceLabel(event);
   const category = event.presentation.category;
 
   return (
     <article
-      className="group relative flex h-full flex-col overflow-hidden rounded-(--radius-lg) border border-night-text/12"
+      className="group relative isolate flex h-full min-h-[22rem] flex-col justify-end overflow-hidden rounded-(--radius-lg) border border-night-text/12 sm:min-h-[28rem]"
       style={presetVars(event.presentation.visualPreset)}
     >
-      <Link href={eventHref(event)} className="block">
-        <EventArt
-          art={artwork}
-          title={event.title}
-          preset={event.presentation.visualPreset}
-          size="lead"
-          sizes="(min-width: 1024px) 58vw, 100vw"
-        />
-      </Link>
+      <EventArt
+        art={artwork}
+        title={event.title}
+        preset={event.presentation.visualPreset}
+        size="lead"
+        sizes="(min-width: 1024px) 58vw, 100vw"
+        fill
+      />
 
-      <div className="flex flex-1 flex-col gap-3 bg-obsidian/60 p-5 sm:p-6">
+      {/* Its own scrim, not the art's: the type sits lower and needs more
+          cover than a caption-height gradient gives. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-3/5 bg-gradient-to-t from-obsidian via-obsidian/80 to-transparent"
+      />
+
+      <div className="relative z-20 flex flex-col gap-3 p-5 sm:p-7">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {category ? (
             <span className="eyebrow text-[color:var(--e-accent)]">{CATEGORY_LABEL[category]}</span>
@@ -130,8 +145,12 @@ function LeadEvent({ event, artwork }: { event: ResolvedEvent; artwork: Paramete
           <StatusChip event={event} />
         </div>
 
-        <h3 className="display text-[clamp(1.5rem,2.6vw,2.125rem)] text-night-text">
+        <h3 className="display text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[0.95] text-night-text">
           <Link href={eventHref(event)} className="hover:text-[color:var(--e-accent)]">
+            {/* The whole card is not one link: the ticket button and the
+                details link are different destinations, and nesting them
+                inside a card-wide link is invalid and unusable by keyboard. */}
+            <span className="absolute inset-0 z-10" aria-hidden="true" />
             {event.title}
           </Link>
         </h3>
@@ -144,7 +163,7 @@ function LeadEvent({ event, artwork }: { event: ResolvedEvent; artwork: Paramete
           <p className="measure text-[0.9375rem] leading-relaxed text-night-soft">{event.summary}</p>
         ) : null}
 
-        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
+        <div className="relative z-20 flex flex-wrap items-center gap-3 pt-1">
           {event.ticketUrl && event.status !== 'sold-out' ? (
             <a
               href={event.ticketUrl}

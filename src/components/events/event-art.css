@@ -41,12 +41,40 @@
     radial-gradient(60% 55% at 8% 92%, rgb(0 0 0 / 0.45), transparent 70%);
 }
 
-.event-art-bg {
+.event-art-bg,
+.event-art-bg img {
   position: absolute;
   inset: 0;
   z-index: 1;
+  display: block;
   height: 100%;
   width: 100%;
+  object-fit: cover;
+}
+
+/* Backdrop mode: the art stops being a band at the top of a card and becomes
+   the card, with the type set over it. Whatever height the row asks for is
+   absorbed by the picture instead of opening a hole above the buttons. */
+.event-art-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  border-radius: 0;
+}
+
+/* The type occupies the bottom of the card, so the official flyer moves to the
+   top corner rather than sitting under the headline. */
+.event-art-fill .event-art-official {
+  top: 6%;
+  bottom: auto;
+}
+
+/* The card's own text block already prints the title; the nameplate would say
+   it a second time, in a different size, behind it. */
+.event-art-fill .event-art-nameplate {
+  display: none;
 }
 
 /* Type sits over the bottom of a card; the scrim is what makes that safe

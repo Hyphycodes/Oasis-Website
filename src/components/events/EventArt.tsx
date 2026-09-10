@@ -45,6 +45,7 @@ export function EventArt({
   sizes,
   priority = false,
   className = '',
+  fill = false,
 }: {
   art: EventArtwork;
   title: string;
@@ -53,15 +54,18 @@ export function EventArt({
   sizes?: string;
   priority?: boolean;
   className?: string;
+  /** Drop the fixed ratio and fill the height the parent gives us. */
+  fill?: boolean;
 }) {
   const hasKeyArt = Boolean(art.keyArt?.path);
   const hasFlyer = Boolean(art.flyer?.path);
   const wide = art.keyArt;
+  const uprightWhen = fill ? '(min-width: 1024px), (max-width: 639px)' : '(max-width: 639px)';
   const resolvedSizes = sizes ?? (size === 'lead' ? '(min-width: 1024px) 62vw, 100vw' : '(min-width: 1024px) 30vw, 90vw');
 
   return (
     <div
-      className={`event-art ${hasKeyArt ? 'event-art-wide' : 'event-art-flyer'} ${className}`}
+      className={`event-art ${hasKeyArt ? 'event-art-wide' : 'event-art-flyer'} ${fill ? 'event-art-fill' : ''} ${className}`}
       style={presetVars(preset)}
       data-size={size}
     >
@@ -69,18 +73,32 @@ export function EventArt({
           artwork at all still reads as a designed object rather than a gap. */}
       <span aria-hidden="true" className="event-art-field" />
 
-      {hasKeyArt && wide ? (
+      {hasKeyArt && wide?.path ? (
         <>
-          <AssetView
-            asset={wide}
-            id="event-key-art"
-            className="event-art-bg"
-            sizes={resolvedSizes}
-            priority={priority}
-            rounded={false}
-            tone="dark"
-            alt=""
-          />
+          {/* A plain <picture>, not next/image: these are decorative
+              backgrounds already shipped at their final size, and <picture> is
+              the only way to art-direct a different CROP without downloading
+              both files.
+
+              The upright crop is used wherever the FRAME is upright, which is
+              not only on phones: in backdrop mode the lead card is as tall as
+              the column beside it, so on a wide screen it is portrait too. Feed
+              a 16:9 file to a portrait frame and `cover` throws away most of
+              the composition. */}
+          <picture className="event-art-bg">
+            {art.keyArtMobile?.path ? (
+              <source media={uprightWhen} srcSet={art.keyArtMobile.path} />
+            ) : null}
+            <img
+              src={wide.path}
+              alt=""
+              width={wide.width || undefined}
+              height={wide.height || undefined}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'low'}
+              decoding="async"
+            />
+          </picture>
           <span aria-hidden="true" className="event-art-scrim" />
         </>
       ) : null}
