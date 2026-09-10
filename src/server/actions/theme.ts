@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { venueLocalIso } from '@/lib/events';
 import { storeMediaFile } from '@/server/media-files';
 import {
-  emptyRecord,
   getThemeRecord,
   listThemeRecords,
   recordToRow,
@@ -182,7 +181,7 @@ export async function uploadThemeAsset(_prev: ActionState, formData: FormData): 
     // Theme artwork is decoration by definition; it must never be read aloud.
     await db.update('media_assets', stored.assetId, { alt: null, decorative: true });
 
-    const record = (await getThemeRecord(db, slug)) ?? emptyRecord(slug);
+    const record = await getThemeRecord(db, slug);
     record.config = { ...record.config, assets: { ...record.config.assets, [slot]: stored.assetId } };
     await db.upsert(THEME_TABLE, recordToRow(record));
 

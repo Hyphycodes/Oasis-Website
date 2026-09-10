@@ -72,7 +72,6 @@ export function ThemeManager({
   choices: { slug: ThemeSlug; name: string; description: string }[];
   theme: ManagerTheme;
   canPublish: boolean;
-  now: string;
 }) {
   const initial: ThemeSlug = theme.record.enabled ? theme.slug : 'default';
   const [active, setActive] = useState<ThemeSlug>(initial);

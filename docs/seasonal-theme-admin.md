@@ -120,6 +120,12 @@ with the requested theme forced on for that request (`setThemeOverride`). It is 
 `noindex`, and gated by `getStaff()`. The public pages stay statically cached because no public
 route reads a preview flag.
 
+### What was verified
+
+The full admin workflow — publish, schedule, validation, switch-back, artwork replace and reset —
+was driven through the real forms with a browser and checked against the public HTML. The record
+is in `docs/halloween-dotd-theme.md` → "QA record".
+
 ### Developer switch
 
 `OASIS_THEME_FORCE=halloween-dotd` in `.env.local` forces the look on in development. It is

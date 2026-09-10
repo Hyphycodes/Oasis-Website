@@ -334,9 +334,11 @@
 
 .theme-hero-left {
   left: 0;
-  top: -4%;
-  width: calc(clamp(150px, 19vw, 340px) * var(--t-edges, 1));
-  translate: -46% 0;
+  /* Tucked into the corner under the banner: its lowest petal clears the
+     eyebrow line at every width from 640px up. */
+  top: -26%;
+  width: calc(clamp(160px, 17vw, 300px) * var(--t-edges, 1));
+  translate: -40% 0;
   animation: theme-drift-left 14s ease-in-out infinite alternate;
 }
 
@@ -423,7 +425,7 @@
     top: 2%;
   }
   .theme-hero-left {
-    top: 1%;
+    top: -10%;
     width: calc(104px * var(--t-edges, 1));
     translate: -42% 0;
   }

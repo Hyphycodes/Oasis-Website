@@ -288,3 +288,34 @@ Everything else is additive.
    glow, photo treatment, mobile rules, `docs/halloween-dotd-theme.md`.
 4. **QA & polish** — visual pass at 1440 / 1280 / 834 / 390, reduced-motion, console, hydration,
    contrast re-measure, weight budget, dead-code sweep, docs update, "Future theme creation".
+
+---
+
+## 12. Implementation notes (added after the build)
+
+Everything in §4–§11 was built as described, with these deviations, all in the direction of
+fewer touch points:
+
+- **`MobileDrawer` was not modified.** Mirroring `data-theme` onto `<html>` (`ThemeAttribute`)
+  makes the custom properties reach the portal by inheritance, so the drawer needed no change.
+- **`SiteChrome`** (`src/components/layout/SiteChrome.tsx`) holds what the site layout used to
+  render, so the preview route can reuse it. The layout itself is now four lines plus
+  `generateViewport` for the phone theme colour.
+- **`ThemeFooterLayer`** lives in `ThemeDivider.tsx` (both are "ornament" components); the footer
+  gained `relative isolate overflow-hidden` and one child.
+- **Foreground decoration** renders in a strip *under* the footer's legal line at `lg+`, not over
+  content — the only place a corner ornament could sit beside nothing.
+- **Preview** is `/admin/theme/preview/<page>?theme=<slug>`, exactly as planned; the request-scoped
+  override is a `React.cache` cell (`setThemeOverride`).
+- **Parallax** uses CSS scroll-driven animations behind `@supports`, so there is still no scroll
+  listener anywhere in the public bundle.
+- The theme stylesheet (~9 KB gzipped with the rest of the CSS) is imported by the site layout and
+  therefore present on the default site, where nothing matches it. Loading it conditionally would
+  require a client-side stylesheet swap and a flash; inert CSS was the cheaper trade.
+- `scripts/migrate-content.ts` and `scripts/generate-seed.ts` learned the new table; `seed.sql`
+  was regenerated.
+- The Supabase project in this environment's MCP connection is a different project from the one
+  the site is configured against (§10.7 stands): **migration 0004 must be applied by hand** before
+  the admin can publish the theme. Until then the public site is unaffected.
+
+QA record: see `docs/halloween-dotd-theme.md` → "QA record".

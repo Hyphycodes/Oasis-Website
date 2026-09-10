@@ -109,7 +109,6 @@ export default async function ThemePage() {
           assets,
         }}
         canPublish={canPublish}
-        now={now.toISOString()}
       />
     </AdminShell>
   );
