@@ -4,19 +4,41 @@ import { Flyer } from '@/components/events/Flyer';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
-import { eventSeries as staticSeries } from '@/content/events';
+import { eventSeries as staticSeries, oneTimeEvents } from '@/content/events';
 import { getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
-import { addToCalendarUrl, getSeriesOccurrences, STATUS_LABEL } from '@/lib/events';
+import type { EventInput } from '@/lib/events';
+import type { ResolvedEvent } from '@/content/types';
+import { EventDetail, eventShareImage } from '@/components/events/EventDetail';
+import { addToCalendarUrl, getSeriesOccurrences, standaloneEvents, STATUS_LABEL } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
-import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
+import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
 // Bounded staleness, for the same reason as /events: a cached page must never be
 // able to hold a finished night for long.
 export const revalidate = 300;
 
 export function generateStaticParams() {
-  return staticSeries.map((series) => ({ slug: series.slug }));
+  return [
+    ...staticSeries.map((series) => ({ slug: series.slug })),
+    ...oneTimeEvents.map((event) => ({ slug: event.slug })),
+  ];
+}
+
+/**
+ * A standalone event by slug — a Paint & Sip, a brunch, a comedy night.
+ *
+ * Deliberately not filtered through `getUpcomingEvents`: a cancelled event, and
+ * one that finished an hour ago, must still resolve here. Someone holding a
+ * ticket arrives on this page to find out what happened, and a 404 is the worst
+ * possible answer. Drafts and archived events stay unreachable.
+ */
+function findStandalone(input: EventInput, slug: string): ResolvedEvent | null {
+  return (
+    standaloneEvents(input.occurrences).find(
+      (event) => event.slug === slug && event.published && !event.archivedAt,
+    ) ?? null
+  );
 }
 
 export async function generateMetadata({
@@ -26,13 +48,28 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
-  const series = input.series.find((entry) => entry.slug === slug);
-  if (!series) return {};
 
+  const series = input.series.find((entry) => entry.slug === slug);
+  if (series) {
+    return buildMetadata({
+      title: `${series.title} — ${settings.name}, Lockport IL`,
+      description: series.description.slice(0, 300),
+      path: `/events/${series.slug}`,
+    });
+  }
+
+  const event = findStandalone(input, slug);
+  if (!event) return {};
+
+  // A shared event link should show the event, not the restaurant's house image.
+  const image = await eventShareImage(event);
   return buildMetadata({
-    title: `${series.title} — ${settings.name}, Lockport IL`,
-    description: series.description.slice(0, 300),
-    path: `/events/${series.slug}`,
+    title: `${event.title} — ${formatEventDateLong(event.startsAt)} at ${settings.name}`,
+    description: (event.summary || event.description).slice(0, 300),
+    path: `/events/${event.slug}`,
+    // Absolute: a share card is fetched by a crawler with no idea what our
+    // origin is.
+    ...(image ? { images: [absoluteUrl(image)] } : {}),
   });
 }
 
@@ -41,7 +78,16 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
 
   const series = input.series.find((entry) => entry.slug === slug);
-  if (!series) notFound();
+  if (!series) {
+    const event = findStandalone(input, slug);
+    if (!event) notFound();
+    return (
+      <>
+        <EventDetail event={event} settings={settings} />
+        <JsonLd data={eventJsonLd(event, settings)} />
+      </>
+    );
+  }
 
   const now = new Date();
   // Six weeks, not a quarter. Occurrences are generated from cadence, so the

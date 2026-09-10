@@ -35,7 +35,8 @@ export const metadata: Metadata = {
 const PAGES: { key: string; label: string; Page: () => Promise<React.ReactNode> }[] = [
   { key: '', label: 'Home', Page: HomePage },
   { key: 'menu', label: 'Menu', Page: MenuPage },
-  { key: 'events', label: 'Events', Page: EventsPage },
+  // Events reads searchParams; the preview has none, so it previews unfiltered.
+  { key: 'events', label: 'Events', Page: () => EventsPage({ searchParams: Promise.resolve({}) }) },
   { key: 'catering', label: 'Catering', Page: CateringPage },
   { key: 'private-events', label: 'Private events', Page: PrivateEventsPage },
   { key: 'visit', label: 'Visit', Page: VisitPage },

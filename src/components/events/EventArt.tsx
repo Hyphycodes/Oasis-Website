@@ -21,8 +21,9 @@ import type { CSSProperties } from 'react';
 
 export interface EventArtwork {
   flyer: PublicAsset | null;
-  keyArt: PublicAsset | null;
-  keyArtMobile: PublicAsset | null;
+  /** Shipped art carries a `srcSet`; art uploaded through the admin does not. */
+  keyArt: (PublicAsset & { srcSet?: string }) | null;
+  keyArtMobile: (PublicAsset & { srcSet?: string }) | null;
   foreground: PublicAsset | null;
 }
 
@@ -45,6 +46,8 @@ export function EventArt({
   sizes,
   priority = false,
   className = '',
+  fill = false,
+  uprightMedia = '(max-width: 639px)',
 }: {
   art: EventArtwork;
   title: string;
@@ -53,6 +56,15 @@ export function EventArt({
   sizes?: string;
   priority?: boolean;
   className?: string;
+  /** Drop the fixed ratio and fill the height the parent gives us. */
+  fill?: boolean;
+  /**
+   * When to use the upright crop. Defaults to phones. A frame that is upright
+   * on a wide screen too — the homepage lead card, whose height is set by the
+   * column beside it — passes its own query. It cannot be inferred from `fill`:
+   * a full-width banner also fills, and is emphatically landscape.
+   */
+  uprightMedia?: string;
 }) {
   const hasKeyArt = Boolean(art.keyArt?.path);
   const hasFlyer = Boolean(art.flyer?.path);
@@ -61,7 +73,7 @@ export function EventArt({
 
   return (
     <div
-      className={`event-art ${hasKeyArt ? 'event-art-wide' : 'event-art-flyer'} ${className}`}
+      className={`event-art ${hasKeyArt ? 'event-art-wide' : 'event-art-flyer'} ${fill ? 'event-art-fill' : ''} ${className}`}
       style={presetVars(preset)}
       data-size={size}
     >
@@ -69,18 +81,38 @@ export function EventArt({
           artwork at all still reads as a designed object rather than a gap. */}
       <span aria-hidden="true" className="event-art-field" />
 
-      {hasKeyArt && wide ? (
+      {hasKeyArt && wide?.path ? (
         <>
-          <AssetView
-            asset={wide}
-            id="event-key-art"
-            className="event-art-bg"
-            sizes={resolvedSizes}
-            priority={priority}
-            rounded={false}
-            tone="dark"
-            alt=""
-          />
+          {/* A plain <picture>, not next/image: these are decorative
+              backgrounds already shipped at their final size, and <picture> is
+              the only way to art-direct a different CROP without downloading
+              both files.
+
+              The upright crop is used wherever the FRAME is upright, which is
+              not only on phones: in backdrop mode the lead card is as tall as
+              the column beside it, so on a wide screen it is portrait too. Feed
+              a 16:9 file to a portrait frame and `cover` throws away most of
+              the composition. */}
+          <picture className="event-art-bg">
+            {art.keyArtMobile?.path ? (
+              <source
+                media={uprightMedia}
+                srcSet={art.keyArtMobile.srcSet ?? art.keyArtMobile.path}
+                sizes={art.keyArtMobile.srcSet ? resolvedSizes : undefined}
+              />
+            ) : null}
+            <img
+              src={wide.path}
+              srcSet={wide.srcSet}
+              sizes={wide.srcSet ? resolvedSizes : undefined}
+              alt=""
+              width={wide.width || undefined}
+              height={wide.height || undefined}
+              loading={priority ? 'eager' : 'lazy'}
+              fetchPriority={priority ? 'high' : 'low'}
+              decoding="async"
+            />
+          </picture>
           <span aria-hidden="true" className="event-art-scrim" />
         </>
       ) : null}
@@ -94,7 +126,17 @@ export function EventArt({
             fit="contain"
             rounded={false}
             tone="dark"
-            sizes={hasKeyArt ? '(min-width: 1024px) 18vw, 40vw' : resolvedSizes}
+            // Beside key art the flyer is a corner card that CSS caps at
+            // 190px, so a viewport-fraction hint just over-fetches: `40vw` on a
+            // phone asks for 156px for a slot that is 43px wide. Alone, it is
+            // the whole composition and takes the composition's own sizes.
+            sizes={
+              hasKeyArt
+                ? size === 'lead'
+                  ? '(min-width: 640px) 190px, 140px'
+                  : '(min-width: 640px) 190px, 48px'
+                : resolvedSizes
+            }
             priority={priority && !hasKeyArt}
             alt={`Official flyer for ${title}`}
             className="event-art-flyer-img"

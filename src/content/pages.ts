@@ -88,11 +88,12 @@ export const pageCopy = {
 
   events: {
     eyebrow: 'Oasis After Dark',
-    // Restaurant-and-bar language. Not "turns into a club".
-    heading: 'Friday and Saturday go later.',
+    // Restaurant-and-bar language. Not "turns into a club". Covers the whole
+    // calendar now, not only the two weekly nights.
+    heading: 'Something on almost every night.',
     // Entry price, ID rules and fees belong on the event feature and the ticket
     // page — not in a hero that has to be right about all three forever.
-    body: 'Dinner first, music after. Friday and Saturday from 10pm.',
+    body: 'Paint nights, brunches, comedy and the weekly nights — dinner first, music after.',
   },
 
   catering: {
@@ -150,7 +151,7 @@ export const seo: Record<string, PageSeo> = {
   events: {
     title: 'Events & Nightlife — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Oasis Fridays and Oasis Latin Saturdays in Lockport, IL. 18+, doors at 10pm. House, Top 100, hip-hop, reggaetón, corridos and guaracha every Friday and Saturday.',
+      'What is on at Oasis in Lockport, IL: Paint & Sip nights, brunches, comedy, and Oasis Fridays and Latin Saturdays every week. Tickets, dates and times for every event.',
     ogAssetId: null,
   },
   catering: {

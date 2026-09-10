@@ -30,9 +30,14 @@ export async function Header() {
           className="flex min-h-11 shrink-0 items-center"
           aria-label={`${site.name} — home`}
         >
-          {/* Fixed-size, so width/height are the RENDERED size at 2x — not the
-              intrinsic 1200px. Passing `sizes` here would make the browser pull
-              the 3840px variant for a 70px slot.
+          {/* `sizes` in real pixels, because the slot is a real, known size:
+              the wordmark is 28px tall (32 from `sm`), which at 1200:483 is
+              70px wide, then 80px. Given that, the browser asks for a ~96px
+              file on an ordinary screen and a ~256px one at 2x, instead of the
+              384px one it was fetching for every visitor on every page.
+
+              (`sizes` is only dangerous here if it is written as a viewport
+              fraction; an explicit px value is what it is for.)
 
               The wordmark falls back to text rather than to a gap: a header with
               no way home is worse than a header with no logo. */}
@@ -40,8 +45,9 @@ export async function Header() {
             <Image
               src={logo.path}
               alt={site.name}
-              width={280}
-              height={Math.round((280 * logo.height) / logo.width)}
+              width={160}
+              height={Math.round((160 * logo.height) / logo.width)}
+              sizes="(min-width: 640px) 80px, 70px"
               priority
               className="h-7 w-auto sm:h-8"
             />

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { EventArtwork } from '@/components/events/EventArt';
+import { defaultEventArt } from '@/content/event-art-defaults';
 import { getMediaMap, type PublicAsset } from '@/content/media';
 import type { ResolvedEvent } from '@/content/types';
 
@@ -22,11 +23,14 @@ export async function resolveEventArtwork(event: ResolvedEvent): Promise<EventAr
     return asset?.path ? asset : null;
   };
 
+  const shipped = defaultEventArt(event.slug);
   return {
     // The official flyer, first and always available.
     flyer: pick(event.flyerAssetId),
-    keyArt: pick(event.presentation.keyArtAssetId),
-    keyArtMobile: pick(event.presentation.keyArtMobileAssetId),
+    // An uploaded background wins; otherwise the shipped one; otherwise none,
+    // and the composition falls back to showing the flyer large.
+    keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
+    keyArtMobile: pick(event.presentation.keyArtMobileAssetId) ?? shipped?.tall ?? null,
     foreground: pick(event.presentation.foregroundAssetId),
   };
 }
@@ -43,14 +47,17 @@ export async function resolveManyEventArtwork(
   };
 
   return new Map(
-    events.map((event) => [
-      event.id,
-      {
-        flyer: pick(event.flyerAssetId),
-        keyArt: pick(event.presentation.keyArtAssetId),
-        keyArtMobile: pick(event.presentation.keyArtMobileAssetId),
-        foreground: pick(event.presentation.foregroundAssetId),
-      },
-    ]),
+    events.map((event) => {
+      const shipped = defaultEventArt(event.slug);
+      return [
+        event.id,
+        {
+          flyer: pick(event.flyerAssetId),
+          keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
+          keyArtMobile: pick(event.presentation.keyArtMobileAssetId) ?? shipped?.tall ?? null,
+          foreground: pick(event.presentation.foregroundAssetId),
+        },
+      ];
+    }),
   );
 }

@@ -1,0 +1,186 @@
+import { describe, expect, it } from 'vitest';
+import { buildCalendar, monthLabel } from './event-calendar';
+import type { EventInput } from './events';
+import { DEFAULT_PRESENTATION } from '@/content/types';
+import type { EventCategory } from '@/content/event-presentation';
+import type { EventStatus } from '@/content/types';
+import type { OccurrenceRecord } from './events';
+
+/** A standalone event on a given venue-local day. */
+function event(
+  slug: string,
+  date: string,
+  extra: {
+    category?: EventCategory;
+    featured?: boolean;
+    priority?: number;
+    status?: EventStatus;
+  } = {},
+): OccurrenceRecord {
+  return {
+    id: slug,
+    seriesSlug: null,
+    slug,
+    startsAt: `${date}T19:00:00-05:00`,
+    endsAt: `${date}T22:00:00-05:00`,
+    status: extra.status ?? 'on-sale',
+    published: true,
+    archivedAt: null,
+    ticketUrl: 'https://www.tickeri.com/e/x',
+    ticketLabel: null,
+    priceCents: 4500,
+    title: slug,
+    summary: '',
+    description: '',
+    ageMin: null,
+    ageNote: null,
+    musicFormats: [],
+    venueName: 'Oasis',
+    flyerAssetId: null,
+    note: null,
+    presentation: {
+      ...DEFAULT_PRESENTATION,
+      category: extra.category ?? 'paint-sip',
+      featured: extra.featured ?? false,
+      priority: extra.priority ?? 0,
+      treatment: extra.featured ? 'featured' : 'standard',
+    },
+  } as unknown as OccurrenceRecord;
+}
+
+function input(occurrences: OccurrenceRecord[]): EventInput {
+  return { series: [], occurrences };
+}
+
+const NOW = new Date('2026-09-01T12:00:00-05:00');
+
+describe('monthLabel', () => {
+  it('reads the label off the grouping key', () => {
+    expect(monthLabel('2026-10')).toBe('October 2026');
+    expect(monthLabel('2027-01')).toBe('January 2027');
+  });
+});
+
+describe('buildCalendar', () => {
+  it('groups in date order, one entry per month', () => {
+    const calendar = buildCalendar(
+      input([event('a', '2026-09-10'), event('b', '2026-09-24'), event('c', '2026-10-08')]),
+      NOW,
+    );
+    expect(calendar.lead?.slug).toBe('a');
+    expect(calendar.months.map((month) => month.key)).toEqual(['2026-09', '2026-10']);
+    expect(calendar.months[0]!.events.map((e) => e.slug)).toEqual(['a', 'b']);
+    expect(calendar.months[1]!.events.map((e) => e.slug)).toEqual(['c']);
+  });
+
+  it('marks October so the page can treat it differently', () => {
+    const calendar = buildCalendar(
+      input([event('a', '2026-09-10'), event('b', '2026-09-24'), event('c', '2026-10-08')]),
+      NOW,
+    );
+    expect(calendar.months.find((month) => month.key === '2026-10')?.isOctober).toBe(true);
+    expect(calendar.months.find((month) => month.key === '2026-09')?.isOctober).toBe(false);
+  });
+
+  it('keeps the lead in its own month, so the calendar has no hole in it', () => {
+    // A featured October event leads the page AND still appears under October.
+    // Dropping it would delete the October section when it is October's only
+    // event, which is exactly when that section matters most.
+    const calendar = buildCalendar(
+      input([event('a', '2026-09-10'), event('b', '2026-10-08', { featured: true, priority: 10 })]),
+      NOW,
+    );
+    expect(calendar.lead?.slug).toBe('b');
+    expect(calendar.months.map((month) => month.key)).toEqual(['2026-09', '2026-10']);
+    expect(calendar.months[1]!.events.map((e) => e.slug)).toEqual(['b']);
+  });
+
+  it('counts every filter against the unfiltered calendar', () => {
+    const calendar = buildCalendar(
+      input([
+        event('a', '2026-09-10', { category: 'paint-sip' }),
+        event('b', '2026-09-11', { category: 'nightlife' }),
+        event('c', '2026-09-12', { category: 'nightlife' }),
+      ]),
+      NOW,
+    );
+    expect(calendar.counts.all).toBe(3);
+    expect(calendar.counts['nightlife']).toBe(2);
+    expect(calendar.counts['paint-sip']).toBe(1);
+    expect(calendar.counts['comedy']).toBe(0);
+  });
+
+  it('filters, and re-picks the lead inside the filter', () => {
+    const calendar = buildCalendar(
+      input([
+        event('a', '2026-09-10', { category: 'paint-sip' }),
+        event('b', '2026-09-11', { category: 'nightlife' }),
+        event('c', '2026-09-12', { category: 'nightlife' }),
+      ]),
+      NOW,
+      'nightlife',
+    );
+    expect(calendar.total).toBe(2);
+    expect(calendar.lead?.slug).toBe('b');
+    expect(calendar.months.flatMap((m) => m.events.map((e) => e.slug))).toEqual(['b', 'c']);
+  });
+
+  it('leaves out a cancelled night, as the rest of the site does', () => {
+    // `ineligibleReason` is the one place that decides what is on. The calendar
+    // does not get its own opinion, or a night could be off everywhere and
+    // still on here. The event's own page still renders and says it is off.
+    const calendar = buildCalendar(
+      input([
+        event('a', '2026-09-10'),
+        event('b', '2026-09-24'),
+        event('c', '2026-09-25', { status: 'cancelled' }),
+      ]),
+      NOW,
+    );
+    const listed = calendar.months.flatMap((month) => month.events.map((e) => e.slug));
+    expect(listed).toEqual(['a', 'b']);
+  });
+
+  it('is empty, not broken, with nothing on', () => {
+    const calendar = buildCalendar(input([]), NOW);
+    expect(calendar.lead).toBeNull();
+    expect(calendar.months).toEqual([]);
+    expect(calendar.counts.all).toBe(0);
+  });
+});
+
+describe('buildCalendar and recurring nights', () => {
+  const series = {
+    slug: 'oasis-fridays',
+    title: 'Oasis Fridays',
+    description: 'House and Top 100.',
+    cadence: { kind: 'weekly' as const, weekday: 5 },
+    startMinutes: 22 * 60,
+    endMinutes: 26 * 60,
+    ageMin: 18,
+    ageNote: null,
+    musicFormats: ['House'],
+    venueName: 'Oasis',
+    flyerAssetId: null,
+    flyerPrintedDate: null,
+    priceCents: 1000,
+    ticketUrlTemplate: null,
+    paused: false,
+    archivedAt: null,
+  };
+
+  it('lists a recurring night once, and keeps it out of the month calendar', () => {
+    const calendar = buildCalendar(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { series: [series as any], occurrences: [event('a', '2026-09-10')] },
+      NOW,
+    );
+
+    // Every Friday between now and the horizon would otherwise be a row.
+    expect(calendar.weekly.map((e) => e.seriesSlug)).toEqual(['oasis-fridays']);
+    // Only the standalone event is in the calendar; not one Friday.
+    expect(calendar.months.flatMap((m) => m.events.map((e) => e.slug))).toEqual(['a']);
+    expect(calendar.lead?.slug).toBe('a');
+    expect(calendar.counts.all).toBe(1);
+  });
+});
