@@ -6,17 +6,23 @@ import type { CSSProperties } from 'react';
 /**
  * An event's artwork, composed.
  *
- * THE FLYER IS ALWAYS AVAILABLE AND IS ALWAYS SHOWN WHOLE. Two arrangements:
+ * THE FLYER IS THE ARTWORK. When an event has one it is the subject of the
+ * composition — large, centred and whole — and the generated key art drops
+ * behind it, blurred, as nothing more than atmosphere in the event's own
+ * colour. That is the right way round: the flyer is what the restaurant
+ * actually promotes the night with, and a guest recognises it. The key art is
+ * ours, and it is scenery.
  *
- *   with key art     a wide cinematic background carries the composition, and
- *                    the official flyer sits on it as an upright card — the
- *                    flyer is smaller but complete, and it is still the thing
- *                    that identifies the event.
- *   without key art  the flyer IS the composition: contained inside a lit
- *                    frame, on the event's own colour, at its own aspect ratio.
+ * Three arrangements, in priority order:
  *
- * `object-contain` in both, always. A flyer prints its own name, date, price
- * and age line along its edges, and cropping it throws those away.
+ *   flyer            the flyer, contained and complete, over an ambient wash
+ *                    of its own key art (blurred) or its preset colour.
+ *   key art only     the cinematic frame carries the card by itself.
+ *   nothing          the event's name, set as poster type on its own colour.
+ *
+ * `object-contain` for the flyer, always and everywhere. A flyer prints its own
+ * name, date, price and age line along its edges, and cropping it throws those
+ * away.
  */
 
 export interface EventArtwork {
@@ -41,7 +47,7 @@ export function EventArt({
   art,
   title,
   preset,
-  /** `lead` is the dominant homepage slot; `card` is everything else. */
+  /** `lead` is the dominant slot; `card` is everything else. */
   size = 'card',
   sizes,
   priority = false,
@@ -59,25 +65,32 @@ export function EventArt({
   /** Drop the fixed ratio and fill the height the parent gives us. */
   fill?: boolean;
   /**
-   * When to use the upright crop. Defaults to phones. A frame that is upright
-   * on a wide screen too — the homepage lead card, whose height is set by the
-   * column beside it — passes its own query. It cannot be inferred from `fill`:
-   * a full-width banner also fills, and is emphatically landscape.
+   * When to use the upright crop of the KEY ART. Defaults to phones. A frame
+   * that is upright on a wide screen too passes its own query; it cannot be
+   * inferred from `fill`, because a full-width banner also fills and is
+   * emphatically landscape.
    */
   uprightMedia?: string;
 }) {
   const hasKeyArt = Boolean(art.keyArt?.path);
   const hasFlyer = Boolean(art.flyer?.path);
   const wide = art.keyArt;
-  const resolvedSizes = sizes ?? (size === 'lead' ? '(min-width: 1024px) 62vw, 100vw' : '(min-width: 1024px) 30vw, 90vw');
+  const resolvedSizes =
+    sizes ?? (size === 'lead' ? '(min-width: 1024px) 62vw, 100vw' : '(min-width: 1024px) 30vw, 90vw');
+
+  // What the frame is actually about. The stylesheet reads this to decide the
+  // aspect ratio, whether the backdrop is blurred, and how much room the flyer
+  // gets — one attribute rather than a pile of conditional class names.
+  const subject = hasFlyer ? 'flyer' : hasKeyArt ? 'keyart' : 'none';
 
   return (
     <div
-      className={`event-art ${hasKeyArt ? 'event-art-wide' : 'event-art-flyer'} ${fill ? 'event-art-fill' : ''} ${className}`}
+      className={`event-art ${fill ? 'event-art-fill' : ''} ${className}`}
       style={presetVars(preset)}
       data-size={size}
+      data-subject={subject}
     >
-      {/* The lit field. Present in both arrangements, so an event with no
+      {/* The lit field. Present in every arrangement, so an event with no
           artwork at all still reads as a designed object rather than a gap. */}
       <span aria-hidden="true" className="event-art-field" />
 
@@ -86,13 +99,7 @@ export function EventArt({
           {/* A plain <picture>, not next/image: these are decorative
               backgrounds already shipped at their final size, and <picture> is
               the only way to art-direct a different CROP without downloading
-              both files.
-
-              The upright crop is used wherever the FRAME is upright, which is
-              not only on phones: in backdrop mode the lead card is as tall as
-              the column beside it, so on a wide screen it is portrait too. Feed
-              a 16:9 file to a portrait frame and `cover` throws away most of
-              the composition. */}
+              both files. */}
           <picture className="event-art-bg">
             {art.keyArtMobile?.path ? (
               <source
@@ -126,18 +133,8 @@ export function EventArt({
             fit="contain"
             rounded={false}
             tone="dark"
-            // Beside key art the flyer is a corner card that CSS caps at
-            // 190px, so a viewport-fraction hint just over-fetches: `40vw` on a
-            // phone asks for 156px for a slot that is 43px wide. Alone, it is
-            // the whole composition and takes the composition's own sizes.
-            sizes={
-              hasKeyArt
-                ? size === 'lead'
-                  ? '(min-width: 640px) 190px, 140px'
-                  : '(min-width: 640px) 190px, 48px'
-                : resolvedSizes
-            }
-            priority={priority && !hasKeyArt}
+            sizes={resolvedSizes}
+            priority={priority}
             alt={`Official flyer for ${title}`}
             className="event-art-flyer-img"
           />
@@ -148,7 +145,7 @@ export function EventArt({
           colour. An event awaiting artwork should look like a designed placard,
           not a hole — and the name is information, so it belongs in the DOM
           rather than in a picture anyway. */}
-      {!hasKeyArt && !hasFlyer ? (
+      {subject === 'none' ? (
         <span className="event-art-nameplate" aria-hidden="true">
           <span className="display-poster">{title}</span>
         </span>

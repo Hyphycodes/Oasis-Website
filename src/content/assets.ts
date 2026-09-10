@@ -341,26 +341,6 @@ export const assets = {
     containsText: 'date',
     maxBytes: 400_000,
   },
-  /**
-   * The real, owner-supplied flyer for the Scream Paint & Sip one-time event —
-   * the same flyer the night is actually promoted with, not the shipped
-   * generated key art. `oneTimeEvents` in events.ts is the only place that
-   * points at this, and it is the only one-time event with a verified flyer:
-   * see the flyer rule in docs/events-system.md.
-   */
-  flyerScreamPaintSip: {
-    path: '/media/events/scream-paint-sip-flyer.jpg',
-    kind: 'image',
-    alt: 'Scream Paint & Sip flyer artwork',
-    width: 1080,
-    height: 1072,
-    ratio: '1:1',
-    focal: '50% 50%',
-    status: 'final',
-    usage: ['/events Scream Paint & Sip feature', '/events/scream-paint-sip'],
-    containsText: 'date',
-    maxBytes: 400_000,
-  },
 
   /* ------------------------------------------------- catering & private */
   privateEvents: {

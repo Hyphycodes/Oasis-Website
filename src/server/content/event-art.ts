@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { EventArtwork } from '@/components/events/EventArt';
-import { defaultEventArt } from '@/content/event-art-defaults';
+import { defaultEventArt, defaultEventFlyer } from '@/content/event-art-defaults';
 import { getMediaMap, type PublicAsset } from '@/content/media';
 import type { ResolvedEvent } from '@/content/types';
 
@@ -25,8 +25,9 @@ export async function resolveEventArtwork(event: ResolvedEvent): Promise<EventAr
 
   const shipped = defaultEventArt(event.slug);
   return {
-    // The official flyer, first and always available.
-    flyer: pick(event.flyerAssetId),
+    // The official flyer, first and always available. An uploaded or imported
+    // flyer wins; a flyer that ships in the repo only ever fills an empty slot.
+    flyer: pick(event.flyerAssetId) ?? defaultEventFlyer(event.slug, event.title),
     // An uploaded background wins; otherwise the shipped one; otherwise none,
     // and the composition falls back to showing the flyer large.
     keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
@@ -52,7 +53,7 @@ export async function resolveManyEventArtwork(
       return [
         event.id,
         {
-          flyer: pick(event.flyerAssetId),
+          flyer: pick(event.flyerAssetId) ?? defaultEventFlyer(event.slug, event.title),
           keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
           keyArtMobile: pick(event.presentation.keyArtMobileAssetId) ?? shipped?.tall ?? null,
           foreground: pick(event.presentation.foregroundAssetId),

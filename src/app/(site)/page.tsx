@@ -70,7 +70,7 @@ export default async function HomePage() {
     <>
       {/* The soonest night of any series, not the first series' next night —
           "what's on" means tonight's Saturday, not next week's Friday. */}
-      <Hero nextEvent={homepageEvents.next} takeover={homepageEvents.takeover} />
+      <Hero takeover={homepageEvents.takeover} />
       <ActionRail openLabel={openState.label} isOpen={openState.open} />
       {/* Events sit high: the second thing a visitor learns about Oasis is that
           there is always something on. */}

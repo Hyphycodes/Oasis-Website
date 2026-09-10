@@ -67,12 +67,16 @@ export function monthLabel(key: string): string {
 }
 
 /**
- * Featured first, then whatever is soonest — the same order the homepage uses,
- * so the event a guest saw promoted there is the one that opens this page.
+ * A tie-break between events starting at the same moment, nothing more.
+ *
+ * The page leads with whatever is SOONEST — the same order the homepage uses.
+ * A banner headed "Next up" showing an event three weeks after the ones listed
+ * under it is simply wrong, and that is what ranking by promotion produced.
+ * See the note in event-feature.ts.
  */
-function rank(event: ResolvedEvent): number {
+function sameTimeRank(event: ResolvedEvent): number {
   const { treatment, priority } = event.presentation;
-  const base = treatment === 'takeover' ? 2000 : treatment === 'featured' ? 1000 : 0;
+  const base = treatment === 'featured' ? 1000 : 0;
   return base + Math.max(0, Math.min(99, priority));
 }
 
@@ -128,12 +132,12 @@ export function buildCalendar(
 
   const visible = special.filter((event) => matches(event, filter));
 
-  const promoted = [...visible].sort((a, b) => {
-    const difference = rank(b) - rank(a);
-    if (difference !== 0) return difference;
-    return a.startsAt.localeCompare(b.startsAt);
+  const chronological = [...visible].sort((a, b) => {
+    const byDate = a.startsAt.localeCompare(b.startsAt);
+    if (byDate !== 0) return byDate;
+    return sameTimeRank(b) - sameTimeRank(a);
   });
-  const lead = promoted[0] ?? null;
+  const lead = chronological[0] ?? null;
 
   const months: EventMonth[] = [];
   for (const event of visible) {

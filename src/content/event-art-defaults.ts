@@ -27,6 +27,33 @@ const SLUGS = [
 
 const SPARES = ['generic-nightlife', 'generic-celebration', 'generic-comedy'] as const;
 
+/**
+ * OFFICIAL FLYERS that ship in the repository, by event slug.
+ *
+ * These are the restaurant's own artwork — the image each night is actually
+ * promoted with — supplied by the owner and matched to the event by slug.
+ *
+ * They are the LOWEST priority source for a flyer, and that is the whole point:
+ * a flyer uploaded in the admin, or imported once by the Tickeri sync, is
+ * stored on the event itself and always wins. This fills an empty slot and
+ * nothing else, exactly like the sync's write-once rule. Nothing here can
+ * replace a flyer an event already has.
+ *
+ * Dimensions are the real ones, so a card can reserve the right box before the
+ * picture arrives and nothing shifts as it loads.
+ */
+const SHIPPED_FLYERS: Record<string, { width: number; height: number }> = {
+  'scream-paint-sip': { width: 1080, height: 1072 },
+  'snoopy-paint-sip': { width: 1080, height: 1074 },
+  'snoopy-white-sox-paint-sip': { width: 1080, height: 1299 },
+  'hello-kitty-fall-paint-lunch': { width: 1080, height: 1083 },
+};
+
+/** Every shipped flyer file, for the docs. */
+export const EVENT_FLYER_FILES: string[] = Object.keys(SHIPPED_FLYERS).map(
+  (slug) => `${DIR}/flyers/${slug}.jpg`,
+);
+
 /** Every shipped file, for the asset check and the docs. */
 export const EVENT_ART_FILES: string[] = [...SLUGS, ...SPARES].flatMap((slug) => [
   `${DIR}/${slug}.webp`,
@@ -93,4 +120,27 @@ const DEFAULTS: Record<string, DefaultEventArt> = Object.fromEntries(
 export function defaultEventArt(slug: string | null): DefaultEventArt | null {
   if (!slug) return null;
   return DEFAULTS[slug] ?? null;
+}
+
+/**
+ * The OFFICIAL flyer that ships for an event, or null.
+ *
+ * `title` is only used to describe the picture: a flyer carries the event's
+ * name, date and price in its pixels, so it is never decorative and always
+ * gets real alt text.
+ */
+export function defaultEventFlyer(slug: string | null, title: string): PublicAsset | null {
+  if (!slug) return null;
+  const size = SHIPPED_FLYERS[slug];
+  if (!size) return null;
+  return {
+    path: `${DIR}/flyers/${slug}.jpg`,
+    kind: 'image' as AssetKind,
+    alt: `Official flyer for ${title}`,
+    width: size.width,
+    height: size.height,
+    ratio: `${size.width}:${size.height}`,
+    focal: '50% 50%',
+    status: 'final',
+  };
 }

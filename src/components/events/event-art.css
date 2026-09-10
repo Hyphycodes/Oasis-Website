@@ -17,17 +17,33 @@
   background: var(--e-surface, #1b0b1a);
 }
 
-/* Without key art the flyer is the composition, at a portrait ratio that
-   suits the flyers restaurants actually print. */
-.event-art-flyer {
-  aspect-ratio: 4 / 5;
+/* THE FLYER IS THE SUBJECT. Restaurants print flyers square or slightly
+   upright, so the frame is close to square and the whole thing fits with very
+   little letterboxing. */
+.event-art[data-subject='flyer'] {
+  aspect-ratio: 1 / 1;
 }
 
-.event-art-wide {
+/* A supporting card is half a row wide, and at 1:1 that made its flyer bigger
+   than the lead's — the hierarchy upside down. Capping the height letterboxes
+   the frame instead: the flyer keeps its own size and the space left over
+   becomes ambient field. */
+.event-art[data-size='card'][data-subject='flyer'] {
+  /* `width` is stated explicitly: with only `aspect-ratio` and `max-height`,
+     the browser keeps the ratio by shrinking the WIDTH too, which left a
+     square of artwork stranded against one edge of a much wider card. */
+  width: 100%;
+  max-height: 22rem;
+}
+
+/* Key art alone still carries the cinematic frame it was composed for. */
+.event-art[data-subject='keyart'],
+.event-art[data-subject='none'] {
   aspect-ratio: 16 / 9;
 }
 
-.event-art[data-size='card'].event-art-wide {
+.event-art[data-size='card'][data-subject='keyart'],
+.event-art[data-size='card'][data-subject='none'] {
   aspect-ratio: 4 / 3;
 }
 
@@ -52,9 +68,10 @@
   object-fit: cover;
 }
 
-/* Backdrop mode: the art stops being a band at the top of a card and becomes
-   the card, with the type set over it. Whatever height the row asks for is
-   absorbed by the picture instead of opening a hole above the buttons. */
+/* Backdrop mode: the art stops being a band at the top of a section and
+   becomes its full-bleed background, with the type set over it. Used by an
+   event's own page header, where the flyer is shown separately and in full
+   further down. */
 .event-art-fill {
   position: absolute;
   inset: 0;
@@ -64,17 +81,22 @@
   border-radius: 0;
 }
 
-/* The type occupies the bottom of the card, so the official flyer moves to the
-   top corner rather than sitting under the headline. */
-.event-art-fill .event-art-official {
-  top: 6%;
-  bottom: auto;
-}
-
-/* The card's own text block already prints the title; the nameplate would say
+/* The section's own heading already prints the title; the nameplate would say
    it a second time, in a different size, behind it. */
 .event-art-fill .event-art-nameplate {
   display: none;
+}
+
+/* Behind a flyer the key art is ATMOSPHERE, not a picture: blurred past
+   legibility, dimmed, and pushed slightly out of frame so the blur has no soft
+   edge against the card border. Two images competing for the same frame is
+   what made these cards unreadable. */
+.event-art[data-subject='flyer'] .event-art-bg {
+  inset: -6%;
+  height: 112%;
+  width: 112%;
+  filter: blur(18px) saturate(1.15) brightness(0.55);
+  transform: scale(1.05);
 }
 
 /* Type sits over the bottom of a card; the scrim is what makes that safe
@@ -93,42 +115,30 @@
 
 /* ------------------------------------------------------------- the flyer -- */
 
+/* Centred and generous: the flyer gets nearly the whole frame, and what is
+   left is a margin of the event's own colour rather than a second picture. */
 .event-art-official {
   position: absolute;
+  inset: 5%;
   z-index: 3;
   margin: 0;
-}
-
-/* Alone: centred, generous, the whole thing visible. */
-.event-art-flyer .event-art-official {
-  inset: 6% 8%;
-}
-
-/* Beside key art: an upright card in the corner, still complete, with a lit
-   edge so it reads as a physical object on top of the scene. */
-.event-art-wide .event-art-official {
-  right: 4.5%;
-  bottom: 6%;
-  width: 30%;
-  max-width: 190px;
-  aspect-ratio: 4 / 5;
-  border-radius: var(--radius-md);
-  border: 1px solid rgb(255 255 255 / 0.18);
-  background: rgb(10 5 12 / 0.55);
-  box-shadow:
-    0 18px 40px -12px rgb(0 0 0 / 0.7),
-    0 0 0 1px var(--e-accent, #f0b24a) inset;
-  padding: 4px;
-  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
 }
 
 .event-art-flyer-img {
   height: 100%;
   width: 100%;
+  /* The shadow is on the IMAGE, not a box around it: a contained flyer does
+     not fill its own element, so a bordered box would draw a rectangle in the
+     wrong place whenever the ratios differ. */
+  filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.55));
 }
 
-.event-art-flyer .event-art-flyer-img {
-  filter: drop-shadow(0 22px 32px rgb(0 0 0 / 0.55));
+/* In the lead slot the flyer is upright inside a wider frame, so it is capped
+   by height rather than width and stays centred. */
+.event-art[data-size='lead'] .event-art-official {
+  inset: 6%;
 }
 
 /* -------------------------------------------------------- no artwork -- */
@@ -184,16 +194,9 @@
 /* --------------------------------------------------------------- phone -- */
 
 @media (max-width: 639px) {
-  .event-art-wide {
+  .event-art[data-subject='keyart'],
+  .event-art[data-subject='none'] {
     aspect-ratio: 4 / 3;
-  }
-  /* On a phone the corner card is too small to read a flyer in. It goes
-     bigger and more central rather than becoming a stamp. */
-  .event-art-wide .event-art-official {
-    right: 5%;
-    bottom: 5%;
-    width: 38%;
-    max-width: none;
   }
   .event-art-foreground {
     width: 40%;

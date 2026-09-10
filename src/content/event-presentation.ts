@@ -45,9 +45,20 @@ export function isEventCategory(value: unknown): value is EventCategory {
 export const EVENT_TREATMENTS = ['standard', 'featured', 'takeover'] as const;
 export type EventTreatment = (typeof EVENT_TREATMENTS)[number];
 
+/**
+ * What each setting actually does, in the admin's own words.
+ *
+ * `featured` no longer reorders anything: the homepage and the events page both
+ * run in date order, because a row of events that is not in time order reads as
+ * broken. It goes first only among events starting at the same moment. Putting
+ * an event ABOVE the calendar is what a hero takeover is for.
+ */
 export const TREATMENT_LABEL: Record<EventTreatment, { name: string; hint: string }> = {
   standard: { name: 'Standard', hint: 'Listed on the events page like everything else.' },
-  featured: { name: 'Featured', hint: 'Eligible for the big slot on the homepage.' },
+  featured: {
+    name: 'Featured',
+    hint: 'Goes first when two events start at the same time. Events are always listed in date order.',
+  },
   takeover: {
     name: 'Hero takeover',
     hint: 'Takes over the homepage hero for the dates you set, then puts itself back.',

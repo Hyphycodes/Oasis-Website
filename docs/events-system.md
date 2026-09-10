@@ -16,8 +16,10 @@ secondary. Consequences, all enforced in code rather than by convention:
 
 | Situation | What happens |
 |---|---|
-| Event has a flyer, no key art | The flyer is shown. It is always shown whole, never cropped. |
-| Admin adds key art | The card gains a wider background. The flyer is untouched and still shown. |
+| Event has a flyer | **The flyer is the artwork.** It is the subject of every card, shown large and whole, never cropped. |
+| Admin adds key art | The key art drops BEHIND the flyer, blurred, as atmosphere. The flyer is untouched and still the subject. |
+| Event has key art and no flyer | The key art carries the card by itself. |
+| A flyer ships in the repo for this slug | It fills an EMPTY flyer slot only. An uploaded or imported flyer always wins. |
 | Tickeri sync runs and the flyer slot is empty | The official flyer is downloaded into it, once. |
 | Tickeri sync runs and a flyer already exists | Nothing. A sync will never replace a flyer. |
 | Admin uploads to the flyer slot on an event that has one | Refused, until they press "Replace the official flyer" — a second, deliberate action. |
@@ -125,24 +127,33 @@ always something on. The homepage says the second thing in three places.
 drawer. It is a plain link, like every other nav item.
 
 **The hero.** The action hierarchy is Reserve a table (primary) → Explore events (strong
-secondary) → Order online (tertiary, a text link). Above the headline sits a **NEXT UP** pill
-carrying the soonest event's name, date and time as real text, plus **SOLD OUT** when it applies.
-The whole pill is one link and one 44px target.
+secondary) → Order online (tertiary, a text link). Above the headline is one quiet line of place,
+and nothing else. A live NEXT UP pill sat there and made the hero busy: it competed with the
+headline for the first thing the eye hit, and repeated what the What's on section says a screen
+below. The calendar lives further down the page, behind *Explore events*.
 
-**What's on.** One dominant featured event and two supporting ones — never three equal cards,
-because a restaurant with a Halloween headliner and two paint nights is not saying those three
-things equally loudly. The lead gets the wide composition, the summary and a ticket button; the
-supporting pair get upright cards. A "All events" link sits in the header of the section.
+**What's on.** The next three things on, in date order. The lead takes its own row — its flyer
+beside the facts — and the two after it sit side by side beneath. Not three equal cards, because a
+headliner and two ordinary nights are not equally loud; and not a promoted card out of sequence,
+because a calendar out of order is simply wrong. An "All events" link sits in the section header.
 
 Which events appear is decided by `selectHomepageEvents` in `src/lib/event-feature.ts` — pure, and
 covered by seven tests:
 
 | Rule | Behaviour |
 |---|---|
-| Lead | A live takeover, else the highest `treatment` + `priority`, else the soonest |
-| Supporting | The next two, never repeating the lead |
-| NEXT UP | The **soonest** event, regardless of promotion — it is a promise about the calendar |
+| Lead | The **soonest** event |
+| Supporting | The next two after it, in date order |
+| Order | Strictly chronological. `featured` and `priority` separate two events starting at the same moment and decide nothing else |
+| Takeover | Promoted in the hero, on its schedule. It does not jump the calendar below |
 | Cancelled | Never advertised anywhere on the homepage; still listed on `/events` |
+
+**Why it is strictly chronological.** The module used to lead with whatever was
+most promoted, which put a featured October event above two nights happening
+that week — three cards reading October, September, September. A guest reads a
+row of events as a sequence in time, and being wrong about that costs more than
+any promotion is worth. Promoting an event *above* the calendar is what a hero
+takeover is for, and that has its own scheduled window.
 
 ### Hero takeovers
 

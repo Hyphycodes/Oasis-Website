@@ -379,11 +379,9 @@ export function occurrenceFromSeed(seed: OneTimeEventSeed): OccurrenceRecord {
     ageNote: seed.ageNote ?? null,
     musicFormats: null,
     venueName: null,
-    // Null unless the seed itself was given a verified flyer directly (see
-    // `OneTimeEventSeed.flyerAssetId`). Otherwise the OFFICIAL flyer for these
-    // events lives on Tickeri and arrives through the import, which fills this
-    // slot once.
-    flyerAssetId: seed.flyerAssetId ?? null,
+    // Null: an uploaded or imported flyer lives in the database, and a flyer
+    // that ships in the repo is matched by slug (see event-art-defaults).
+    flyerAssetId: null,
     note: null,
     presentation: {
       category: seed.category,

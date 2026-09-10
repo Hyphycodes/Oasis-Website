@@ -43,7 +43,10 @@ const input = (occurrences: OccurrenceRecord[]): EventInput => ({ series: [], oc
 const at = (id: string) => `one-time:${id}`;
 
 describe('selectHomepageEvents', () => {
-  it('leads with a featured event over a sooner unfeatured one', () => {
+  it('leads with the soonest event, not the most promoted one', () => {
+    // A guest reads a row of events as a sequence in time. Leading with a
+    // featured event a month out put October above two September nights, which
+    // is what "the events are out of order" meant.
     const result = selectHomepageEvents(
       input([
         event('soon', '2026-09-12'),
@@ -51,12 +54,14 @@ describe('selectHomepageEvents', () => {
       ]),
       now,
     );
-    expect(result.lead?.id).toBe(at('big'));
-    // "Next up" is still a promise about the calendar, not about promotion.
+    expect(result.lead?.id).toBe(at('soon'));
     expect(result.next?.id).toBe(at('soon'));
+    expect(result.supporting.map((e) => e.id)).toEqual([at('big')]);
   });
 
-  it('leads with a live takeover over everything else', () => {
+  it('reports a live takeover without letting it jump the calendar', () => {
+    // A takeover is promoted in the HERO, which is what it is for. The what's
+    // on module underneath stays in date order like everything else.
     const result = selectHomepageEvents(
       input([
         event('featured', '2026-09-20', { treatment: 'featured', featured: true, priority: 90 }),
@@ -70,7 +75,7 @@ describe('selectHomepageEvents', () => {
       now,
     );
     expect(result.takeover?.id).toBe(at('takeover'));
-    expect(result.lead?.id).toBe(at('takeover'));
+    expect(result.lead?.id).toBe(at('featured'));
   });
 
   it('ignores a takeover whose window has not started or has ended', () => {
@@ -128,15 +133,26 @@ describe('selectHomepageEvents', () => {
     expect(result.supporting).toHaveLength(0);
   });
 
-  it('breaks a tie on priority, then on date', () => {
-    const result = selectHomepageEvents(
+  it('uses priority only to separate events starting at the same moment', () => {
+    const differentDays = selectHomepageEvents(
       input([
         event('later-important', '2026-09-25', { treatment: 'featured', priority: 50 }),
         event('sooner-ordinary', '2026-09-12', { treatment: 'featured', priority: 10 }),
       ]),
       now,
     );
-    expect(result.lead?.id).toBe(at('later-important'));
+    // Different days: the date decides, whatever the priority says.
+    expect(differentDays.lead?.id).toBe(at('sooner-ordinary'));
+
+    const sameNight = selectHomepageEvents(
+      input([
+        event('opener', '2026-09-12', { treatment: 'featured', priority: 10 }),
+        event('headliner', '2026-09-12', { treatment: 'featured', priority: 50 }),
+      ]),
+      now,
+    );
+    // Same moment: priority is the tie-break, and the only thing it decides.
+    expect(sameNight.lead?.id).toBe(at('headliner'));
   });
 
   it('copes with an empty calendar', () => {

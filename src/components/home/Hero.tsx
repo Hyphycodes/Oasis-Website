@@ -9,7 +9,6 @@ import { site } from '@/content/site';
 import type { ResolvedEvent } from '@/content/types';
 import { presetVars } from '@/components/events/EventArt';
 import { resolveEventArtwork } from '@/server/content/event-art';
-import { formatEventDate, formatEventTime } from '@/lib/format';
 import { getActiveTheme } from '@/themes/resolve';
 
 /**
@@ -26,10 +25,8 @@ import { getActiveTheme } from '@/themes/resolve';
  * Height is bounded so the actions always sit inside the first viewport.
  */
 export async function Hero({
-  nextEvent,
   takeover = null,
 }: {
-  nextEvent: ResolvedEvent | null;
   /**
    * An event whose scheduled hero takeover is running right now. It lends the
    * hero its artwork and a line of copy; it never takes the navigation, the
@@ -114,14 +111,14 @@ export async function Hero({
 
       <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">
         <div className="max-w-xl">
-          {/* NEXT UP, from real event data, above the headline. It is the one
-              piece of the hero that changes on its own, so it sits where the
-              eye lands first and says something true about tonight. */}
-          {nextEvent ? <NextUpPill event={nextEvent} /> : (
-            <p className="eyebrow text-amber">Lockport, Illinois</p>
-          )}
+          {/* One quiet line above the headline, and nothing else. A live
+              NEXT UP pill sat here and made the hero busy: it competed with the
+              headline, repeated what the What's on section says immediately
+              below, and was the first thing the eye hit. The calendar belongs
+              further down the page, behind "Explore events". */}
+          <p className="eyebrow text-amber">Lockport, Illinois</p>
 
-          <h1 className="display mt-4 text-[clamp(2rem,6vw,3.25rem)] text-night-text">
+          <h1 className="display mt-5 text-[clamp(2rem,6vw,3.25rem)] leading-[1.06] text-night-text">
             {(takeover ? [takeover.title] : pageCopy.home.heroHeadlineLines).map((line) => (
               <span key={line} className="block">
                 {line}
@@ -129,7 +126,7 @@ export async function Hero({
             ))}
           </h1>
 
-          <p className="mt-4 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
+          <p className="mt-5 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
             {takeover
               ? takeover.summary || pageCopy.home.heroBody
               : pageCopy.home.heroBody}
@@ -224,37 +221,3 @@ export function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: b
   );
 }
 
-/**
- * NEXT UP · what · when.
- *
- * Real event data, rendered as text — including SOLD OUT, which a guest needs
- * before they plan an evening, not after. The whole pill is one link to the
- * event, so it is a single 44px target rather than a row of small ones.
- */
-function NextUpPill({ event }: { event: ResolvedEvent }) {
-  const soldOut = event.status === 'sold-out';
-  const href = event.slug ? `/events/${event.slug}` : '/events';
-
-  return (
-    <Link
-      href={href}
-      className="group inline-flex min-h-11 max-w-full flex-wrap items-center gap-x-2.5 gap-y-1 rounded-full border border-amber/45 bg-obsidian/55 py-1.5 pl-3 pr-4 backdrop-blur-[2px] transition-colors hover:border-amber"
-    >
-      <span className="eyebrow shrink-0 text-amber">Next up</span>
-      <span className="min-w-0 truncate text-[0.9375rem] font-semibold text-night-text">
-        {event.title.replace('Oasis ', '')}
-      </span>
-      <span className="tabular shrink-0 text-[0.875rem] text-night-soft">
-        {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
-      </span>
-      {soldOut ? (
-        <span className="shrink-0 rounded-(--radius-sm) border border-danger px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-danger">
-          Sold out
-        </span>
-      ) : null}
-      <span aria-hidden="true" className="shrink-0 text-amber transition-transform group-hover:translate-x-0.5">
-        →
-      </span>
-    </Link>
-  );
-}

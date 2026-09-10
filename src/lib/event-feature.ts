@@ -26,15 +26,22 @@ function advertisable(event: ResolvedEvent): boolean {
 }
 
 /**
- * Featured first, then whatever is soonest.
+ * THE ORDER IS THE CALENDAR'S.
  *
- * Within the featured set the order is: takeover, then featured, then higher
- * priority, then sooner. A restaurant that has explicitly promoted something
- * expects to see it lead, and only after that does the calendar decide.
+ * The module reads soonest first, then the next two, and that is all. It used
+ * to lead with whatever was most promoted, which put a featured event a month
+ * out above the two nights happening this week — three cards in the order
+ * October, September, September. A guest reads a row of events as a sequence
+ * in time, and being wrong about that is worse than any promotion is worth.
+ *
+ * `featured` and `priority` survive as a tie-break between events starting at
+ * the same moment, so two nights on one evening can still be ordered
+ * deliberately. Promoting an event ABOVE the calendar is what a hero takeover
+ * is for, and that has its own scheduled window.
  */
-function rank(event: ResolvedEvent): number {
+function sameTimeRank(event: ResolvedEvent): number {
   const { treatment, priority } = event.presentation;
-  const base = treatment === 'takeover' ? 2000 : treatment === 'featured' ? 1000 : 0;
+  const base = treatment === 'featured' ? 1000 : 0;
   return base + Math.max(0, Math.min(99, priority));
 }
 
@@ -43,22 +50,22 @@ export function selectHomepageEvents(input: EventInput, now: Date): HomepageEven
 
   const takeover = upcoming.find((event) => takeoverIsLive(event, now)) ?? null;
 
-  // Sort a copy: `getUpcomingEvents` returns chronological order, which the
-  // supporting slots and /events both still want.
-  const promoted = [...upcoming].sort((a, b) => {
-    const difference = rank(b) - rank(a);
-    if (difference !== 0) return difference;
-    return a.startsAt.localeCompare(b.startsAt);
+  const chronological = [...upcoming].sort((a, b) => {
+    const byDate = a.startsAt.localeCompare(b.startsAt);
+    if (byDate !== 0) return byDate;
+    return sameTimeRank(b) - sameTimeRank(a);
   });
 
-  const lead = promoted[0] ?? null;
-  const supporting = promoted.filter((event) => event.id !== lead?.id).slice(0, 2);
+  const lead = chronological[0] ?? null;
+  const supporting = chronological.slice(1, 3);
 
   return {
     takeover,
     lead,
     supporting,
-    // Soonest, not most promoted: "next up" is a promise about the calendar.
-    next: upcoming[0] ?? null,
+    // The same event as the lead now. Kept as its own field because "the next
+    // thing on" is a different question from "what the module opens with", and
+    // callers should not have to know they currently coincide.
+    next: chronological[0] ?? null,
   };
 }

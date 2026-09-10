@@ -83,16 +83,27 @@ describe('buildCalendar', () => {
   });
 
   it('keeps the lead in its own month, so the calendar has no hole in it', () => {
-    // A featured October event leads the page AND still appears under October.
-    // Dropping it would delete the October section when it is October's only
-    // event, which is exactly when that section matters most.
+    // The lead leads the page AND still appears under its month. Dropping it
+    // would delete a month's section when the lead is that month's only event.
     const calendar = buildCalendar(
       input([event('a', '2026-09-10'), event('b', '2026-10-08', { featured: true, priority: 10 })]),
       NOW,
     );
-    expect(calendar.lead?.slug).toBe('b');
+    expect(calendar.lead?.slug).toBe('a');
     expect(calendar.months.map((month) => month.key)).toEqual(['2026-09', '2026-10']);
+    expect(calendar.months[0]!.events.map((e) => e.slug)).toEqual(['a']);
     expect(calendar.months[1]!.events.map((e) => e.slug)).toEqual(['b']);
+  });
+
+  it('leads with the soonest event, so "Next up" is never a later one', () => {
+    const calendar = buildCalendar(
+      input([
+        event('october', '2026-10-08', { featured: true, priority: 10 }),
+        event('september', '2026-09-10'),
+      ]),
+      NOW,
+    );
+    expect(calendar.lead?.slug).toBe('september');
   });
 
   it('counts every filter against the unfiltered calendar', () => {

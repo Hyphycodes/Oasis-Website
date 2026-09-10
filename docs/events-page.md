@@ -10,7 +10,7 @@ What a guest sees when they want to know what is on, and the decisions behind it
 |---|---|---|
 | 1 | Intro | One line about what a night here is. Admin-editable copy. |
 | 2 | Filter | Only when there is more than one kind of night on. |
-| 3 | Next up | The one event the page leads with, full-bleed. |
+| 3 | Next up | The soonest event, its flyer beside the facts. |
 | 4 | The calendar | Every special event, in date order, grouped by month. |
 | 5 | October | The restaurant's biggest month, as its own dark room. |
 | 6 | Every week | Fridays and Latin Saturdays, once each, linking to their own pages. |
@@ -50,7 +50,7 @@ Three sizes, because a calendar where every night is a large card is a calendar 
 
 | Component | Where | What it carries |
 |---|---|---|
-| `EventBanner` | Next up | Full-bleed art, name at display size, long date, time range, summary, ticket button, price, venue |
+| `EventBanner` | Next up | The flyer beside the facts: name at display size, long date, time range, summary, ticket button, price, venue |
 | `EventCard` | October | Art on top, name, date, two-line summary, ticket link, price |
 | `EventRow` | Every other month | Date block, thumbnail, name, one-line summary, status, price, ticket button |
 

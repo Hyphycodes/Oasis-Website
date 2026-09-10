@@ -24,6 +24,33 @@ information away, so it is never cropped anywhere on the site. The enforcement p
 
 ---
 
+## Official flyers that ship in the repository
+
+`public/events/flyers/<slug>.jpg`, listed in `SHIPPED_FLYERS`
+(`src/content/event-art-defaults.ts`) and processed by
+`scripts/process-flyers.mts` — same width, same quality, same place, every time.
+
+These are the restaurant's own artwork, supplied by the owner and matched to a live event by its
+slug. They exist because the events themselves live in the content database, which a code change
+cannot reach: shipping the flyer by slug is how a real flyer gets onto the site without one.
+
+**They are the lowest-priority source for a flyer, and that is the point.** A flyer uploaded in the
+admin, or imported once by the Tickeri sync, is stored on the event itself and always wins. A
+shipped flyer fills an empty slot and nothing else — the same write-once rule the sync follows.
+Nothing here can replace a flyer an event already has.
+
+| Slug | Event it belongs to |
+|---|---|
+| `scream-paint-sip` | Scream Paint & Sip, Thu 8 Oct, 7pm |
+| `snoopy-paint-sip` | Snoopy Paint & Sip, Thu 24 Sep, 7pm |
+| `snoopy-white-sox-paint-sip` | Snoopy White Sox Paint & Sip, Sun 13 Sep |
+| `hello-kitty-fall-paint-lunch` | Hello Kitty Fall Paint & Lunch, Sat 19 Sep |
+
+To add more: drop the files in, add a line to `SHIPPED_FLYERS` with the real pixel dimensions, and
+match the slug exactly to the one on the event's own page.
+
+---
+
 ## The two sources of website art
 
 ### 1. Higgsfield — cinematic photography
@@ -167,8 +194,12 @@ them. Decisions worth knowing:
   one thing allowed to lean outside its card, and it never intercepts a tap.
 - **Every fact is HTML text.** Nothing a guest needs — name, date, time, price, sold out — exists
   only inside a picture.
-- **Nothing ever crops the flyer.** Where key art is present the flyer becomes an upright card in
-  the corner, lit and complete; where it is absent the flyer *is* the composition.
+- **The flyer is the subject wherever it exists.** It is centred, contained and large, and the key
+  art drops behind it — blurred past legibility and dimmed — as atmosphere in the event's own
+  colour. It used to be a corner stamp on top of the generated art, which had it exactly the wrong
+  way round: the flyer is what the restaurant actually promotes the night with and what a guest
+  recognises; the key art is ours, and it is scenery.
+- **Nothing ever crops the flyer**, in any slot, at any size.
 - **No artwork at all** is still a designed object: the event's name set as poster type in its own
   accent, ruled top and bottom. That is what a card looks like the day an event is announced and
   before the flyer arrives, which is a normal day.

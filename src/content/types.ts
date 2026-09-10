@@ -328,14 +328,6 @@ export interface OneTimeEventSeed {
   status?: EventStatus;
   /** Tickeri's id, so a later sync updates this row instead of copying it. */
   sourceEventId: string;
-  /**
-   * The OFFICIAL flyer, when a verified one has been supplied directly rather
-   * than through the Tickeri sync. Absent by default — most seeded one-time
-   * events have no flyer until an admin adds one or a sync imports it. Setting
-   * this is a one-time, deliberate, source-controlled act, the same as an
-   * admin's own upload; nothing here or elsewhere overwrites it automatically.
-   */
-  flyerAssetId?: string | null;
 }
 
 export const DEFAULT_PROVENANCE: EventProvenance = {

@@ -36,33 +36,30 @@ export function EventBanner({
 
   return (
     <article
-      className="group relative isolate flex min-h-[24rem] flex-col justify-end overflow-hidden rounded-(--radius-lg) border border-night-text/12 sm:min-h-[32rem]"
+      className="group grid gap-5 overflow-hidden rounded-(--radius-lg) border border-night-text/12 bg-espresso p-4 on-dark sm:gap-8 sm:p-7 md:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] md:items-center"
       style={presetVars(event.presentation.visualPreset)}
     >
-      <EventArt
-        art={artwork}
-        title={event.title}
-        preset={event.presentation.visualPreset}
-        size="lead"
-        sizes="(min-width: 1024px) 76vw, 100vw"
-        priority
-        fill
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-3/5 bg-gradient-to-t from-obsidian via-obsidian/80 to-transparent"
-      />
+      {/* The picture and the title link to the same place; see EventCard. */}
+      <Link href={eventHref(event)} aria-hidden="true" tabIndex={-1}>
+        <EventArt
+          art={artwork}
+          title={event.title}
+          preset={event.presentation.visualPreset}
+          size="card"
+          sizes="(min-width: 768px) 24rem, 92vw"
+          priority
+        />
+      </Link>
 
-      <div className="relative z-20 flex flex-col gap-3 p-5 sm:p-8">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="eyebrow text-night-text/70">{eyebrow}</span>
           <CategoryLabel event={event} />
           <StatusChip event={event} />
         </div>
 
-        <h2 className="display max-w-3xl text-[clamp(2rem,4.4vw,3.5rem)] leading-[0.92] text-night-text">
+        <h2 className="display max-w-3xl text-[clamp(1.75rem,3.6vw,3rem)] leading-[1.02] text-night-text">
           <Link href={eventHref(event)} className="hover:text-[color:var(--e-accent)]">
-            <span className="absolute inset-0 z-10" aria-hidden="true" />
             {event.title}
           </Link>
         </h2>
@@ -75,7 +72,7 @@ export function EventBanner({
           <p className="measure text-[1rem] leading-relaxed text-night-soft">{event.summary}</p>
         ) : null}
 
-        <div className="relative z-20 mt-1 flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-3">
           {event.ticketUrl && event.status !== 'sold-out' ? (
             <a
               href={event.ticketUrl}
@@ -177,7 +174,7 @@ export function EventRow({ event, artwork }: { event: ResolvedEvent; artwork: Ev
 
   return (
     <article
-      className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 border-b border-brown/12 py-4 last:border-b-0 sm:grid-cols-[5rem_7rem_minmax(0,1fr)_auto] sm:gap-x-6"
+      className="group grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 border-b border-brown/12 py-4 last:border-b-0 sm:grid-cols-[5rem_9rem_minmax(0,1fr)_auto] sm:gap-x-6"
       style={presetVars(event.presentation.visualPreset)}
     >
       <p className="tabular w-20 shrink-0 sm:w-auto">
@@ -196,7 +193,7 @@ export function EventRow({ event, artwork }: { event: ResolvedEvent; artwork: Ev
           technology instead — it stays clickable for a pointer. */}
       <Link
         href={eventHref(event)}
-        className="hidden w-28 sm:block"
+        className="hidden w-36 sm:block"
         aria-hidden="true"
         tabIndex={-1}
       >
@@ -205,7 +202,7 @@ export function EventRow({ event, artwork }: { event: ResolvedEvent; artwork: Ev
           title={event.title}
           preset={event.presentation.visualPreset}
           size="card"
-          sizes="112px"
+          sizes="144px"
         />
       </Link>
 

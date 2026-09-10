@@ -211,11 +211,11 @@ export default async function EventsPage({
         <Frame wide>
           <div className="relative max-w-2xl py-10 lg:py-14">
             <Eyebrow tone="night">{copy.eyebrow}</Eyebrow>
-            <h1 className="display mt-3 text-[clamp(1.875rem,3.6vw,2.75rem)] text-night-text">
+            <h1 className="display mt-4 text-[clamp(1.875rem,3.6vw,2.75rem)] leading-[1.08] text-night-text">
               {copy.heading}
             </h1>
             {copy.body ? (
-              <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-teal-soft">
+              <p className="measure mt-4 text-[0.9375rem] leading-relaxed text-teal-soft">
                 {copy.body}
               </p>
             ) : null}
@@ -229,7 +229,7 @@ export default async function EventsPage({
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
             <div>
               <Eyebrow>What&apos;s on</Eyebrow>
-              <h2 className="display mt-2 text-[clamp(1.5rem,2.6vw,2rem)] text-brown">
+              <h2 className="display mt-3.5 text-[clamp(1.5rem,2.6vw,2rem)] leading-[1.08] text-brown">
                 {calendar.total === 0
                   ? 'No special events on sale right now'
                   : calendar.total === 1
@@ -290,7 +290,7 @@ export default async function EventsPage({
               <section key={month.key} className="mt-10 first:mt-0" aria-labelledby={`month-${month.key}`}>
                 <h2
                   id={`month-${month.key}`}
-                  className="display border-b-2 border-brown/15 pb-2 text-[1.375rem] text-brown"
+                  className="display border-b-2 border-brown/15 pb-3 text-[1.375rem] leading-[1.1] text-brown"
                 >
                   {month.label}
                 </h2>
@@ -312,10 +312,10 @@ export default async function EventsPage({
         <Band key={month.key} surface="espresso" size="sm" topRule>
           <Frame wide>
             <Eyebrow tone="night">Halloween &amp; Día de los Muertos</Eyebrow>
-            <h2 className="display mt-2 text-[clamp(1.75rem,3vw,2.5rem)] text-night-text">
+            <h2 className="display mt-3.5 text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.06] text-night-text">
               {month.label} at Oasis
             </h2>
-            <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-night-soft">
+            <p className="measure mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
               The whole month leans into it — costumes, marigolds, painted faces and a different
               reason to be here most nights.
             </p>
@@ -343,7 +343,7 @@ export default async function EventsPage({
         <Band surface="ivory-deep" size="sm">
           <Frame wide>
             <Eyebrow>Every week</Eyebrow>
-            <h2 className="display mt-2 text-[clamp(1.5rem,2.6vw,2rem)] text-brown">
+            <h2 className="display mt-3.5 text-[clamp(1.5rem,2.6vw,2rem)] leading-[1.08] text-brown">
               The nights that come round again
             </h2>
             <div className="mt-7 grid gap-6 sm:gap-8">
