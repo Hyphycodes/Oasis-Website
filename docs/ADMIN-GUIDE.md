@@ -43,6 +43,7 @@ on a section, *Preview the page* in Website.
 | **Events** | Friday and Saturday nights, ticket links, one-off events |
 | **Website** | The words and photographs on each page |
 | **Photos** | Every picture, where each one is used, uploading new ones |
+| **Seasonal look** | Dress the whole website for the season, preview it, set the dates — see `docs/seasonal-theme-admin.md` |
 | **Settings** | Address, phone, hours, holidays, ordering and booking links, the banner |
 
 Owners also see **Team & permissions**.
@@ -196,8 +197,10 @@ so you can look at it before it goes live.
 
 ## Not built (deliberately, and honestly)
 
-- **Scheduled publishing.** There is nothing running at 9am to publish for you, and a "scheduled"
-  button that silently never fires would be worse than not offering it. Publish when you are ready.
+- **Scheduled publishing** of menu, event and page changes. There is nothing running at 9am to
+  publish for you, and a "scheduled" button that silently never fires would be worse than not
+  offering it. Publish when you are ready. (The seasonal look is the one exception: its dates are
+  checked every time a page is served, so it needs no scheduler to switch itself on and off.)
 - **Deleting things.** Staff archive; nothing is deleted. Archived content is kept and can come
   back.
 - **Uploading video.** Videos need a poster frame and a matching crop, so they are placed by your

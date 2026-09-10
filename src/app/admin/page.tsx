@@ -99,6 +99,9 @@ export default async function AdminDashboard() {
         <Link href="/admin/website" className="font-semibold text-clay underline underline-offset-4">
           Change page words or pictures
         </Link>
+        <Link href="/admin/theme" className="font-semibold text-clay underline underline-offset-4">
+          Dress the website for the season
+        </Link>
         <Link href="/admin/inquiries" className="font-semibold text-clay underline underline-offset-4">
           {waiting > 0
             ? `Read ${waiting} new ${waiting === 1 ? 'enquiry' : 'enquiries'}`

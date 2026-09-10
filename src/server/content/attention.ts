@@ -6,6 +6,9 @@ import { getEditableEvents } from './events';
 import { stateOf, type EditorialRow } from './editorial';
 import { getMediaLibrary } from './media';
 import { getEditableMenus } from './menu';
+import { listThemeRecords } from './theme';
+import { THEMES } from '@/themes/registry';
+import { formatVenueMoment, themeStatusAt } from '@/themes/schedule';
 
 /**
  * What needs attention, computed from the real records.
@@ -191,6 +194,33 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
         message: `Special hours are set for ${date}: ${row.note}.`,
         href: '/admin/settings',
         actionLabel: 'Check it',
+      });
+    }
+  }
+
+  /* -------------------------------------------------------------- theme -- */
+
+  // Guarded: the table arrives with migration 0004, and a dashboard must not
+  // fail because one migration has not been applied yet.
+  const themes = await listThemeRecords(db).catch(() => []);
+  for (const record of themes) {
+    const status = themeStatusAt(record, now);
+    const name = THEMES[record.slug].name;
+    if (status === 'ended') {
+      items.push({
+        id: `theme-ended-${record.slug}`,
+        severity: 'warning',
+        message: `${name} is switched on but its dates have passed, so guests see Default Oasis. Set new dates or switch it off.`,
+        href: '/admin/theme',
+        actionLabel: 'Open the seasonal look',
+      });
+    } else if (status === 'scheduled') {
+      items.push({
+        id: `theme-scheduled-${record.slug}`,
+        severity: 'info',
+        message: `${name} switches itself on ${formatVenueMoment(record.startAt, 'America/Chicago')}.`,
+        href: '/admin/theme',
+        actionLabel: 'Preview it',
       });
     }
   }

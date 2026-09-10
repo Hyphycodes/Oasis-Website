@@ -669,4 +669,9 @@ insert into public.page_lists (id, page, key, label, items)
   values ('private-events:types', 'private-events', 'types', 'Celebration types in the enquiry form', '["Birthday","Quinceañera","Graduation","Corporate / team","Rehearsal dinner","Other celebration"]'::jsonb)
   on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;
 
+-- site_themes
+insert into public.site_themes (slug, name, enabled, schedule_enabled, start_at, end_at, config)
+  values ('halloween-dotd', 'Halloween · Día de los Muertos', false, false, null, null, '{}'::jsonb)
+  on conflict (slug) do update set name = excluded.name, enabled = excluded.enabled, schedule_enabled = excluded.schedule_enabled, start_at = excluded.start_at, end_at = excluded.end_at, config = excluded.config;
+
 commit;

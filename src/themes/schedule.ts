@@ -36,3 +36,44 @@ export const STATUS_LABEL: Record<ThemeStatus, string> = {
   scheduled: 'Scheduled',
   ended: 'Dates have passed',
 };
+
+/**
+ * An instant as the wall-clock date and time the restaurant would write down.
+ * Used to fill the admin's date inputs from stored ISO values.
+ */
+export function venueLocalParts(
+  iso: string | null,
+  timeZone: string,
+): { date: string; time: string } {
+  if (!iso) return { date: '', time: '' };
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return { date: '', time: '' };
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(at);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? '';
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${get('hour') === '24' ? '00' : get('hour')}:${get('minute')}`,
+  };
+}
+
+/** "Oct 15, 6:00 PM" in the restaurant's time zone, for status lines. */
+export function formatVenueMoment(iso: string | null, timeZone: string): string {
+  if (!iso) return '';
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(at);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isThemeActiveAt, themeStatusAt } from './schedule';
+import { isThemeActiveAt, themeStatusAt, venueLocalParts } from './schedule';
 
 const base = { enabled: true, scheduleEnabled: false, startAt: null, endAt: null };
 
@@ -52,5 +52,18 @@ describe('themeStatusAt', () => {
 
   it('fails closed on a malformed date', () => {
     expect(themeStatusAt({ ...base, scheduleEnabled: true, startAt: 'soon' }, now)).toBe('off');
+  });
+});
+
+describe('venueLocalParts', () => {
+  it('renders an instant as Chicago wall-clock date and time', () => {
+    // 2026-10-31 18:30 CDT is 23:30 UTC.
+    const parts = venueLocalParts('2026-10-31T23:30:00Z', 'America/Chicago');
+    expect(parts).toEqual({ date: '2026-10-31', time: '18:30' });
+  });
+
+  it('is empty for nothing or nonsense', () => {
+    expect(venueLocalParts(null, 'America/Chicago')).toEqual({ date: '', time: '' });
+    expect(venueLocalParts('later', 'America/Chicago')).toEqual({ date: '', time: '' });
   });
 });

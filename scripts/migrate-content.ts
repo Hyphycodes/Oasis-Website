@@ -35,6 +35,7 @@ const ORDER = [
   'page_sections',
   'page_seo',
   'page_lists',
+  'site_themes',
 ];
 
 async function main() {

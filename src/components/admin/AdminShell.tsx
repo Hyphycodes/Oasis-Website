@@ -9,7 +9,7 @@ import { Notice } from './ui';
 /**
  * The admin shell.
  *
- * Six destinations, and a seventh only an Owner sees. That ceiling is the point:
+ * Seven destinations, and an eighth only an Owner sees. That ceiling is the point:
  * a restaurant manager should be able to hold the whole tool in their head, and
  * every extra top-level item makes the five things they came to do harder to
  * find. "Website" is five named screens, not a pages collection.
@@ -20,6 +20,7 @@ const NAV: { href: string; label: string; section?: Section; ownerOnly?: boolean
   { href: '/admin/menu', label: 'Menu', section: 'menu' },
   { href: '/admin/events', label: 'Events', section: 'events' },
   { href: '/admin/website', label: 'Pages', section: 'website' },
+  { href: '/admin/theme', label: 'Seasonal look', section: 'website' },
   { href: '/admin/media', label: 'Photos & videos', section: 'media' },
   { href: '/admin/settings', label: 'Hours & contact', section: 'settings' },
   { href: '/admin/team', label: 'Staff', ownerOnly: true },
