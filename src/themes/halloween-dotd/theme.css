@@ -1,0 +1,495 @@
+/* ==========================================================================
+   HALLOWEEN · DÍA DE LOS MUERTOS — seasonal theme
+   Everything in this file is scoped to [data-theme="halloween-dotd"]. It is
+   deliberately UNLAYERED so it beats Tailwind's @layer theme, which is where
+   the default tokens are declared. With the theme off, none of this matches.
+
+   Two halves:
+     1. a remap of the design tokens in src/app/globals.css — this is what
+        recolours every band, button, header and footer at once without a
+        single component knowing;
+     2. the decorative layers rendered by src/components/theme/*.
+
+   Colour pairs were re-measured because the roles invert (bone type on a plum
+   field instead of brown on ivory). Ratios in comments are against the canvas.
+   ========================================================================== */
+
+[data-theme='halloween-dotd'] {
+  /* --- Canvas -------------------------------------------------------- */
+  --t-canvas: #120a12;
+
+  /* --- Light surfaces become deep, slightly translucent plum --------------
+     Translucent on purpose: the fixed candle glow behind the page shows
+     through, which is what makes the sections feel lit rather than painted. */
+  --color-ivory: rgb(29 16 29 / 0.86);
+  --color-ivory-deep: rgb(38 20 36 / 0.9);
+  --color-cream: rgb(34 18 32 / 0.9);
+  --color-linen: rgb(45 24 41 / 0.92);
+  --color-sand: #3b1526; /* burgundy */
+  --color-sand-deep: #4d1c32;
+
+  /* --- Ink becomes bone -------------------------------------------------- */
+  --color-brown: #f4e7cf; /* 15.3:1 */
+  --color-brown-soft: #cfb58f; /* 9.4:1 */
+  --o-brown-line: rgb(244 231 207 / 0.16);
+
+  /* --- Action becomes marigold ------------------------------------------ */
+  --color-coral: #e58a2e;
+  --color-coral-deep: #c96f1e;
+  --color-coral-light: #f3a75a;
+  --color-orange: #e8912c;
+  --color-orange-deep: #c9761c;
+  --color-clay: #f0a548; /* text on dark, 8.6:1 */
+  --color-on-orange: #23110a; /* 7.1:1 on marigold */
+
+  /* --- Night ramp, one step deeper -------------------------------------- */
+  --color-obsidian: #08040a;
+  --color-espresso: #150b14;
+  --color-espresso-lift: #22121f;
+  --color-night-text: #f7eedc;
+  --color-night-soft: #cfb58f;
+
+  /* --- Evening surfaces: After Dark drops to near-black, plum stays plum -- */
+  --color-teal: #0c0710;
+  --color-teal-lift: #1b1020;
+  --color-teal-soft: #c9a98d;
+  --color-plum: #1b0b1a;
+  --color-plum-lift: #2c1329;
+  --color-plum-soft: #d9b2a8;
+
+  /* --- Accents ----------------------------------------------------------- */
+  --color-agave: #cfa456; /* antique gold */
+  --color-agave-light: #e6c27a;
+  --color-amber: #f0b24a;
+  --color-amber-bright: #f7c76a;
+
+  /* --- Status, lifted for a dark field ----------------------------------- */
+  --color-success: #8fcf99;
+  --color-warning: #f0a548;
+  --color-danger: #f5917f;
+
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ root -- */
+
+.theme-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  background-color: var(--t-canvas);
+  color: var(--color-brown);
+}
+
+/* ---------------------------------------------------------- atmosphere -- */
+
+.theme-atmosphere {
+  pointer-events: none;
+}
+
+.theme-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Candle glow, BEHIND the content. Two layers breathe out of phase so the
+   light moves the way flame-light does, slowly and never in a loop you can
+   count. */
+.theme-layer-glow {
+  z-index: -1;
+  opacity: var(--t-glow, 1);
+  background:
+    radial-gradient(58vmax 42vmax at 84% 12%, rgb(236 150 62 / 0.2), transparent 62%),
+    radial-gradient(52vmax 40vmax at 8% 86%, rgb(190 74 44 / 0.18), transparent 62%),
+    radial-gradient(70vmax 50vmax at 50% 110%, rgb(120 30 40 / 0.22), transparent 65%);
+  animation: theme-breathe 16s ease-in-out infinite alternate;
+}
+
+.theme-layer-glow-2 {
+  background:
+    radial-gradient(38vmax 30vmax at 70% 60%, rgb(240 178 74 / 0.08), transparent 60%),
+    radial-gradient(30vmax 26vmax at 20% 30%, rgb(232 145 60 / 0.07), transparent 60%);
+  animation-duration: 23s;
+  animation-delay: -9s;
+}
+
+@keyframes theme-breathe {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: calc(var(--t-glow, 1) * 0.85);
+  }
+  to {
+    transform: scale(1.06) translate3d(-1.5%, 1%, 0);
+    opacity: var(--t-glow, 1);
+  }
+}
+
+/* Aged plaster, IN FRONT, at grain strength. */
+.theme-layer-texture {
+  z-index: 1;
+  background-image: var(--t-texture-image);
+  background-size: 480px 480px;
+  opacity: calc(0.16 * var(--t-texture, 1));
+  mix-blend-mode: soft-light;
+}
+
+/* Film vignette. Never over the sticky header, which sits at z-40. */
+.theme-layer-vignette {
+  z-index: 1;
+  opacity: var(--t-vignette, 1);
+  background: radial-gradient(118% 88% at 50% 42%, transparent 52%, rgb(6 2 8 / 0.62) 100%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .theme-layer-texture,
+  .theme-layer-glow-2 {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- petals -- */
+
+.theme-petals {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.theme-petal {
+  position: absolute;
+  top: -8vh;
+  width: var(--t-size, 12px);
+  height: calc(var(--t-size, 12px) * 1.35);
+  opacity: var(--t-alpha, 0.7);
+  animation: theme-fall var(--t-dur, 22s) linear var(--t-delay, 0s) infinite;
+  will-change: transform;
+}
+
+.theme-petal > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--t-petal-image) center / contain no-repeat;
+  animation:
+    theme-sway var(--t-sway-dur, 5s) ease-in-out var(--t-delay, 0s) infinite alternate,
+    theme-spin calc(var(--t-dur, 22s) * 0.9) linear var(--t-delay, 0s) infinite;
+}
+
+@keyframes theme-fall {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 118vh, 0);
+  }
+}
+
+@keyframes theme-sway {
+  from {
+    transform: translateX(calc(var(--t-sway, 40px) * -0.5));
+  }
+  to {
+    transform: translateX(calc(var(--t-sway, 40px) * 0.5));
+  }
+}
+
+@keyframes theme-spin {
+  to {
+    rotate: var(--t-spin, 360deg);
+  }
+}
+
+/* Phones get a sparser field: the `-wide` petals only exist from 640px up. */
+@media (max-width: 639px) {
+  .theme-petal-wide {
+    display: none;
+  }
+  .theme-layer-texture {
+    opacity: calc(0.11 * var(--t-texture, 1));
+  }
+}
+
+/* ------------------------------------------------------------------ hero -- */
+
+.theme-hero {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Low warm haze, so the reel sits in candle-light rather than under a scrim. */
+.theme-hero-haze {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(18 10 18 / 0.35) 0%, transparent 28%),
+    radial-gradient(70% 55% at 88% 96%, rgb(236 150 62 / 0.28), transparent 65%),
+    radial-gradient(40% 40% at 0% 100%, rgb(120 30 40 / 0.35), transparent 70%);
+  mix-blend-mode: screen;
+}
+
+.theme-hero-candle {
+  position: absolute;
+  right: 6%;
+  bottom: -10%;
+  width: 46vmax;
+  height: 32vmax;
+  background: radial-gradient(50% 50% at 50% 60%, rgb(240 178 74 / 0.32), transparent 70%);
+  filter: blur(8px);
+  animation: theme-flicker 5.5s ease-in-out infinite;
+}
+
+@keyframes theme-flicker {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  37% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  62% {
+    opacity: 0.78;
+    transform: scale(0.98);
+  }
+  81% {
+    opacity: 0.95;
+  }
+}
+
+.theme-hero-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: max(100%, 1100px);
+  height: auto;
+  max-height: 21%;
+  object-fit: cover;
+  object-position: top center;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 18px 22px rgb(0 0 0 / 0.45));
+  animation: theme-drape 9s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+
+@keyframes theme-drape {
+  from {
+    transform: translateX(-50%) rotate(0.15deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(-0.15deg);
+  }
+}
+
+.theme-hero-left,
+.theme-hero-right {
+  position: absolute;
+  height: auto;
+  filter: drop-shadow(0 24px 28px rgb(0 0 0 / 0.55));
+}
+
+.theme-hero-left {
+  left: 0;
+  top: -4%;
+  width: calc(clamp(150px, 19vw, 340px) * var(--t-edges, 1));
+  transform: translateX(-46%);
+  animation: theme-drift-left 14s ease-in-out infinite alternate;
+}
+
+.theme-hero-right {
+  right: 0;
+  bottom: -3%;
+  width: calc(clamp(220px, 30vw, 520px) * var(--t-edges, 1));
+  transform: translateX(18%);
+  animation: theme-drift-right 17s ease-in-out infinite alternate;
+}
+
+@keyframes theme-drift-left {
+  from {
+    transform: translate3d(-46%, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(-44%, -1.2%, 0) rotate(-1.2deg);
+  }
+}
+
+@keyframes theme-drift-right {
+  from {
+    transform: translate3d(18%, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(16%, -1.5%, 0) rotate(1deg);
+  }
+}
+
+/* Phones: both clusters tuck into the top corners under the banner, well
+   clear of the headline and the actions, and the banner scales down. */
+@media (max-width: 639px) {
+  .theme-hero-top {
+    width: 900px;
+    max-height: 18%;
+  }
+  .theme-hero-left {
+    top: 1%;
+    width: calc(104px * var(--t-edges, 1));
+    transform: translateX(-42%);
+  }
+  .theme-hero-right {
+    top: 3%;
+    bottom: auto;
+    width: calc(136px * var(--t-edges, 1));
+    transform: translateX(34%) scaleY(-1);
+  }
+  @keyframes theme-drift-left {
+    from {
+      transform: translate3d(-42%, 0, 0);
+    }
+    to {
+      transform: translate3d(-40%, -1%, 0);
+    }
+  }
+  @keyframes theme-drift-right {
+    from {
+      transform: translate3d(34%, 0, 0) scaleY(-1);
+    }
+    to {
+      transform: translate3d(32%, 1%, 0) scaleY(-1);
+    }
+  }
+  .theme-hero-candle {
+    width: 90vw;
+    height: 40vw;
+    right: -10%;
+  }
+}
+
+/* ------------------------------------------------------------- dividers -- */
+
+.theme-divider {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  justify-content: center;
+  margin: -1.25rem auto -1.75rem;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.theme-divider img {
+  width: min(100%, 880px);
+  height: auto;
+  opacity: 0.95;
+  filter: drop-shadow(0 12px 16px rgb(0 0 0 / 0.45));
+}
+
+.theme-divider[data-tone='dark'] {
+  margin-top: -2.5rem;
+  margin-bottom: -1rem;
+}
+
+/* --------------------------------------------------------------- footer -- */
+
+.theme-footer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.theme-footer-left,
+.theme-footer-right {
+  position: absolute;
+  bottom: -6%;
+  width: calc(clamp(160px, 18vw, 300px) * var(--t-edges, 1));
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.5));
+}
+
+.theme-footer-left {
+  left: 0;
+  transform: translateX(-28%);
+}
+
+.theme-footer-right {
+  right: 0;
+  transform: translateX(28%) scaleX(-1);
+}
+
+@media (max-width: 1023px) {
+  .theme-footer-left,
+  .theme-footer-right {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------- photo treatment -- */
+
+/* Warmer highlights, deeper blacks, a little more amber. Kept gentle so the
+   food stays food. Applied to photographs only, never to artwork the theme
+   itself draws. */
+[data-theme='halloween-dotd'] main img:not(.theme-hero img, .theme-divider img, .theme-footer img),
+[data-theme='halloween-dotd'] main video {
+  filter: sepia(0.16) saturate(1.08) contrast(1.05) brightness(0.94);
+}
+
+/* ----------------------------------------------------------- chrome -- */
+
+/* The header picks up the canvas rather than translucent ivory-plum, so the
+   wordmark reads on the first frame and the blur has something to blur. */
+[data-theme='halloween-dotd'] header.sticky {
+  background-color: rgb(18 10 18 / 0.82);
+  border-bottom-color: rgb(240 178 74 / 0.18);
+  box-shadow: 0 1px 0 rgb(240 178 74 / 0.06) inset;
+}
+
+/* Primary actions glow faintly, the way a lit sign does. */
+[data-theme='halloween-dotd'] .bg-coral,
+[data-theme='halloween-dotd'] .bg-orange {
+  box-shadow:
+    0 0 0 1px rgb(247 199 106 / 0.25) inset,
+    0 10px 30px -10px rgb(232 145 60 / 0.55);
+}
+
+/* Paper grain is a multiply texture tuned for sand; on burgundy it is mud. */
+[data-theme='halloween-dotd'] .grain::before {
+  mix-blend-mode: screen;
+  opacity: 0.05;
+}
+
+/* Rounded photography and cards pick up a hairline of antique gold. */
+[data-theme='halloween-dotd'] main .rounded-\(--radius-lg\) {
+  box-shadow: 0 0 0 1px rgb(207 164 86 / 0.18);
+}
+
+/* ------------------------------------------------------------ motion -- */
+
+[data-motion='off'] .theme-layer-glow,
+[data-motion='off'] .theme-hero-candle,
+[data-motion='off'] .theme-hero-top,
+[data-motion='off'] .theme-hero-left,
+[data-motion='off'] .theme-hero-right {
+  animation: none;
+}
+
+[data-motion='off'] .theme-petals {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-petals {
+    display: none;
+  }
+  .theme-layer-glow,
+  .theme-hero-candle,
+  .theme-hero-top,
+  .theme-hero-left,
+  .theme-hero-right {
+    animation: none;
+  }
+}

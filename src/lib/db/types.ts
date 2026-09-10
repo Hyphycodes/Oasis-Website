@@ -64,6 +64,7 @@ export const PRIMARY_KEY: Record<string, string> = {
   page_seo: 'page',
   profiles: 'user_id',
   site_settings: 'id',
+  site_themes: 'slug',
   special_hours: 'id',
 };
 

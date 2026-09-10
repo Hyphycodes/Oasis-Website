@@ -1,0 +1,64 @@
+import type { ResolvedTheme } from '@/themes/types';
+
+/**
+ * The hero's seasonal composition: papel picado overhead, marigolds entering
+ * from the edges, and a candle-warm haze low in the frame.
+ *
+ * Rendered INSIDE the hero, after the scrims and before the headline, so the
+ * artwork sits over the reel and under the type. Positions are set in the
+ * theme's CSS per breakpoint; on phones the clusters move to the top corners so
+ * they never cover the headline or the actions.
+ */
+export function ThemeHeroLayer({ theme }: { theme: ResolvedTheme }) {
+  if (!theme.definition || !theme.config.options.edges) return null;
+  const { topDecoration, leftDecoration, rightDecoration } = theme.assets;
+
+  return (
+    <div aria-hidden="true" className="theme-hero">
+      <div className="theme-hero-haze" />
+      {theme.config.options.glow ? <div className="theme-hero-candle" /> : null}
+      {topDecoration.path ? (
+        // Decorative artwork with no intrinsic layout role; plain <img> keeps it
+        // out of the image optimizer and off the critical path.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={topDecoration.path} alt="" className="theme-hero-top" decoding="async" />
+      ) : null}
+      {leftDecoration.path ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={leftDecoration.path} alt="" className="theme-hero-left" decoding="async" />
+      ) : null}
+      {rightDecoration.path ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={rightDecoration.path} alt="" className="theme-hero-right" decoding="async" />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * An admin-supplied hero background. Replaces the Oasis reel only when the
+ * admin has uploaded something into the slot; otherwise the hero keeps its own
+ * video and the theme art-directs around it.
+ */
+export function ThemeHeroBackground({ theme }: { theme: ResolvedTheme }) {
+  const asset = theme.assets.heroBackground;
+  if (!asset.path) return null;
+
+  if (asset.kind === 'video') {
+    return (
+      <video
+        className="absolute inset-0 size-full object-cover"
+        src={asset.path}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={asset.path} alt="" className="absolute inset-0 size-full object-cover" />;
+}

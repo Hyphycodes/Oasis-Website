@@ -37,6 +37,11 @@ export const AFFECTED: Record<string, { routes: string[]; subtrees?: string[] }>
   settings: { routes: ['/', '/visit', '/menu', '/catering', '/private-events', '/careers'], subtrees: ['/events'] },
   home: { routes: ['/'] },
   media: { routes: [] },
+  // The seasonal theme wraps every public page.
+  theme: {
+    routes: ['/', '/menu', '/events', '/catering', '/private-events', '/visit', '/careers', '/legal/privacy'],
+    subtrees: ['/events'],
+  },
 };
 
 export function revalidate(area: keyof typeof AFFECTED): string[] {

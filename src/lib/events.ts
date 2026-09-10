@@ -71,7 +71,7 @@ export interface EventInput {
  * The offset is resolved for that specific date, so a CST/CDT transition cannot
  * shift a 10pm door time to 9pm or 11pm.
  */
-function venueLocalIso(year: number, month: number, day: number, minutes: number): string {
+export function venueLocalIso(year: number, month: number, day: number, minutes: number): string {
   const hour = Math.floor(minutes / 60);
   const minute = minutes % 60;
 

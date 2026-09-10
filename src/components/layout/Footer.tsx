@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ThemeFooterLayer } from '@/components/theme/ThemeDivider';
 import { getSiteSettings } from '@/content/resolve';
 import { formatPhoneHref } from '@/lib/format';
 import { primaryNav, secondaryNav } from './nav';
@@ -30,8 +31,9 @@ export async function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-plum text-night-text on-dark">
-      <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-8 lg:px-12 lg:py-14">
+    <footer className="relative isolate overflow-hidden bg-plum text-night-text on-dark">
+      <ThemeFooterLayer />
+      <div className="relative mx-auto max-w-[1600px] px-5 py-12 sm:px-8 lg:px-12 lg:py-14">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-1">
             <p className="eyebrow text-night-soft">Find us</p>

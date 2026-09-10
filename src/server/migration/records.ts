@@ -6,6 +6,7 @@ import { homeSections, pageCopy, seo } from '@/content/pages';
 import { announcements, site } from '@/content/site';
 import type { Row } from '@/lib/db/types';
 import { stableUuid } from '@/lib/stable-uuid';
+import { THEMES } from '@/themes/registry';
 
 /**
  * The single content mapping.
@@ -54,6 +55,22 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
   // defaults in src/content/site.ts, so an untouched install renders exactly what
   // the static modules say and nothing is duplicated into the database.
   put('site_settings', [{ id: 'default', payload: {} }]);
+
+  // Seasonal themes ship OFF. The row exists so the admin's theme screen has
+  // something to edit on a fresh install; the config is empty because the
+  // theme's own defaults apply until the admin changes something.
+  put(
+    'site_themes',
+    Object.values(THEMES).map((theme) => ({
+      slug: theme.slug,
+      name: theme.name,
+      enabled: false,
+      schedule_enabled: false,
+      start_at: null,
+      end_at: null,
+      config: {},
+    })),
+  );
 
   put(
     'announcements',

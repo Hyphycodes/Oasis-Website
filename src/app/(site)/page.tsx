@@ -4,6 +4,7 @@ import { BarAndBrunch } from '@/components/home/BarAndBrunch';
 import { CateringAndVisit } from '@/components/home/CateringAndVisit';
 import { ActionRail, Hero } from '@/components/home/Hero';
 import { Offerings } from '@/components/home/Offerings';
+import { ThemeDivider } from '@/components/theme/ThemeDivider';
 import { seo } from '@/content/pages';
 import { getCateringPackages, getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
@@ -66,8 +67,12 @@ export default async function HomePage() {
       <Hero nextEvent={nextEvent(events, now)} />
       <ActionRail openLabel={openState.label} isOpen={openState.open} />
       <Offerings section={breadth} />
+      {/* Seasonal ornaments. Render nothing on the default look. Two, not five:
+          the transitions that already exist do the rest. */}
+      <ThemeDivider />
       <BarAndBrunch section={bar} />
       <AfterDark section={afterDark} events={nights} />
+      <ThemeDivider tone="dark" />
       <CateringAndVisit section={twoPaths} packages={packages} />
     </>
   );

@@ -22,9 +22,10 @@ const ORDER = [
   'page_sections',
   'page_seo',
   'page_lists',
+  'site_themes',
 ];
 
-const JSONB_COLUMNS = new Set(['payload', 'ranges', 'items']);
+const JSONB_COLUMNS = new Set(['payload', 'ranges', 'items', 'config']);
 const TEXT_ARRAY_COLUMNS = new Set(['dietary', 'music_formats', 'includes', 'tags']);
 const OMIT_COLUMNS = new Set(['draft', 'archived_at', 'updated_by']);
 

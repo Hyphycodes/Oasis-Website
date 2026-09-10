@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { AssetVideo } from '@/components/media/AssetVideo';
+import { ThemeHeroBackground, ThemeHeroLayer } from '@/components/theme/ThemeHeroLayer';
 import { getPublicAsset } from '@/content/media';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
 import { site } from '@/content/site';
 import type { ResolvedEvent } from '@/content/types';
 import { formatEventDate, formatEventTime } from '@/lib/format';
+import { getActiveTheme } from '@/themes/resolve';
 
 /**
  * Hero — ONE dominant visual.
@@ -23,8 +25,12 @@ import { formatEventDate, formatEventTime } from '@/lib/format';
 export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
   // Resolved here, on the server, because AssetVideo runs in the browser and the
   // media store does not.
-  const video = await getPublicAsset('heroVideo');
+  const [video, theme] = await Promise.all([getPublicAsset('heroVideo'), getActiveTheme()]);
   if (!video) return null;
+
+  // A seasonal theme may supply its own backdrop. When it does not, the reel
+  // stays and the theme art-directs around it.
+  const themedBackdrop = Boolean(theme.assets.heroBackground.path);
 
   return (
     <section className="relative isolate overflow-hidden bg-plum">
@@ -32,12 +38,16 @@ export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
           its own root, which would fight an `absolute` passed through className
           (same specificity — stylesheet order decides, not the class list). */}
       <div className="absolute inset-0">
-        <AssetVideo
-          asset={video}
-          mobileBelow={0}
-          className="size-full"
-          objectPosition="50% 42%"
-        />
+        {themedBackdrop ? (
+          <ThemeHeroBackground theme={theme} />
+        ) : (
+          <AssetVideo
+            asset={video}
+            mobileBelow={0}
+            className="size-full"
+            objectPosition="50% 42%"
+          />
+        )}
       </div>
 
       {/* Directional scrims, not a blanket.
@@ -64,6 +74,10 @@ export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
         aria-hidden="true"
         className="absolute inset-0 hidden bg-linear-to-r from-plum/85 via-plum/35 via-30% to-transparent to-55% lg:block"
       />
+
+      {/* Seasonal layers sit over the reel and under the type. Nothing when
+          the default look is on. */}
+      <ThemeHeroLayer theme={theme} />
 
       <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">
         <div className="max-w-xl">
