@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { EventArt, presetVars } from '@/components/events/EventArt';
 import { Frame } from '@/components/primitives/Band';
 import { Reveal } from '@/components/primitives/Reveal';
+import { eventHref, priceLabel, StatusChip } from '@/components/events/EventBits';
 import { CATEGORY_LABEL } from '@/content/event-presentation';
 import type { ResolvedEvent } from '@/content/types';
-import { formatEventDate, formatEventTime, formatPrice } from '@/lib/format';
+import { formatEventDate, formatEventTime } from '@/lib/format';
 import { resolveManyEventArtwork } from '@/server/content/event-art';
 import type { HomepageEvents } from '@/lib/event-feature';
 
@@ -73,36 +74,6 @@ export async function FeaturedEvents({
   );
 }
 
-/** Sold out and cancelled are words, never a colour alone. */
-function StatusChip({ event }: { event: ResolvedEvent }) {
-  if (event.status === 'sold-out') {
-    return (
-      <span className="inline-flex shrink-0 items-center rounded-(--radius-sm) border border-danger bg-danger/15 px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-danger">
-        Sold out
-      </span>
-    );
-  }
-  if (event.status === 'free') {
-    return (
-      <span className="inline-flex shrink-0 items-center rounded-(--radius-sm) border border-success/60 bg-success/15 px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-success">
-        Free entry
-      </span>
-    );
-  }
-  return null;
-}
-
-/** What entry costs: the admin's own words first, then the number, then nothing. */
-function priceLabel(event: ResolvedEvent): string | null {
-  if (event.presentation.priceText) return event.presentation.priceText;
-  if (event.priceCents != null) return formatPrice(event.priceCents);
-  return null;
-}
-
-function eventHref(event: ResolvedEvent): string {
-  return event.slug ? `/events/${event.slug}` : '/events';
-}
-
 /**
  * The dominant card: full-bleed artwork with the type set over it.
  *
@@ -128,6 +99,9 @@ function LeadEvent({ event, artwork }: { event: ResolvedEvent; artwork: Paramete
         size="lead"
         sizes="(min-width: 1024px) 58vw, 100vw"
         fill
+        // At `lg` this card is as tall as the two-card column beside it, which
+        // makes it portrait on a desktop.
+        uprightMedia="(min-width: 1024px), (max-width: 639px)"
       />
 
       {/* Its own scrim, not the art's: the type sits lower and needs more

@@ -46,6 +46,7 @@ export function EventArt({
   priority = false,
   className = '',
   fill = false,
+  uprightMedia = '(max-width: 639px)',
 }: {
   art: EventArtwork;
   title: string;
@@ -56,11 +57,17 @@ export function EventArt({
   className?: string;
   /** Drop the fixed ratio and fill the height the parent gives us. */
   fill?: boolean;
+  /**
+   * When to use the upright crop. Defaults to phones. A frame that is upright
+   * on a wide screen too — the homepage lead card, whose height is set by the
+   * column beside it — passes its own query. It cannot be inferred from `fill`:
+   * a full-width banner also fills, and is emphatically landscape.
+   */
+  uprightMedia?: string;
 }) {
   const hasKeyArt = Boolean(art.keyArt?.path);
   const hasFlyer = Boolean(art.flyer?.path);
   const wide = art.keyArt;
-  const uprightWhen = fill ? '(min-width: 1024px), (max-width: 639px)' : '(max-width: 639px)';
   const resolvedSizes = sizes ?? (size === 'lead' ? '(min-width: 1024px) 62vw, 100vw' : '(min-width: 1024px) 30vw, 90vw');
 
   return (
@@ -87,7 +94,7 @@ export function EventArt({
               the composition. */}
           <picture className="event-art-bg">
             {art.keyArtMobile?.path ? (
-              <source media={uprightWhen} srcSet={art.keyArtMobile.path} />
+              <source media={uprightMedia} srcSet={art.keyArtMobile.path} />
             ) : null}
             <img
               src={wide.path}

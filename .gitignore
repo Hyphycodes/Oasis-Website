@@ -27,3 +27,6 @@ coverage/
 
 # Photos uploaded through the admin in local development.
 /public/media/uploads/
+
+# Local dev server log
+dev.log

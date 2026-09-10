@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { EventFilters } from '@/components/events/EventFilters';
+import { EventBanner, EventCard, EventRow } from '@/components/events/EventListing';
 import { Flyer } from '@/components/events/Flyer';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
@@ -7,10 +9,13 @@ import { ExternalButtonLink } from '@/components/primitives/Button';
 import { Eyebrow } from '@/components/primitives/Type';
 import { getPageCopy } from '@/server/content/pages';
 import { getPublicEvents } from '@/server/content/events';
+import { resolveManyEventArtwork } from '@/server/content/event-art';
 import { getSiteSettings } from '@/content/resolve';
+import { CATEGORY_FILTERS } from '@/content/event-presentation';
 import { seo } from '@/content/pages';
 import type { ResolvedEvent } from '@/content/types';
-import { getUpcomingEvents, nextPerSeries, STATUS_LABEL } from '@/lib/events';
+import { buildCalendar, type CategoryFilter } from '@/lib/event-calendar';
+import { STATUS_LABEL } from '@/lib/events';
 import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
@@ -140,70 +145,57 @@ function NightFeature({
   );
 }
 
-/** A special one-off event created in the admin, including its connected artwork. */
-function SpecialEventFeature({ event, index }: { event: ResolvedEvent; index: number }) {
-  const tone = index % 2 === 0 ? 'teal' : 'plum';
-  const surface = tone === 'teal' ? 'bg-teal' : 'bg-plum';
-  const accent = tone === 'teal' ? 'text-amber' : 'text-coral-light';
-  const soft = tone === 'teal' ? 'text-teal-soft' : 'text-plum-soft';
-
-  return (
-    <article className={`${surface} on-dark rounded-(--radius-lg) p-5 sm:p-7`}>
-      <div className="grid gap-6 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:items-center">
-        <Flyer
-          assetId={event.flyerAssetId}
-          printedDate={null}
-          eventName={event.title}
-          tone={tone}
-          sizes="(min-width: 768px) 15rem, 90vw"
-        />
-        <div>
-          <p className={`eyebrow ${soft}`}>Special event</p>
-          <h2 className={`display mt-2 text-[clamp(1.75rem,3vw,2.5rem)] ${accent}`}>
-            {event.title}
-          </h2>
-          <p className="tabular mt-3 font-semibold text-night-text">
-            {formatEventDate(event.startsAt)} · {formatTimeRange(event.startsAt, event.endsAt)}
-          </p>
-          {event.description ? (
-            <p className={`measure mt-4 text-[0.9375rem] leading-relaxed ${soft}`}>
-              {event.description}
-            </p>
-          ) : null}
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-[0.9375rem] text-night-text">
-            {event.musicFormats.length > 0 ? <span>{event.musicFormats.join(' · ')}</span> : null}
-            <span>{event.priceCents != null ? formatPrice(event.priceCents) : 'Entry at the door'}</span>
-            {event.ticketUrl ? (
-              <ExternalButtonLink href={event.ticketUrl} destination={`${event.title} tickets`}>
-                Tickets
-              </ExternalButtonLink>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 /**
- * Events.
+ * Events — the entertainment calendar.
  *
- * Two nights, featured once each, flyer-led. The combined multi-week schedule
- * that used to sit underneath is gone: it published months of dates that had not
- * been confirmed, and it mixed both series into one list. Each feature links to
- * its own series page, which lists only that night's future dates.
+ * The shape of the page, top to bottom:
+ *
+ *   1  what this place is on a night out, once, in a sentence
+ *   2  the filter, if there is more than one kind of night on
+ *   3  the one event we are leading with
+ *   4  every remaining upcoming event, in date order, grouped by month
+ *   5  October, when it comes, as its own dark room rather than another month
+ *   6  the two recurring nights, which have their own pages
+ *   7  the kitchen is open before the music starts
+ *
+ * Past events disappear on their own: everything comes from `buildCalendar`,
+ * which reads `getUpcomingEvents`, which drops anything already finished. There
+ * is no "archive" to prune and no date to remember to change.
  */
-export default async function EventsPage() {
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
   const now = new Date();
-  const [input, copy, settings] = await Promise.all([
+  const [{ kind }, input, copy, settings] = await Promise.all([
+    searchParams,
     getPublicEvents(),
     getPageCopy('events'),
     getSiteSettings(),
   ]);
-  const featured = nextPerSeries(input, now);
-  const specialEvents = getUpcomingEvents(input, now)
-    .filter((event) => event.seriesSlug === null)
-    .slice(0, 6);
+
+  const filter: CategoryFilter =
+    kind && (CATEGORY_FILTERS as string[]).includes(kind) ? (kind as CategoryFilter) : 'all';
+
+  const calendar = buildCalendar(input, now, filter);
+  const featured = calendar.weekly;
+
+  // The lead is also in its own month, so this is deduplicated: one artwork
+  // lookup and one piece of structured data per event, however many times the
+  // page shows it.
+  const listed = [
+    ...new Map(
+      [
+        ...(calendar.lead ? [calendar.lead] : []),
+        ...calendar.months.flatMap((month) => month.events),
+      ].map((event) => [event.id, event]),
+    ).values(),
+  ];
+  const artwork = await resolveManyEventArtwork(listed);
+
+  const october = calendar.months.filter((month) => month.isOctober);
+  const ordinary = calendar.months.filter((month) => !month.isOctober);
 
   return (
     <>
@@ -231,46 +223,149 @@ export default async function EventsPage() {
         </Frame>
       </section>
 
-      {specialEvents.length > 0 ? (
+      {/* 2 and 3 — the filter, then the event we are leading with. */}
+      <Band surface="ivory" size="sm">
+        <Frame wide>
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <div>
+              <Eyebrow>What&apos;s on</Eyebrow>
+              <h2 className="display mt-2 text-[clamp(1.5rem,2.6vw,2rem)] text-brown">
+                {calendar.total === 0
+                  ? 'No special events on sale right now'
+                  : calendar.total === 1
+                    ? 'One special event coming up'
+                    : `${calendar.total} special events coming up`}
+              </h2>
+            </div>
+          </div>
+
+          <EventFilters active={filter} counts={calendar.counts} />
+
+          {calendar.lead ? (
+            <div className="mt-7">
+              <EventBanner
+                event={calendar.lead}
+                artwork={artwork.get(calendar.lead.id)!}
+                eyebrow="Next up"
+              />
+            </div>
+          ) : (
+            <p className="measure mt-6 text-[length:var(--text-body-lg)] text-brown-soft">
+              Nothing is on sale for this kind of night at the moment. The weekly nights below are
+              still on, and{' '}
+              <Link href="/events" className="underline underline-offset-4">
+                the whole calendar
+              </Link>{' '}
+              may have something else.
+            </p>
+          )}
+
+          {/* The weekly nights are the reason the calendar above can be short
+              without the page implying the place is dark. */}
+          {featured.length > 0 ? (
+            <p className="mt-6 text-[0.9375rem] text-brown-soft">
+              Plus{' '}
+              {featured.map((event, index) => (
+                <span key={event.id}>
+                  {index > 0 ? (index === featured.length - 1 ? ' and ' : ', ') : null}
+                  <Link
+                    href={`/events/${event.seriesSlug}`}
+                    className="font-semibold text-brown underline underline-offset-4"
+                  >
+                    {event.title}
+                  </Link>
+                </span>
+              ))}{' '}
+              every week.
+            </p>
+          ) : null}
+        </Frame>
+      </Band>
+
+      {/* 4 — the calendar proper, month by month. */}
+      {ordinary.length > 0 ? (
         <Band surface="ivory" size="sm">
           <Frame wide>
-            <Eyebrow>Coming up</Eyebrow>
-            <h2 className="display mt-3 text-[clamp(1.75rem,3vw,2.5rem)] text-brown">
-              Special events
-            </h2>
-            <div className="mt-7 grid gap-6 lg:grid-cols-2">
-              {specialEvents.map((event, index) => (
-                <SpecialEventFeature key={event.id} event={event} index={index} />
-              ))}
-            </div>
+            {ordinary.map((month) => (
+              <section key={month.key} className="mt-10 first:mt-0" aria-labelledby={`month-${month.key}`}>
+                <h2
+                  id={`month-${month.key}`}
+                  className="display border-b-2 border-brown/15 pb-2 text-[1.375rem] text-brown"
+                >
+                  {month.label}
+                </h2>
+                <div className="mt-1">
+                  {month.events.map((event) => (
+                    <EventRow key={event.id} event={event} artwork={artwork.get(event.id)!} />
+                  ))}
+                </div>
+              </section>
+            ))}
           </Frame>
         </Band>
       ) : null}
 
-      {/* 2 — the two recurring nights, once each. */}
-      <Band surface="ivory" size="sm">
-        <Frame wide>
-          {featured.length === 0 ? (
-            <p className="text-[length:var(--text-body-lg)] text-brown-soft">
-              Nothing on the calendar right now. Follow us on Instagram for the next announcement.
+      {/* 5 — October is the restaurant's biggest month. It gets the dark room,
+          the seasonal accent and cards rather than rows: the same events, said
+          louder. The characters stay on their own events; this is atmosphere. */}
+      {october.map((month) => (
+        <Band key={month.key} surface="espresso" size="sm" topRule>
+          <Frame wide>
+            <Eyebrow tone="night">Halloween &amp; Día de los Muertos</Eyebrow>
+            <h2 className="display mt-2 text-[clamp(1.75rem,3vw,2.5rem)] text-night-text">
+              {month.label} at Oasis
+            </h2>
+            <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-night-soft">
+              The whole month leans into it — costumes, marigolds, painted faces and a different
+              reason to be here most nights.
             </p>
-          ) : (
-            <div className="grid gap-6 sm:gap-8">
+            {/* The grid fits the month. One card stretched across three columns
+                reads as a mistake; one card at card width reads as a choice. */}
+            <div
+              className={`mt-7 grid gap-5 ${
+                month.events.length === 1
+                  ? 'sm:max-w-md'
+                  : month.events.length === 2
+                    ? 'sm:grid-cols-2'
+                    : 'sm:grid-cols-2 lg:grid-cols-3'
+              }`}
+            >
+              {month.events.map((event) => (
+                <EventCard key={event.id} event={event} artwork={artwork.get(event.id)!} />
+              ))}
+            </div>
+          </Frame>
+        </Band>
+      ))}
+
+      {/* 6 — the two recurring nights, once each. */}
+      {featured.length > 0 ? (
+        <Band surface="ivory-deep" size="sm">
+          <Frame wide>
+            <Eyebrow>Every week</Eyebrow>
+            <h2 className="display mt-2 text-[clamp(1.5rem,2.6vw,2rem)] text-brown">
+              The nights that come round again
+            </h2>
+            <div className="mt-7 grid gap-6 sm:gap-8">
               {featured.map((event, index) => (
                 <NightFeature
                   key={event.id}
                   event={event}
                   tone={index === 0 ? 'teal' : 'plum'}
                   flip={index % 2 === 1}
-                  priority={index === 0}
+                  priority={false}
                 />
               ))}
             </div>
-          )}
-        </Frame>
-      </Band>
+            <p className="measure mt-6 text-[0.875rem] leading-relaxed text-brown-soft">
+              These run every week. Each night&apos;s own page lists its next few confirmed dates —
+              they are not repeated in the calendar above, which is for one-off events.
+            </p>
+          </Frame>
+        </Band>
+      ) : null}
 
-      {/* 3 — restaurant context, one line. */}
+      {/* 7 — restaurant context, one line. */}
       <Band surface="ivory-deep" size="sm">
         <Frame>
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -285,7 +380,7 @@ export default async function EventsPage() {
         </Frame>
       </Band>
 
-      {featured.map((event) => (
+      {listed.map((event) => (
         <JsonLd key={event.id} data={eventJsonLd(event, settings)} />
       ))}
     </>
