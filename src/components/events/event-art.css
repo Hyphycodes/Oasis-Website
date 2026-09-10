@@ -1,0 +1,174 @@
+/* ==========================================================================
+   EVENT ART
+   The composition an event's artwork sits in. Every event carries its own
+   accent as custom properties (see presetVars), so one stylesheet dresses
+   seven different looks and a new preset needs no CSS at all.
+
+   The flyer is `object-contain` in every arrangement, on purpose and without
+   exception: a flyer prints its own name, date, price and age line along its
+   edges, and cropping it throws those away.
+   ========================================================================== */
+
+.event-art {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--e-surface, #1b0b1a);
+}
+
+/* Without key art the flyer is the composition, at a portrait ratio that
+   suits the flyers restaurants actually print. */
+.event-art-flyer {
+  aspect-ratio: 4 / 5;
+}
+
+.event-art-wide {
+  aspect-ratio: 16 / 9;
+}
+
+.event-art[data-size='card'].event-art-wide {
+  aspect-ratio: 4 / 3;
+}
+
+/* The lit field: the event's own colour, breathed on from one corner. */
+.event-art-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(78% 62% at 72% 14%, var(--e-glow, rgb(236 150 62 / 0.3)), transparent 68%),
+    radial-gradient(60% 55% at 8% 92%, rgb(0 0 0 / 0.45), transparent 70%);
+}
+
+.event-art-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+}
+
+/* Type sits over the bottom of a card; the scrim is what makes that safe
+   whatever the artwork happens to be doing there. */
+.event-art-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    to top,
+    rgb(8 4 10 / 0.88) 0%,
+    rgb(8 4 10 / 0.45) 34%,
+    transparent 68%
+  );
+}
+
+/* ------------------------------------------------------------- the flyer -- */
+
+.event-art-official {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+}
+
+/* Alone: centred, generous, the whole thing visible. */
+.event-art-flyer .event-art-official {
+  inset: 6% 8%;
+}
+
+/* Beside key art: an upright card in the corner, still complete, with a lit
+   edge so it reads as a physical object on top of the scene. */
+.event-art-wide .event-art-official {
+  right: 4.5%;
+  bottom: 6%;
+  width: 30%;
+  max-width: 190px;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(10 5 12 / 0.55);
+  box-shadow:
+    0 18px 40px -12px rgb(0 0 0 / 0.7),
+    0 0 0 1px var(--e-accent, #f0b24a) inset;
+  padding: 4px;
+  backdrop-filter: blur(2px);
+}
+
+.event-art-flyer-img {
+  height: 100%;
+  width: 100%;
+}
+
+.event-art-flyer .event-art-flyer-img {
+  filter: drop-shadow(0 22px 32px rgb(0 0 0 / 0.55));
+}
+
+/* -------------------------------------------------------- no artwork -- */
+
+/* Set in the event's own accent, ruled top and bottom, centred. Deliberately
+   not a "missing image" icon: this is what a card looks like the day an event
+   is announced and before the flyer arrives, which is a normal day. */
+.event-art-nameplate {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 12% 10%;
+  text-align: center;
+}
+
+.event-art-nameplate > span {
+  color: var(--e-accent, #f0b24a);
+  font-size: clamp(1.125rem, 3.4vw, 2rem);
+  line-height: 0.95;
+  border-block: 1px solid currentColor;
+  padding-block: 0.5em;
+  opacity: 0.92;
+  text-wrap: balance;
+}
+
+.event-art[data-size='lead'] .event-art-nameplate > span {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+}
+
+/* --------------------------------------------------------- foreground -- */
+
+/* The one layer allowed to lean past its own card. It belongs to this event's
+   composition and never appears anywhere else on the site. */
+.event-art-foreground {
+  position: absolute;
+  z-index: 4;
+  left: -6%;
+  bottom: -4%;
+  width: 46%;
+  max-width: 260px;
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 20px 26px rgb(0 0 0 / 0.6));
+}
+
+.event-art[data-size='lead'] .event-art-foreground {
+  width: 38%;
+  max-width: 320px;
+}
+
+/* --------------------------------------------------------------- phone -- */
+
+@media (max-width: 639px) {
+  .event-art-wide {
+    aspect-ratio: 4 / 3;
+  }
+  /* On a phone the corner card is too small to read a flyer in. It goes
+     bigger and more central rather than becoming a stamp. */
+  .event-art-wide .event-art-official {
+    right: 5%;
+    bottom: 5%;
+    width: 38%;
+    max-width: none;
+  }
+  .event-art-foreground {
+    width: 40%;
+    left: -8%;
+  }
+}

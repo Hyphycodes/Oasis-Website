@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { AssetVideo } from '@/components/media/AssetVideo';
+import { AssetView } from '@/components/media/Asset';
 import { ThemeHeroBackground, ThemeHeroLayer } from '@/components/theme/ThemeHeroLayer';
 import { getPublicAsset } from '@/content/media';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
 import { site } from '@/content/site';
 import type { ResolvedEvent } from '@/content/types';
+import { presetVars } from '@/components/events/EventArt';
+import { resolveEventArtwork } from '@/server/content/event-art';
 import { formatEventDate, formatEventTime } from '@/lib/format';
 import { getActiveTheme } from '@/themes/resolve';
 
@@ -22,23 +25,53 @@ import { getActiveTheme } from '@/themes/resolve';
  * first frame, the last frame, under reduced motion, and on a dead connection.
  * Height is bounded so the actions always sit inside the first viewport.
  */
-export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
+export async function Hero({
+  nextEvent,
+  takeover = null,
+}: {
+  nextEvent: ResolvedEvent | null;
+  /**
+   * An event whose scheduled hero takeover is running right now. It lends the
+   * hero its artwork and a line of copy; it never takes the navigation, the
+   * headline hierarchy or the restaurant's own actions away.
+   */
+  takeover?: ResolvedEvent | null;
+}) {
   // Resolved here, on the server, because AssetVideo runs in the browser and the
   // media store does not.
   const [video, theme] = await Promise.all([getPublicAsset('heroVideo'), getActiveTheme()]);
   if (!video) return null;
+
+  const takeoverArt = takeover ? await resolveEventArtwork(takeover) : null;
+  // Key art only. A takeover borrows the event's WEBSITE art for the hero — the
+  // official flyer belongs to the event's own card and page, where it is shown
+  // whole, not stretched across a 16:9 hero.
+  const takeoverBackdrop = takeoverArt?.keyArt?.path ? takeoverArt.keyArt : null;
 
   // A seasonal theme may supply its own backdrop. When it does not, the reel
   // stays and the theme art-directs around it.
   const themedBackdrop = Boolean(theme.assets.heroBackground.path);
 
   return (
-    <section className="relative isolate overflow-hidden bg-plum">
+    <section
+      className="relative isolate overflow-hidden bg-plum"
+      style={takeover ? presetVars(takeover.presentation.visualPreset) : undefined}
+    >
       {/* Wrapped rather than positioned directly: AssetVideo sets `relative` on
           its own root, which would fight an `absolute` passed through className
           (same specificity — stylesheet order decides, not the class list). */}
       <div className="absolute inset-0">
-        {themedBackdrop ? (
+        {takeoverBackdrop ? (
+          <AssetView
+            asset={takeoverBackdrop}
+            id="hero-takeover"
+            alt=""
+            rounded={false}
+            priority
+            sizes="100vw"
+            className="size-full"
+          />
+        ) : themedBackdrop ? (
           <ThemeHeroBackground theme={theme} />
         ) : (
           <AssetVideo
@@ -81,10 +114,15 @@ export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
 
       <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">
         <div className="max-w-xl">
-          <p className="eyebrow text-amber">Lockport, Illinois</p>
+          {/* NEXT UP, from real event data, above the headline. It is the one
+              piece of the hero that changes on its own, so it sits where the
+              eye lands first and says something true about tonight. */}
+          {nextEvent ? <NextUpPill event={nextEvent} /> : (
+            <p className="eyebrow text-amber">Lockport, Illinois</p>
+          )}
 
           <h1 className="display mt-4 text-[clamp(2rem,6vw,3.25rem)] text-night-text">
-            {pageCopy.home.heroHeadlineLines.map((line) => (
+            {(takeover ? [takeover.title] : pageCopy.home.heroHeadlineLines).map((line) => (
               <span key={line} className="block">
                 {line}
               </span>
@@ -92,43 +130,58 @@ export async function Hero({ nextEvent }: { nextEvent: ResolvedEvent | null }) {
           </h1>
 
           <p className="mt-4 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
-            {pageCopy.home.heroBody}
+            {takeover
+              ? takeover.summary || pageCopy.home.heroBody
+              : pageCopy.home.heroBody}
           </p>
 
+          {/* Reserve is primary, Explore Events is a strong secondary, Order
+              online is tertiary. A takeover slots its ticket link in at the
+              front and pushes the rest along — it never removes them, because
+              the hero still has to work as a restaurant's front door. */}
           <div className="mt-7 flex flex-wrap items-center gap-3">
+            {takeover?.ticketUrl && takeover.status !== 'sold-out' ? (
+              <a
+                href={takeover.ticketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-[color:var(--e-accent)] px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-obsidian transition-opacity hover:opacity-90"
+              >
+                Get tickets
+                <span className="sr-only">for {takeover.title} (opens the ticket page in a new tab)</span>
+              </a>
+            ) : null}
+
             <a
               href={site.reservationUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-coral px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-on-orange transition-colors hover:bg-coral-deep"
+              className={`inline-flex min-h-12 items-center justify-center rounded-(--radius-md) px-6 text-[0.9375rem] font-semibold tracking-[0.02em] transition-colors ${
+                takeover
+                  ? 'border border-night-text/45 text-night-text hover:bg-night-text/12'
+                  : 'bg-coral text-on-orange hover:bg-coral-deep'
+              }`}
             >
               Reserve a table
               <span className="sr-only">(opens Toast in a new tab)</span>
             </a>
+
+            <Link
+              href="/events"
+              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border border-night-text/45 px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-night-text transition-colors hover:bg-night-text/12"
+            >
+              Explore events
+            </Link>
+
             <a
               href={site.orderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border border-night-text/45 px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-night-text transition-colors hover:bg-night-text/12"
+              className="inline-flex min-h-12 items-center text-[0.9375rem] font-medium text-night-text/85 underline underline-offset-4 transition-[text-underline-offset] hover:underline-offset-[6px]"
             >
               Order online
               <span className="sr-only">(opens Toast in a new tab)</span>
             </a>
-
-            {nextEvent ? (
-              <Link
-                href="/events"
-                className="group inline-flex min-h-12 flex-wrap items-center gap-x-2 text-[0.9375rem] text-night-text/85"
-              >
-                <span className="tabular text-amber">
-                  {nextEvent.title.replace('Oasis ', '')} ·{' '}
-                  {formatEventDate(nextEvent.startsAt)} · {formatEventTime(nextEvent.startsAt)}
-                </span>
-                <span className="underline underline-offset-4 group-hover:underline-offset-[6px]">
-                  Events
-                </span>
-              </Link>
-            ) : null}
           </div>
         </div>
       </div>
@@ -168,5 +221,40 @@ export function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: b
         </span>
       </div>
     </div>
+  );
+}
+
+/**
+ * NEXT UP · what · when.
+ *
+ * Real event data, rendered as text — including SOLD OUT, which a guest needs
+ * before they plan an evening, not after. The whole pill is one link to the
+ * event, so it is a single 44px target rather than a row of small ones.
+ */
+function NextUpPill({ event }: { event: ResolvedEvent }) {
+  const soldOut = event.status === 'sold-out';
+  const href = event.slug ? `/events/${event.slug}` : '/events';
+
+  return (
+    <Link
+      href={href}
+      className="group inline-flex min-h-11 max-w-full flex-wrap items-center gap-x-2.5 gap-y-1 rounded-full border border-amber/45 bg-obsidian/55 py-1.5 pl-3 pr-4 backdrop-blur-[2px] transition-colors hover:border-amber"
+    >
+      <span className="eyebrow shrink-0 text-amber">Next up</span>
+      <span className="min-w-0 truncate text-[0.9375rem] font-semibold text-night-text">
+        {event.title.replace('Oasis ', '')}
+      </span>
+      <span className="tabular shrink-0 text-[0.875rem] text-night-soft">
+        {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}
+      </span>
+      {soldOut ? (
+        <span className="shrink-0 rounded-(--radius-sm) border border-danger px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-danger">
+          Sold out
+        </span>
+      ) : null}
+      <span aria-hidden="true" className="shrink-0 text-amber transition-transform group-hover:translate-x-0.5">
+        →
+      </span>
+    </Link>
   );
 }

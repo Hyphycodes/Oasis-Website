@@ -3,13 +3,15 @@ import { AfterDark } from '@/components/home/AfterDark';
 import { BarAndBrunch } from '@/components/home/BarAndBrunch';
 import { CateringAndVisit } from '@/components/home/CateringAndVisit';
 import { ActionRail, Hero } from '@/components/home/Hero';
+import { FeaturedEvents } from '@/components/home/FeaturedEvents';
 import { Offerings } from '@/components/home/Offerings';
 import { ThemeDivider } from '@/components/theme/ThemeDivider';
 import { seo } from '@/content/pages';
 import { getCateringPackages, getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
 import { getPageCopy } from '@/server/content/pages';
-import { nextEvent, nextPerSeries } from '@/lib/events';
+import { selectHomepageEvents } from '@/lib/event-feature';
+import { nextPerSeries } from '@/lib/events';
 import { getOpenState } from '@/lib/hours';
 import { buildMetadata } from '@/lib/seo';
 
@@ -53,6 +55,10 @@ export default async function HomePage() {
   ]);
 
   const nights = nextPerSeries(events, now);
+  // One pass decides everything the homepage says about events: what is on
+  // next, what leads the featured module, and whether a scheduled takeover is
+  // running right now.
+  const homepageEvents = selectHomepageEvents(events, now);
   const openState = getOpenState(
     settings.hours.value,
     settings.temporaryClosures,
@@ -64,8 +70,11 @@ export default async function HomePage() {
     <>
       {/* The soonest night of any series, not the first series' next night —
           "what's on" means tonight's Saturday, not next week's Friday. */}
-      <Hero nextEvent={nextEvent(events, now)} />
+      <Hero nextEvent={homepageEvents.next} takeover={homepageEvents.takeover} />
       <ActionRail openLabel={openState.label} isOpen={openState.open} />
+      {/* Events sit high: the second thing a visitor learns about Oasis is that
+          there is always something on. */}
+      <FeaturedEvents events={homepageEvents} />
       <Offerings section={breadth} />
       {/* Seasonal ornaments. Render nothing on the default look. Two, not five:
           the transitions that already exist do the rest. */}

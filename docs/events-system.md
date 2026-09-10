@@ -116,6 +116,53 @@ Everything obeys the existing permission model: a Contributor sees the screens a
 
 ---
 
+## The homepage
+
+A visitor should learn two things immediately: Oasis is a modern Mexican restaurant, and there is
+always something on. The homepage says the second thing in three places.
+
+**Navigation.** `Events` is the second item in the primary nav on desktop and in the mobile
+drawer. It is a plain link, like every other nav item.
+
+**The hero.** The action hierarchy is Reserve a table (primary) → Explore events (strong
+secondary) → Order online (tertiary, a text link). Above the headline sits a **NEXT UP** pill
+carrying the soonest event's name, date and time as real text, plus **SOLD OUT** when it applies.
+The whole pill is one link and one 44px target.
+
+**What's on.** One dominant featured event and two supporting ones — never three equal cards,
+because a restaurant with a Halloween headliner and two paint nights is not saying those three
+things equally loudly. The lead gets the wide composition, the summary and a ticket button; the
+supporting pair get upright cards. A "All events" link sits in the header of the section.
+
+Which events appear is decided by `selectHomepageEvents` in `src/lib/event-feature.ts` — pure, and
+covered by seven tests:
+
+| Rule | Behaviour |
+|---|---|
+| Lead | A live takeover, else the highest `treatment` + `priority`, else the soonest |
+| Supporting | The next two, never repeating the lead |
+| NEXT UP | The **soonest** event, regardless of promotion — it is a promise about the calendar |
+| Cancelled | Never advertised anywhere on the homepage; still listed on `/events` |
+
+### Hero takeovers
+
+An event with `treatment: 'takeover'` and a window containing right now lends the hero its **website
+key art**, its title and its summary, and puts its ticket button first. It never removes the
+navigation, the Reserve action, the Explore events action or the restaurant's identity, and it
+reverts on its own the moment the window ends — there is nothing to remember and nothing to undo.
+
+The takeover borrows key art only. The official flyer is *not* stretched across a 16:9 hero; it
+belongs to the event's own card and page, where it is shown whole.
+
+### Global look versus event look
+
+The seasonal theme owns the **global** environment: plum, near-black, candle glow, marigolds,
+papel picado, antique gold. An individual event's colour comes from its own preset and is scoped
+to that event's card, its detail page and — during a takeover only — the hero. A character or theme
+belonging to one event never leaks into the food, catering or location sections.
+
+---
+
 ## Reconciliation with Tickeri
 
 **Admin → Events → "Check Tickeri now".**
