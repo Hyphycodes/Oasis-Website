@@ -22,6 +22,7 @@ export function ThemeAtmosphere({ theme }: { theme: ResolvedTheme }) {
         <>
           <div className="theme-layer theme-layer-glow" />
           <div className="theme-layer theme-layer-glow theme-layer-glow-2" />
+          <div className="theme-layer theme-layer-haze" />
         </>
       ) : null}
       {options.texture ? <div className="theme-layer theme-layer-texture" /> : null}

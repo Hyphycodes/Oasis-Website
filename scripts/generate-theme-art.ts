@@ -69,8 +69,20 @@ const P = {
  * inner rings toward yellow, a dark eye with a few stamens. Everything is
  * rotated a little at random so no two blossoms share a silhouette.
  */
-function marigold(cx: number, cy: number, R: number, seed: number, idPrefix: string): string {
+function marigold(
+  cx: number,
+  cy: number,
+  R: number,
+  seed: number,
+  idPrefix: string,
+  /** 0 = yellow-gold blossom, 1 = deep red-orange blossom. */
+  warmth = 0,
+): string {
   const rand = rng(seed);
+  const deep = mix(P.marigoldDeep, '#8f2a12', warmth);
+  const base = mix(P.marigold, '#c4521a', warmth);
+  const midTone = mix(P.marigoldMid, '#e07a1f', warmth);
+  const tipTone = mix(P.marigoldTip, '#f2a53a', warmth);
   const rings = 6;
   const parts: string[] = [];
   const defs: string[] = [];
@@ -82,9 +94,9 @@ function marigold(cx: number, cy: number, R: number, seed: number, idPrefix: str
     const offset = rand() * 360;
     const w = r * (0.34 - 0.03 * k);
     const id = `${idPrefix}g${k}`;
-    const from = mix(P.marigoldDeep, P.marigold, t * 0.6);
-    const mid = mix(P.marigold, P.marigoldMid, 0.25 + t * 0.6);
-    const tip = mix(P.marigoldMid, P.marigoldTip, 0.3 + t * 0.7);
+    const from = mix(deep, base, t * 0.6);
+    const mid = mix(base, midTone, 0.25 + t * 0.6);
+    const tip = mix(midTone, tipTone, 0.3 + t * 0.7);
     defs.push(
       `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${from}"/><stop offset=".55" stop-color="${mid}"/><stop offset="1" stop-color="${tip}"/></linearGradient>`,
     );
@@ -101,6 +113,14 @@ function marigold(cx: number, cy: number, R: number, seed: number, idPrefix: str
     }
     parts.push(`<g>${petals.join('')}</g>`);
   }
+
+  // A soft top-light across the whole head, so it reads as a sphere rather
+  // than a flat rosette, and a shade toward the rim.
+  const lightId = `${idPrefix}light`;
+  defs.push(
+    `<radialGradient id="${lightId}" cx=".42" cy=".38" r=".62"><stop offset="0" stop-color="#fff1c4" stop-opacity=".28"/><stop offset=".45" stop-color="#fff1c4" stop-opacity=".06"/><stop offset=".78" stop-color="#4a1608" stop-opacity=".1"/><stop offset="1" stop-color="#2a0c05" stop-opacity=".2"/></radialGradient>`,
+  );
+  parts.push(`<circle r="${fmt(R * 0.88)}" fill="url(#${lightId})"/>`);
 
   // The eye.
   const eyeId = `${idPrefix}eye`;
@@ -191,38 +211,50 @@ function marigoldCluster(seed: number, mirror: boolean): string {
   const H = 1000;
   const rand = rng(seed);
   const id = mirror ? 'r' : 'l';
+  // Largest heads toward the outside edge (x small), overlapping by a quarter
+  // so the cluster reads as one mass with depth, not a scatter of stickers.
   const blossoms = [
-    { x: 150, y: 250, r: 165 },
-    { x: 380, y: 130, r: 112 },
-    { x: 330, y: 470, r: 138 },
-    { x: 130, y: 620, r: 120 },
-    { x: 520, y: 330, r: 88 },
-    { x: 420, y: 700, r: 96 },
-    { x: 230, y: 850, r: 78 },
-    { x: 600, y: 560, r: 62 },
+    { x: 170, y: 300, r: 175, w: 0.15 },
+    { x: 400, y: 165, r: 118, w: 0.55 },
+    { x: 360, y: 470, r: 150, w: 0 },
+    { x: 150, y: 640, r: 135, w: 0.7 },
+    { x: 560, y: 340, r: 96, w: 0.3 },
+    { x: 440, y: 720, r: 108, w: 0.45 },
+    { x: 250, y: 880, r: 90, w: 0.1 },
+    { x: 640, y: 560, r: 72, w: 0.85 },
+    { x: 60, y: 470, r: 80, w: 0.4 },
+    { x: 590, y: 780, r: 58, w: 0.2 },
   ];
   const sprigs = [
-    sprig(280, 200, 330, 14, seed + 11, id),
-    sprig(200, 560, 380, -22, seed + 12, id),
-    sprig(470, 420, 300, 38, seed + 13, id),
-    sprig(360, 760, 320, 8, seed + 14, id),
-    sprig(150, 380, 260, 62, seed + 15, id),
-    sprig(560, 640, 240, -48, seed + 16, id),
+    sprig(300, 220, 360, 12, seed + 11, id),
+    sprig(220, 560, 400, -24, seed + 12, id),
+    sprig(500, 430, 320, 40, seed + 13, id),
+    sprig(380, 780, 340, 6, seed + 14, id),
+    sprig(160, 400, 280, 64, seed + 15, id),
+    sprig(600, 660, 260, -50, seed + 16, id),
+    sprig(80, 760, 300, -70, seed + 17, id),
+    sprig(520, 120, 240, 100, seed + 18, id),
   ];
   const buds = [
-    bud(640, 250, 44, 70, seed + 21),
-    bud(700, 470, 38, 95, seed + 22),
-    bud(560, 800, 40, 120, seed + 23),
-    bud(80, 430, 36, -40, seed + 24),
+    bud(690, 250, 46, 70, seed + 21),
+    bud(740, 470, 40, 95, seed + 22),
+    bud(600, 860, 42, 120, seed + 23),
+    bud(60, 300, 38, -40, seed + 24),
+    bud(700, 660, 34, 60, seed + 25),
   ];
-  const flowers = blossoms
+  // Painted back to front: big heads first so the smaller ones sit on top,
+  // each with its own shadow, which is what gives the pile its depth.
+  const flowers = [...blossoms]
     .sort((a, b) => b.r - a.r)
-    .map((b, i) => marigold(b.x, b.y, b.r * (0.96 + rand() * 0.08), seed + i * 7, `${id}${i}`))
+    .map(
+      (b, i) =>
+        `<g filter="url(#${id}sh)">${marigold(b.x, b.y, b.r * (0.96 + rand() * 0.08), seed + i * 7, `${id}${i}`, b.w)}</g>`,
+    )
     .join('');
 
-  const inner = `<g filter="url(#${id}sh)">${sprigs.join('')}${buds.join('')}${flowers}</g>`;
+  const inner = `<g filter="url(#${id}sh)">${sprigs.join('')}${buds.join('')}</g>${flowers}`;
   const transform = mirror ? `transform="translate(${W} 0) scale(-1 1)"` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${leafDefs(id)}${shadowFilter(`${id}sh`, 10, 14, 0.55)}</defs><g ${transform}>${inner}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${leafDefs(id)}${shadowFilter(`${id}sh`, 9, 12, 0.5)}</defs><g ${transform}>${inner}</g></svg>`;
 }
 
 /** Smaller cluster for the footer corners. */
@@ -232,22 +264,27 @@ function foregroundCluster(seed: number): string {
   const id = 'f';
   const rand = rng(seed);
   const blossoms = [
-    { x: 150, y: 420, r: 150 },
-    { x: 380, y: 300, r: 118 },
-    { x: 330, y: 540, r: 96 },
-    { x: 560, y: 470, r: 84 },
+    { x: 160, y: 430, r: 160, w: 0.1 },
+    { x: 390, y: 310, r: 122, w: 0.6 },
+    { x: 350, y: 540, r: 104, w: 0 },
+    { x: 570, y: 470, r: 90, w: 0.75 },
+    { x: 520, y: 240, r: 56, w: 0.3 },
   ];
   const sprigs = [
-    sprig(230, 300, 340, -30, seed + 1, id),
-    sprig(430, 420, 260, 20, seed + 2, id),
-    sprig(120, 560, 300, -8, seed + 3, id),
+    sprig(240, 300, 360, -30, seed + 1, id),
+    sprig(440, 430, 280, 20, seed + 2, id),
+    sprig(120, 560, 320, -8, seed + 3, id),
+    sprig(60, 380, 220, -60, seed + 6, id),
   ];
-  const buds = [bud(560, 300, 40, 40, seed + 4), bud(620, 580, 36, 110, seed + 5)];
-  const flowers = blossoms
+  const buds = [bud(580, 300, 40, 40, seed + 4), bud(640, 590, 36, 110, seed + 5), bud(40, 520, 32, -90, seed + 7)];
+  const flowers = [...blossoms]
     .sort((a, b) => b.r - a.r)
-    .map((b, i) => marigold(b.x, b.y, b.r * (0.96 + rand() * 0.08), seed + i * 5, `${id}${i}`))
+    .map(
+      (b, i) =>
+        `<g filter="url(#${id}sh)">${marigold(b.x, b.y, b.r * (0.96 + rand() * 0.08), seed + i * 5, `${id}${i}`, b.w)}</g>`,
+    )
     .join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${leafDefs(id)}${shadowFilter(`${id}sh`, 9, 12, 0.5)}</defs><g filter="url(#${id}sh)">${sprigs.join('')}${buds.join('')}${flowers}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${leafDefs(id)}${shadowFilter(`${id}sh`, 8, 10, 0.5)}</defs><g filter="url(#${id}sh)">${sprigs.join('')}${buds.join('')}</g>${flowers}</svg>`;
 }
 
 /* ---------------------------------------------------------- papel picado -- */
@@ -400,9 +437,9 @@ function divider(seed: number): string {
   parts.push(sprig(cx - 70, cy + 4, 120, 196, seed + 1, id));
   parts.push(sprig(cx + 70, cy + 4, 120, -16, seed + 2, id));
   parts.push(bud(cx - 118, cy - 8, 26, -70, seed + 3), bud(cx + 118, cy - 8, 26, 70, seed + 4));
-  parts.push(marigold(cx - 62, cy + 8, 40, seed + 5, `${id}a`));
-  parts.push(marigold(cx + 62, cy + 8, 40, seed + 6, `${id}b`));
-  parts.push(marigold(cx, cy - 4, 58, seed + 7, `${id}c`));
+  parts.push(marigold(cx - 62, cy + 8, 40, seed + 5, `${id}a`, 0.6));
+  parts.push(marigold(cx + 62, cy + 8, 40, seed + 6, `${id}b`, 0.6));
+  parts.push(marigold(cx, cy - 4, 58, seed + 7, `${id}c`, 0.1));
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>` +
@@ -472,7 +509,7 @@ async function texture(size: number, seed: number): Promise<Buffer> {
 async function rasterise(svg: string, file: string, width: number): Promise<void> {
   const out = await sharp(Buffer.from(svg), { density: 96 })
     .resize({ width })
-    .webp({ quality: 84, alphaQuality: 92, effort: 5 })
+    .webp({ quality: 80, alphaQuality: 90, effort: 6 })
     .toBuffer();
   await writeFile(path.join(OUT, file), out);
   console.log(`${file.padEnd(22)} ${(out.length / 1024).toFixed(0)}KB`);
@@ -481,11 +518,13 @@ async function rasterise(svg: string, file: string, width: number): Promise<void
 async function main() {
   await mkdir(OUT, { recursive: true });
 
-  await rasterise(marigoldCluster(31, false), 'marigold-left.webp', 900);
-  await rasterise(marigoldCluster(31, true), 'marigold-right.webp', 900);
-  await rasterise(foregroundCluster(77), 'foreground.webp', 700);
-  await rasterise(papelPicado(1031), 'papel-picado.webp', 2400);
-  await rasterise(divider(2026), 'divider.webp', 1600);
+  // Sizes are the largest CSS size each piece is drawn at, times ~1.4, which
+  // is where WebP stops looking soft on a 2x screen without doubling the bytes.
+  await rasterise(marigoldCluster(31, false), 'marigold-left.webp', 720);
+  await rasterise(marigoldCluster(31, true), 'marigold-right.webp', 720);
+  await rasterise(foregroundCluster(77), 'foreground.webp', 560);
+  await rasterise(papelPicado(1031), 'papel-picado.webp', 1800);
+  await rasterise(divider(2026), 'divider.webp', 1400);
 
   const petalSvg = petal();
   await writeFile(path.join(OUT, 'petal.svg'), petalSvg);
