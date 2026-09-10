@@ -140,5 +140,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     priority: 10,
     ticketUrl: 'https://www.tickeri.com/events/xvt4t4jbzvwf/scream-paint-sip',
     sourceEventId: 'xvt4t4jbzvwf',
+    // The real flyer the night is promoted with, supplied directly and
+    // verified against this event's own title, date, time and address.
+    flyerAssetId: 'flyerScreamPaintSip',
   },
 ];
