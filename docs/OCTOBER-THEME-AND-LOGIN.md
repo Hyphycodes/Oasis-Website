@@ -396,9 +396,25 @@ show through undimmed right at that seam — visually a brighter patch sandwiche
 darker interiors, which reads as a box even though nothing is actually drawing one. Any
 `ThemeWorld` scene or other content sitting at a band boundary sat inside that bright patch.
 
-Fixed by giving all five pool gradients (base, ivory-deep, espresso, teal, sand) a low residual
-opacity at their outer rim instead of true zero — each keeps roughly a fifth to a quarter of its
-center strength at 100%, so the page's brightness floor stays continuous across band seams
-instead of alternating between "inside a pool" and "in raw glow." Verified at both flagged
-locations (paint scene, music scene), on `/private-events` and `/events` where the same scenes
-recur, and at both desktop and mobile widths.
+The first attempt gave all five pool gradients a low residual opacity at their outer rim instead
+of true zero. That was wrong, and made things worse: those pools are explicit-size ellipses
+(`72% 50% at 42% 50%`, etc.) that reach a band's top/bottom edge but never its actual corners —
+and past a gradient's last colour stop, CSS keeps painting flat with that colour forever. With
+the last stop at `transparent` this flat region was invisible; giving it a real colour instead
+filled every band's corners with a hard-edged rectangle, clipped by the band's own `inset: 0` —
+a new, more visible box than the one being fixed.
+
+## Rectangles again, and the actual fix
+
+Reported directly: "i see rectangles even worse now." The five pools were rewritten a second
+time, switching from explicit `<rx>% <ry>%` sizing back to the `ellipse farthest-corner` keyword
+(the same sizing `radial-gradient()` uses when no size is given at all), with the last stop back
+to `transparent`. `farthest-corner` is defined to always reach every corner of its box, so there
+is no leftover region for a flat colour to occupy — and because only the single farthest corner
+ever actually reaches that final `transparent` stop, every other point, including the
+top/bottom-centre where a `ThemeWorld` scene actually sits, keeps a little smoothly-fading colour
+instead of hitting literal zero. Centre alphas were trimmed slightly (0.34→0.3, 0.62→0.55, and so
+on) since the larger ellipse holds its colour further out than the old explicit sizing did.
+Verified at both flagged locations (paint scene, music scene), on `/private-events` and `/events`
+where the same scenes recur, and at both desktop and mobile widths — no rectangle, no seam,
+smoothly one field of night from top to bottom.
