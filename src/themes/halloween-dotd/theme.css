@@ -408,6 +408,23 @@
   background: linear-gradient(90deg, transparent, rgb(240 178 74 / 0.32) 30%, rgb(240 178 74 / 0.32) 70%, transparent);
 }
 
+/* The "on next" strip is ruled top and bottom so it reads as a shelf. In the
+   night both rules become threads that fade out at either end, like every
+   other line on the page. */
+[data-theme='halloween-dotd'] main .border-y.border-amber\/25 {
+  border-color: transparent;
+  background-image:
+    linear-gradient(90deg, transparent, rgb(240 178 74 / 0.34) 26%, rgb(240 178 74 / 0.34) 74%, transparent),
+    linear-gradient(90deg, transparent, rgb(240 178 74 / 0.34) 26%, rgb(240 178 74 / 0.34) 74%, transparent);
+  background-size:
+    100% 1px,
+    100% 1px;
+  background-repeat: no-repeat;
+  background-position:
+    top center,
+    bottom center;
+}
+
 /* Month bands on /events and the espresso page opener carry a 2px orange rule
    in the default look. In the night it is a thread, same as the one above. */
 [data-theme='halloween-dotd'] main .border-t-2.border-t-orange {
@@ -471,8 +488,13 @@
    of hitting the action rail, and the left clears under the type.
    The mask is on the wrapper so the poster and the video get it together. */
 [data-theme='halloween-dotd'] [data-oasis-hero] > .absolute:first-child {
-  -webkit-mask-image: radial-gradient(84% 76% at 63% 48%, #000 30%, rgb(0 0 0 / 0.58) 64%, transparent 100%);
-  mask-image: radial-gradient(84% 76% at 63% 48%, #000 30%, rgb(0 0 0 / 0.58) 64%, transparent 100%);
+  /* The ellipse is centred HIGH and its vertical radius reaches the bottom
+     edge exactly, so the loop is fully transparent by the time it gets there
+     and dissolves into the canvas instead of ending on a straight cut. The
+     old one still had roughly half its opacity left at that edge, which is
+     what drew the line. */
+  -webkit-mask-image: radial-gradient(92% 58% at 60% 40%, #000 24%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
+  mask-image: radial-gradient(92% 58% at 60% 40%, #000 24%, rgb(0 0 0 / 0.5) 60%, transparent 100%);
 }
 
 /* With the reel fading out on its own, the scrims can relax and let the glow
@@ -482,8 +504,8 @@
   /* The scrim's strong end is the hero's bottom edge, which is exactly where
      a step against the page would show; it lets go over the last stretch,
      after the reel has already faded out underneath it. */
-  -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 52%, transparent 96%);
 }
 [data-theme='halloween-dotd'] [data-oasis-hero] > [class*='bg-linear-to-r'] {
   opacity: 0.5;
@@ -736,8 +758,8 @@
   /* On a phone the reel is the poster; keep more of it and let it fade
      mostly at the bottom, where the headline is. */
   [data-theme='halloween-dotd'] [data-oasis-hero] > .absolute:first-child {
-    -webkit-mask-image: radial-gradient(112% 74% at 56% 46%, #000 34%, rgb(0 0 0 / 0.62) 66%, transparent 100%);
-    mask-image: radial-gradient(112% 74% at 56% 46%, #000 34%, rgb(0 0 0 / 0.62) 66%, transparent 100%);
+    -webkit-mask-image: radial-gradient(130% 60% at 56% 40%, #000 28%, rgb(0 0 0 / 0.55) 62%, transparent 100%);
+    mask-image: radial-gradient(130% 60% at 56% 40%, #000 28%, rgb(0 0 0 / 0.55) 62%, transparent 100%);
   }
 }
 
@@ -1004,6 +1026,17 @@
 @media (max-width: 639px) {
   [data-theme='halloween-dotd'] main .action-rail-row {
     padding-right: 132px;
+  }
+}
+
+/* He is taller than the rail, so he also leans up into the strip ABOVE it —
+   where the ticket button lives. From 640px that button is aligned right,
+   which is exactly where his easel is, so the same reserve applies there.
+   Below 640px the button is full width and sits well clear of him, and
+   reserving there would only squash it. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  [data-theme='halloween-dotd'] main .next-up-row {
+    padding-right: 172px;
   }
 }
 

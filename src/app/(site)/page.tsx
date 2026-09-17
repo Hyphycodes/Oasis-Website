@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { SocialScene } from '@/components/home/SocialScene';
+import { Celebrations } from '@/components/home/Celebrations';
 import { AfterDark } from '@/components/home/AfterDark';
 import { FindUs } from '@/components/home/FindUs';
+import { NextUp } from '@/components/home/NextUp';
 import { ActionRail, Hero } from '@/components/home/Hero';
 import { FeaturedEvents } from '@/components/home/FeaturedEvents';
 import { Offerings } from '@/components/home/Offerings';
@@ -32,17 +33,22 @@ export const dynamic = 'force-dynamic';
  * Homepage — five movements, no more.
  *
  *   1. Hero              one dominant visual
- *   2. Action rail       open state, directions, phone
- *   3. What's on         the next night, then the weekly two
- *   4. The kitchen and the bar   four categories, brunch, one way to the menu
- *   5. Oasis After Dark  preview only; the schedule lives on /events
- *   6. Social, then arrival
+ *   2. On next           the soonest event, named and dated
+ *   3. Action rail       open state, directions, phone
+ *   4. What's on         the next night, then the weekly two
+ *   5. The kitchen and the bar   four doors into the menu
+ *   6. Oasis After Dark  preview only; the schedule lives on /events
+ *   7. Celebrations      birthdays and quinceañeras
+ *   8. Find us           address, hours, catering
  *
- * It was nine content bands and three seasonal scenes, which on a phone ran to
- * eight and a half screens and asked the visitor to work through a catering
- * package list before being told the address. Food and bar are one band now,
- * catering and celebrations are two links inside the closing block, and one
- * scene went with them.
+ * EVENTS COME FIRST, on purpose. People already know how to have dinner at a
+ * restaurant; the reason to pick a particular night at Oasis is what is on that
+ * night, and the calendar used to be three sections down. The "on next" strip
+ * puts the soonest one directly under the hero with one way in.
+ *
+ * The social gallery that used to sit near the bottom is gone. It sold nothing
+ * and the footer already carries the accounts as logos; celebrations — a whole
+ * room booked weeks ahead — took the slot instead.
  *
  * Nothing here stores its own copy of a menu item, an event date, or a business
  * fact: menu features reference menu records, event cards derive from the same
@@ -76,6 +82,8 @@ export default async function HomePage() {
       {/* The soonest night of any series, not the first series' next night —
           "what's on" means tonight's Saturday, not next week's Friday. */}
       <Hero takeover={homepageEvents.takeover} />
+      {/* Nothing between the hero and the next night on sale. */}
+      <NextUp event={homepageEvents.next} />
       <ActionRail openLabel={openState.label} isOpen={openState.open} />
       {/* Events sit high: the second thing a visitor learns about Oasis is that
           there is always something on. */}
@@ -86,7 +94,7 @@ export default async function HomePage() {
       <Offerings section={breadth} bar={bar} />
       <AfterDark section={afterDark} events={nights} />
       <ThemeWorld scene="music" />
-      <SocialScene />
+      <Celebrations />
       <FindUs section={twoPaths} />
     </>
   );

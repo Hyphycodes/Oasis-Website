@@ -76,8 +76,10 @@ export function FindUs({ section }: { section: PageSection }) {
           </div>
         </Reveal>
 
-        {/* Catering and celebrations: one line each, at the weight a homepage
-            owes them. Both have their own page for everything else. */}
+        {/* One line, not two. Celebrations now have a section of their own
+            further up the page, so repeating them here would be the third time
+            the homepage points at the same form. Catering is the one that is
+            still only reachable from the nav. */}
         {section.visible ? (
           <Reveal delay={60}>
             <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-brown/15 pt-6">
@@ -89,12 +91,6 @@ export function FindUs({ section }: { section: PageSection }) {
                 className="inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-brown underline underline-offset-4 hover:text-coral hover:underline-offset-[6px]"
               >
                 Feed the party — catering packages
-              </Link>
-              <Link
-                href="/private-events"
-                className="inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-brown underline underline-offset-4 hover:text-coral hover:underline-offset-[6px]"
-              >
-                Book the room for a celebration
               </Link>
             </div>
           </Reveal>

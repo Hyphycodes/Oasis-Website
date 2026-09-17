@@ -176,3 +176,39 @@ as Facebook's is).
 Every admin control still drives something visible. The `bar` section keeps its own eyebrow and
 heading on the facts line rather than becoming a lone visibility toggle, and `two-paths` drives
 the catering and celebration links in the closing block.
+
+## Events lead, and the page sells two things
+
+**The reel dissolves.** The hero's ellipse mask still had roughly half its opacity left where
+it met the bottom edge, so the loop ended on a straight cut into the canvas. Its vertical
+radius now reaches that edge exactly, and the scrim over it lets go early too — otherwise the
+scrim simply becomes the hard edge instead.
+
+**"On next" sits directly under the hero.** Oasis is a restaurant people already know how to
+have dinner at; the reason to pick a particular night is what is on that night, and the
+calendar was three sections down. One strip now names the soonest event, dates it, and offers
+one way in — tickets where there are tickets, the night itself where there are none, because
+the weekly nights are free and have nothing to sell. `selectHomepageEvents` had already been
+returning a `next` event for exactly this and nothing had ever used it. The strip renders
+nothing when nothing is upcoming, rather than advertising an empty calendar.
+
+**Four general doors, not a menu in miniature.** "Quesabirrias / Plates & entrées / Margaritas
+/ The bar" named two dishes and then split the bar in half, so a guest who wanted a drink had
+to pick between two cards that both meant drinks. It is Tacos, Plates, Cocktails and Brunch —
+what somebody actually arrives wanting, each landing on the part of the menu that answers it.
+Brunch is a colour field because there is no approved brunch photograph and standing a taco
+shot in for one would misrepresent a weekend morning; it carries its hours instead. The `bar`
+section's default copy moved off "Margaritas by the tower." for the same reason the cards
+changed — the Cocktails and Brunch cards now say both of those — and onto the one thing
+neither card covers, which is that the drinks come by the tower and the pitcher.
+
+**Celebrations replaced the social gallery.** Four photographs, a poster-scale headline and
+three account links sold nothing. A birthday or a quinceañera is a room booked weeks ahead and
+had no homepage presence beyond small print at the very bottom. The accounts are in the footer,
+where a row of logos is enough. Every claim in the new section is one the restaurant already
+publishes: capacities, minimums and room-hire terms stay absent, because they are not published
+anywhere, they depend on the date, and the inquiry form is what settles them.
+
+One placement note: the rail companion is taller than the action rail, so he leans up into the
+"on next" strip above it. From 640px that strip's ticket button is aligned right, exactly where
+his easel is, so the row reserves his footprint the same way the rail below it does.

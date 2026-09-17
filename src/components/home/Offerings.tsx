@@ -18,45 +18,52 @@ import type { PageSection } from '@/content/types';
  * scroller hid half of what it offered, so the categories past the second one
  * were only ever found by accident.
  *
- * One band now. Four photographs that all fit on the screen at once, so nothing
- * is hidden behind a swipe; the two weakest tiles (a colour field standing in
- * for Starters, another for Brunch, because neither has an approved
- * photograph — see docs/ASSET-HANDOFF.md) are gone rather than padding the
- * grid, and brunch survives where it is actually useful: as a fact, with its
- * hours, on the line under the grid.
+ * One band now, and four tiles that all fit on the screen at once, so nothing
+ * is hidden behind a swipe.
  */
 type Tile = {
   label: string;
   note: string;
   href: string;
-  assetId: AssetId;
-};
+} & ({ assetId: AssetId } | { field: 'sand' });
 
-/** Four real photographs. The kitchen twice, then the bar twice. */
+/**
+ * FOUR GENERAL DOORS, not a menu in miniature.
+ *
+ * "Quesabirrias / Plates & entrées / Margaritas / The bar" named two dishes and
+ * then split the bar in half, so a guest who wanted a drink had to decide which
+ * of two cards meant drinks. These are the four things somebody actually
+ * arrives wanting, each landing on the part of the menu that answers it.
+ *
+ * Brunch is a colour field rather than a photograph because there is no
+ * approved brunch photograph, and standing a taco shot in for one would be a
+ * small lie about what a weekend morning here looks like. It carries its hours
+ * instead, which is the thing worth knowing. See docs/ASSET-HANDOFF.md.
+ */
 const TILES: Tile[] = [
   {
-    label: 'Quesabirrias',
-    note: 'Crisped with cheese, consommé to dip',
+    label: 'Tacos',
+    note: 'Birria, asada, carnitas, shrimp',
     href: '/menu#specialty-tacos',
     assetId: 'dishQuesabirria',
   },
   {
-    label: 'Plates & entrées',
-    note: 'Fajitas, carne asada, tortas',
+    label: 'Plates',
+    note: 'Fajitas, carne asada, tortas, pasta',
     href: '/menu#entrees',
     assetId: 'plateTorta',
   },
   {
-    label: 'Margaritas',
-    note: 'Six flavours, rocks or frozen',
-    href: '/menu#classic-cocktails',
+    label: 'Cocktails',
+    note: 'Margaritas, towers, pitchers, beer',
+    href: '/menu#cocktails',
     assetId: 'cocktailPour',
   },
   {
-    label: 'The bar',
-    note: 'Tequila, beer, wine, towers',
-    href: '/menu#shareables',
-    assetId: 'backBar',
+    label: 'Brunch',
+    note: 'Saturday & Sunday · 10am–3pm',
+    href: '/menu#brunch',
+    field: 'sand',
   },
 ];
 
@@ -89,18 +96,24 @@ export function Offerings({ section, bar }: { section: PageSection; bar: PageSec
               <li key={tile.label}>
                 <Link href={tile.href} className="group block">
                   <div className="relative isolate overflow-hidden rounded-(--radius-lg)">
-                    <Asset
-                      id={tile.assetId}
-                      className="aspect-square w-full sm:aspect-3/4"
-                      sizes="(min-width: 640px) 23vw, 46vw"
-                      rounded={false}
-                    />
-                    {/* Type over photography never relies on the photograph
-                        being dark in the right place. */}
-                    <div
-                      aria-hidden="true"
-                      className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-t from-obsidian/90 to-transparent"
-                    />
+                    {'assetId' in tile ? (
+                      <>
+                        <Asset
+                          id={tile.assetId}
+                          className="aspect-square w-full sm:aspect-3/4"
+                          sizes="(min-width: 640px) 23vw, 46vw"
+                          rounded={false}
+                        />
+                        {/* Type over photography never relies on the
+                            photograph being dark in the right place. */}
+                        <div
+                          aria-hidden="true"
+                          className="absolute inset-x-0 bottom-0 h-2/5 bg-linear-to-t from-obsidian/90 to-transparent"
+                        />
+                      </>
+                    ) : (
+                      <div className="grain aspect-square w-full bg-sand sm:aspect-3/4" />
+                    )}
                     <p className="display absolute inset-x-0 bottom-0 p-3 text-[clamp(0.9375rem,1.4vw,1.25rem)] leading-none text-night-text">
                       {tile.label}
                     </p>
@@ -114,37 +127,21 @@ export function Offerings({ section, bar }: { section: PageSection; bar: PageSec
           </ul>
         </Reveal>
 
-        {/* What the separate bar band existed to carry, compressed to a label
-            and two facts. It keeps its own eyebrow and heading so the section
-            stays something an editor can actually change and see change — the
-            admin still lists it, and a control that does nothing is worse than
-            no control. */}
+        {/* One line and one button. The bar keeps its own editable eyebrow and
+            heading rather than becoming a bare visibility toggle — a control
+            that does nothing is worse than no control — but it no longer
+            repeats what the Cocktails and Brunch cards just said. */}
         <Reveal delay={90}>
-          <div className="mt-8 border-t border-brown/15 pt-5">
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-brown/15 pt-5">
             {bar.visible ? (
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 {bar.eyebrow ? <Eyebrow tone="orange">{bar.eyebrow}</Eyebrow> : null}
                 <p className="display text-[1.125rem] text-brown">{bar.heading}</p>
               </div>
             ) : null}
-
-            <div className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-3 text-[0.9375rem]">
-              {bar.visible ? (
-                <>
-                  <p className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-semibold text-brown">Brunch</span>
-                    <span className="tabular text-brown-soft">Sat &amp; Sun · 10am–3pm</span>
-                  </p>
-                  <p className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-semibold text-brown">Built to share</span>
-                    <span className="text-brown-soft">Towers · Pitchers · Cantaritos</span>
-                  </p>
-                </>
-              ) : null}
-              <ButtonLink href="/menu" className="ml-auto">
-                See the full menu
-              </ButtonLink>
-            </div>
+            <ButtonLink href="/menu" className="ml-auto">
+              See the full menu
+            </ButtonLink>
           </div>
         </Reveal>
       </Frame>

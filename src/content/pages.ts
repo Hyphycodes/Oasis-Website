@@ -24,10 +24,15 @@ export const homeSections: PageSection[] = [
     variant: 'stagger',
   },
   {
+    // Was "Bar & brunch — Margaritas by the tower." That was written when the
+    // bar had a band of its own; it now sits under a grid whose Cocktails card
+    // already says margaritas and whose Brunch card already carries the hours,
+    // so it said both of those a second time. It carries the one thing neither
+    // card does: that the drinks come by the tower and the pitcher.
     key: 'bar',
-    eyebrow: 'Bar & brunch',
-    heading: 'Margaritas by the tower.',
-    body: 'A bar built on tequila, and the weekend brunch that fills the room by eleven.',
+    eyebrow: 'Built to share',
+    heading: 'Towers, pitchers and cantaritos.',
+    body: null,
     visible: true,
     variant: 'editorial-right',
   },
