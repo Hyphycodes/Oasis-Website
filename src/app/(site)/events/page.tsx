@@ -114,7 +114,7 @@ function NightFeature({
             <div>
               <dt className={`text-[0.8125rem] ${theme.soft}`}>Entry</dt>
               <dd className="tabular mt-1 text-night-text">
-                {event.priceCents != null ? formatPrice(event.priceCents) : 'At the door'}
+                {event.priceCents === 0 ? 'Free entry · No tickets needed' : event.priceCents != null ? formatPrice(event.priceCents) : 'At the door'}
               </dd>
             </div>
           </dl>

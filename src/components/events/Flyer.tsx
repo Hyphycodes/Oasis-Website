@@ -59,7 +59,7 @@ export async function Flyer({
         ) : (
           <div className="flex aspect-square w-full items-center justify-center px-6 text-center">
             <p className={`text-[0.875rem] leading-relaxed ${caption}`}>
-              Current artwork for {eventName} is on the way. The date, time and tickets on this page
+              Current artwork for {eventName} is on the way. The date, time and entry details on this page
               are live.
             </p>
           </div>
@@ -72,7 +72,7 @@ export async function Flyer({
       {printedDate ? (
         <figcaption className={`mt-2.5 text-[0.8125rem] leading-relaxed ${caption}`}>
           Series artwork, printed for {printedDate}. {eventName} runs every week — the next date and
-          tickets are listed on this page.
+          entry details are listed on this page.
         </figcaption>
       ) : null}
     </figure>
