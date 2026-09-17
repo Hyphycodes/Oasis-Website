@@ -200,7 +200,10 @@ export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isO
       {/* Seasonal only; nothing in the default look. Reserves no space, so the
           rail is exactly its usual height without a theme. */}
       <ThemeRailGuest />
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">
+      {/* `action-rail-row` is a stable hook, not a style: the theme reserves
+          space here on phones and tablets so wrapping puts the phone number
+          on its own line rather than letting the seasonal guest sit over it. */}
+      <div className="action-rail-row mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">
         <span className="inline-flex items-center gap-2 font-semibold">
           <span
             aria-hidden="true"

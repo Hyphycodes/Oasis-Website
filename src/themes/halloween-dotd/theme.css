@@ -991,6 +991,22 @@
   }
 }
 
+/* Nothing in the rail — the phone number above all — may sit under him. He is
+   `position: absolute`, so the flex row does not know to route around him on
+   its own; this reserves exactly his footprint (plus a little air) as right
+   padding, so a wrapping row breaks a line early instead of running a link
+   underneath his silhouette. Matches his two sizes above. */
+@media (max-width: 1023px) {
+  [data-theme='halloween-dotd'] main .action-rail-row {
+    padding-right: 152px;
+  }
+}
+@media (max-width: 639px) {
+  [data-theme='halloween-dotd'] main .action-rail-row {
+    padding-right: 132px;
+  }
+}
+
 .theme-hero-companion {
   position: absolute;
   right: 19%;
