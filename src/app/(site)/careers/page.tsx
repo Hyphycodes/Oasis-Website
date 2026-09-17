@@ -1,3 +1,4 @@
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/content/resolve';
 import { getPageCopy, getPageList } from '@/server/content/pages';
@@ -114,6 +115,7 @@ export default async function CareersPage() {
           </div>
         </Frame>
       </Band>
+      <ThemeWorld scene="welcome" />
     </>
   );
 }

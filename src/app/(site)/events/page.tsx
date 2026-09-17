@@ -1,3 +1,4 @@
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { EventFilters } from '@/components/events/EventFilters';
@@ -383,6 +384,7 @@ export default async function EventsPage({
       {listed.map((event) => (
         <JsonLd key={event.id} data={eventJsonLd(event, settings)} />
       ))}
+      <ThemeWorld scene="paint" />
     </>
   );
 }

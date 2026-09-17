@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { activeAnnouncement, AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { ThemeCharacter } from '@/components/theme/ThemeCharacter';
+import { ThemeWorldEdges } from '@/components/theme/ThemeWorld';
 import { ThemeRoot } from '@/components/theme/ThemeRoot';
 import { getAnnouncements, getSiteSettings } from '@/content/resolve';
 import { JsonLd, restaurantJsonLd } from '@/lib/seo';
@@ -29,7 +29,7 @@ export async function SiteChrome({ theme, children }: { theme: ResolvedTheme; ch
       </a>
       <AnnouncementBar announcement={announcement} />
       <Header />
-      <main id="main">{theme.definition && theme.config.options.edges ? <div aria-hidden="true" className="theme-page-companion"><ThemeCharacter name="scream" /></div> : null}{children}</main>
+      <main id="main">{theme.definition && theme.config.options.edges ? <ThemeWorldEdges /> : null}{children}</main>
       <Footer />
       <JsonLd data={restaurantJsonLd(settings)} />
     </ThemeRoot>

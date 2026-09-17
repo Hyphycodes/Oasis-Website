@@ -639,3 +639,49 @@
   .theme-divider[data-tone='dark'] { min-height: 90px; }
   .theme-divider .theme-divider-companion { top: 5px; }
 }
+
+/* An inhabited October room: uneven pools of colour, little guests, open reading space. */
+.theme-world {
+  position: relative;
+  isolation: isolate;
+  height: clamp(135px, 14vw, 190px);
+  max-width: 1250px;
+  margin: 0 auto;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 22% 70%, rgb(207 70 139 / .12), transparent 42%), radial-gradient(ellipse at 82% 40%, rgb(90 112 224 / .12), transparent 42%);
+}
+.theme-world .theme-world-guest { position: absolute; width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 8px 20px rgb(0 0 0 / .18)); }
+.theme-world .theme-world-guest-0 { left: 10%; bottom: 8px; rotate: -5deg; }
+.theme-world .theme-world-guest-1 { right: 12%; top: 5px; width: 125px; height: 125px; rotate: 6deg; }
+.theme-world[data-scene='music'] { background: radial-gradient(ellipse at 30% 60%, rgb(169 38 84 / .15), transparent 40%), radial-gradient(ellipse at 80% 50%, rgb(42 100 255 / .16), transparent 45%); }
+.theme-world[data-scene='music'] .theme-world-guest-0 { left: 20%; width: 125px; height: 155px; }
+.theme-world[data-scene='music'] .theme-world-guest-1 { right: 17%; width: 165px; height: 165px; }
+.theme-world[data-scene='table'] .theme-world-guest-0 { left: 13%; }
+.theme-world[data-scene='table'] .theme-world-guest-1 { right: 24%; }
+.theme-world-orbit { position: absolute; width: 48%; height: 50%; border-top: 1px solid rgb(236 158 194 / .16); border-radius: 50%; left: 28%; top: 45%; rotate: -9deg; }
+.theme-world-star { position: absolute; color: #e9a4cf; font-size: 16px; opacity: .6; }
+.theme-world-star-one { left: 39%; top: 25%; }
+.theme-world-star-two { right: 32%; top: 64%; color: #9bafff; font-size: 22px; }
+.theme-world-star-three { left: 49%; top: 72%; color: #f6ac55; font-size: 10px; }
+.theme-world-edges { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.theme-edge-guest { position: absolute; width: clamp(62px, 5.5vw, 100px); height: 125px; opacity: .65; }
+.theme-edge-guest-0 { left: 2px; top: 10%; rotate: -9deg; }
+.theme-edge-guest-1 { right: 4px; top: 26%; rotate: 12deg; }
+.theme-edge-guest-2 { left: 1px; top: 43%; rotate: -7deg; }
+.theme-edge-guest-3 { right: 1px; top: 60%; rotate: 7deg; }
+.theme-edge-guest-4 { left: 3px; top: 77%; rotate: -12deg; }
+.theme-edge-guest-5 { right: 1px; top: 90%; rotate: 9deg; }
+/* Only use outside gutters where the full content column has room. */
+@media (max-width: 1439px) { .theme-world-edges { display: none; } }
+@media (max-width: 639px) {
+  .theme-world { height: 124px; }
+  .theme-world .theme-world-guest { width: 104px; height: 108px; }
+  .theme-world .theme-world-guest-0 { left: 7%; bottom: 4px; }
+  .theme-world .theme-world-guest-1 { right: 7%; top: 3px; width: 91px; height: 98px; }
+  .theme-world[data-scene='music'] .theme-world-guest-0 { left: 12%; width: 90px; height: 112px; }
+  .theme-world[data-scene='music'] .theme-world-guest-1 { right: 10%; width: 110px; height: 115px; }
+}
+/* Florals remain cultural accents, no longer the repeated visual structure. */
+.theme-footer-left, .theme-footer-right { opacity: .25; }
+.theme-photo-guest { position: absolute; right: -12px; bottom: -22px; width: clamp(95px, 11vw, 155px); height: auto; z-index: 2; pointer-events: none; filter: drop-shadow(0 6px 12px rgb(0 0 0 / .22)); }

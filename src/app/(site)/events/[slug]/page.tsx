@@ -1,3 +1,4 @@
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Flyer } from '@/components/events/Flyer';
@@ -245,6 +246,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
       </Band>
 
       {next ? <JsonLd data={eventJsonLd(next, settings)} /> : null}
+      <ThemeWorld scene="paint" />
     </>
   );
 }

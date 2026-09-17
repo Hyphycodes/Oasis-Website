@@ -1,3 +1,4 @@
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { CateringForm } from '@/components/forms/CateringForm';
 import { Band, Frame } from '@/components/primitives/Band';
@@ -142,6 +143,7 @@ export default async function CateringPage() {
           </div>
         </Frame>
       </Band>
+      <ThemeWorld scene="celebration" />
     </>
   );
 }

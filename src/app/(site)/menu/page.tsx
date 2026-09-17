@@ -1,3 +1,4 @@
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { Asset } from '@/components/media/Asset';
 import { MenuExperience } from '@/components/menu/MenuExperience';
@@ -94,6 +95,7 @@ export default async function MenuPage() {
       {menus.map((menu) => (
         <JsonLd key={menu.slug} data={menuJsonLd(menu)} />
       ))}
+      <ThemeWorld scene="table" />
     </>
   );
 }

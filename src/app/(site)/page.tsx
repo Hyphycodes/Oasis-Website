@@ -6,7 +6,7 @@ import { CateringAndVisit } from '@/components/home/CateringAndVisit';
 import { ActionRail, Hero } from '@/components/home/Hero';
 import { FeaturedEvents } from '@/components/home/FeaturedEvents';
 import { Offerings } from '@/components/home/Offerings';
-import { ThemeDivider } from '@/components/theme/ThemeDivider';
+import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import { seo } from '@/content/pages';
 import { getCateringPackages, getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
@@ -76,13 +76,12 @@ export default async function HomePage() {
       {/* Events sit high: the second thing a visitor learns about Oasis is that
           there is always something on. */}
       <FeaturedEvents events={homepageEvents} />
+      <ThemeWorld scene="paint" />
       <Offerings section={breadth} />
-      {/* Seasonal ornaments. Render nothing on the default look. Two, not five:
-          the transitions that already exist do the rest. */}
-      <ThemeDivider />
+      {/* Seasonal scenes share the room with the content. */}
       <BarAndBrunch section={bar} />
       <AfterDark section={afterDark} events={nights} />
-      <ThemeDivider tone="dark" />
+      <ThemeWorld scene="music" />
       <SocialScene />
       <CateringAndVisit section={twoPaths} packages={packages} />
     </>

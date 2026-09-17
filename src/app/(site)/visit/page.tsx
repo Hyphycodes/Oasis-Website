@@ -1,3 +1,4 @@
+import { ThemeWorld, ThemePhotoGuest } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/content/resolve';
 import { getPageCopy } from '@/server/content/pages';
@@ -176,7 +177,8 @@ export default async function VisitPage() {
       <Band surface="ivory-deep" size="sm">
         <Frame wide>
           <Eyebrow>The room</Eyebrow>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="relative mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            <ThemePhotoGuest name="snoopy" />
             <Asset
               id="diningRoom"
               className="aspect-3/4 w-full"
@@ -195,6 +197,7 @@ export default async function VisitPage() {
           </div>
         </Frame>
       </Band>
+      <ThemeWorld scene="welcome" />
     </>
   );
 }

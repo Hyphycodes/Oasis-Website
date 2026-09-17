@@ -1,3 +1,4 @@
+import { ThemePhotoGuest } from '@/components/theme/ThemeWorld';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink } from '@/components/primitives/Button';
@@ -20,7 +21,8 @@ export function BarAndBrunch({ section }: { section: PageSection }) {
       <Frame wide>
         <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
           <Reveal className="lg:col-span-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="relative grid grid-cols-2 gap-3">
+              <ThemePhotoGuest name="kitty" />
               <Asset
                 id="margaritaTajin"
                 className="aspect-square w-full"

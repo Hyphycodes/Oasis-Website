@@ -1,0 +1,37 @@
+import { getActiveTheme } from '@/themes/resolve';
+import { ThemeCharacter, type ThemeCharacterName } from './ThemeCharacter';
+
+const scenes = {
+  welcome: ['pumpkin', 'angel'],
+  paint: ['myers', 'scream'],
+  music: ['selena', 'junior'],
+  table: ['snoopy', 'roses'],
+  celebration: ['kitty', 'pumpkin'],
+} satisfies Record<string, ThemeCharacterName[]>;
+
+/** A little inhabited space between content, with no copy or competing action. */
+export async function ThemeWorld({ scene = 'welcome' }: { scene?: keyof typeof scenes }) {
+  const theme = await getActiveTheme();
+  if (!theme.definition || !theme.config.options.edges) return null;
+  return <div className="theme-world" data-scene={scene} aria-hidden="true">
+    <span className="theme-world-orbit" />
+    {scenes[scene].map((name, index) => <ThemeCharacter key={name} name={name} className={`theme-world-guest theme-world-guest-${index}`} />)}
+    <span className="theme-world-star theme-world-star-one">✦</span>
+    <span className="theme-world-star theme-world-star-two">✧</span>
+    <span className="theme-world-star theme-world-star-three">✦</span>
+  </div>;
+}
+
+/** Peripheral companions stay outside the reading column and never intercept input. */
+export function ThemeWorldEdges() {
+  return <div className="theme-world-edges" aria-hidden="true">
+    {(['pumpkin','selena','angel','myers','junior','scream'] as const).map((name,index) => <ThemeCharacter key={name} name={name} className={`theme-edge-guest theme-edge-guest-${index}`} />)}
+  </div>;
+}
+
+/** Place inside a relative photo composition, away from words and controls. */
+export async function ThemePhotoGuest({ name }: { name: ThemeCharacterName }) {
+  const theme = await getActiveTheme();
+  if (!theme.definition || !theme.config.options.edges) return null;
+  return <ThemeCharacter name={name} className="theme-photo-guest" />;
+}

@@ -1,27 +1,8 @@
 import { ThemeCharacter } from './ThemeCharacter';
 import { getActiveTheme } from '@/themes/resolve';
 
-/**
- * An ornamental transition between two homepage movements.
- *
- * Renders nothing on the default look, so the placements in the page are inert
- * until a theme is on. Used twice on the homepage and nowhere else — the brief
- * asks for restraint, and a divider at every boundary is wallpaper.
- */
-export async function ThemeDivider({ tone = 'light' }: { tone?: 'light' | 'dark' }) {
-  const theme = await getActiveTheme();
-  if (!theme.definition || !theme.config.options.edges) return null;
-  const divider = theme.assets.divider;
-  if (!divider.path) return null;
-
-  return (
-    <div aria-hidden="true" className="theme-divider" data-tone={tone}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={divider.path} alt="" loading="lazy" decoding="async" />
-      <ThemeCharacter name={tone === 'dark' ? 'scream' : 'kitty'} className="theme-divider-companion" />
-    </div>
-  );
-}
+/** Seasonal transitions are small inhabited scenes, rather than floral rules. */
+export { ThemeWorld } from './ThemeWorld';
 
 /** Foreground artwork in the footer's corners. */
 export async function ThemeFooterLayer() {
@@ -32,7 +13,7 @@ export async function ThemeFooterLayer() {
 
   return (
     <div aria-hidden="true" className="theme-footer">
-      <div className="theme-footer-companions"><ThemeCharacter name="kitty" /><ThemeCharacter name="scream" /><ThemeCharacter name="snoopy" /></div>
+      <div className="theme-footer-companions"><ThemeCharacter name="pumpkin" /><ThemeCharacter name="snoopy" /><ThemeCharacter name="roses" /></div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={art.path} alt="" className="theme-footer-left" loading="lazy" decoding="async" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
