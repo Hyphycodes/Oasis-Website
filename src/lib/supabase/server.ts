@@ -54,7 +54,10 @@ export function getServiceClient(): SupabaseClient | null {
 
   return createClient(URL, key, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { 'x-oasis-source': 'ssr' } },
+    global: {
+      headers: { 'x-oasis-source': 'ssr' },
+      fetch: (input, init) => fetch(input, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000) }),
+    },
   });
 }
 

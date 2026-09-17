@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { venueIsoDate } from './events';
 import type { InquiryType } from '@/content/types';
 
 /**
@@ -27,11 +28,10 @@ const futureDate = z
   .string()
   .trim()
   .min(1, 'Choose a date.')
-  .refine((value) => !Number.isNaN(Date.parse(value)), 'Choose a valid date.')
-  .refine((value) => {
-    const chosen = new Date(`${value}T23:59:59`);
-    return chosen.getTime() >= Date.now() - 86_400_000;
-  }, 'Choose a date that has not already passed.');
+  .refine((value) => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value,
+    'Choose a valid date.')
+  .refine((value) => value >= venueIsoDate(new Date().toISOString()), 'Choose a date that has not already passed.');
 
 export const cateringSchema = z.object({
   ...base,
@@ -73,7 +73,7 @@ export const SCHEMAS = {
 } satisfies Record<InquiryType, z.ZodTypeAny>;
 
 export type InquiryResult =
-  | { ok: true; reference: string; stored: 'database' | 'log' }
+  | { ok: true; reference: string; stored: 'database' }
   | { ok: false; fieldErrors: Record<string, string>; formError?: string };
 
 /** Short, human-quotable reference. Deterministic from the payload + timestamp. */

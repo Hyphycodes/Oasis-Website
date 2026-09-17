@@ -110,27 +110,11 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
 
 ---
 
-## The admin is currently open
+## Staff authentication
 
-**There is no sign-in on `/admin` right now.** Anyone who can reach the URL has full access, and
-with Supabase configured, writes use the service key — because with no account there is no role for
-Row Level Security to check. That is the honest consequence of turning the gate off, not an
-oversight.
-
-It is fine on a local machine. It is not fine on a public address.
-
-| To require sign-in | Where |
-|---|---|
-| Without a code change (**use this in a deployment**) | `ADMIN_REQUIRE_SIGN_IN=true` |
-| In code | `OPEN_ADMIN = false` in `src/server/admin-access.ts`, and the matching `OPEN_ADMIN_DEFAULT` in `src/middleware.ts` |
-
-The environment variable wins over the constant, so turning it on in production cannot be undone by
-redeploying an older commit. Nothing was removed to open the gate: accounts, roles, RLS and the
-publish guard are all still there and start working again the moment it closes.
-
-| Name | Required | Secret | Purpose |
-|---|---|---|---|
-| `ADMIN_REQUIRE_SIGN_IN` | Before launch | No | `true` puts the password back on `/admin` |
+Production always requires sign-in, including when `ADMIN_REQUIRE_SIGN_IN=false` is set.
+Only development can explicitly opt out with that value. Staff need both a Supabase Auth user
+and an active `profiles` row. See [staff setup and release audit](PRODUCTION-POLISH-2026-09-17.md).
 
 ---
 
@@ -173,7 +157,7 @@ canonical URLs and confuse search engines.
 
 | Not configured | Consequence |
 |---|---|
-| **Email delivery** | No mailer exists, so nothing in the UI claims an email was sent. Enquiries are stored in the database, or written to the server log when Supabase is absent — and the confirmation message says which. Adding email means adding a provider **and** updating the wording in `src/components/forms/FormShell.tsx`. |
+| **Email delivery** | No mailer exists, so nothing in the UI claims an email was sent. Enquiries succeed only after database persistence. Development uses the local inbox; an unavailable production database returns an error and preserves the form. Adding email means adding a provider **and** updating the wording in `src/components/forms/FormShell.tsx`. |
 | **Analytics** | No script, no cookie banner — there is nothing to consent to. `/legal/privacy` states this plainly and must be updated in the same change if analytics is ever added. |
 | **Error monitoring** | Not set up. Vercel captures runtime logs. |
 | **Scheduled publishing** | There is no scheduler in this deployment. A "scheduled" state that silently never fires is worse than not offering one, so the admin has Draft / Published / Changed / Archived and says so. |

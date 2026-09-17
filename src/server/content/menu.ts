@@ -173,8 +173,7 @@ export async function getEditableMenus(db: Db): Promise<AdminMenu[]> {
                   priceCents: (item.price_cents as number | null) ?? null,
                   priceNote: (item.price_note as string | null) ?? null,
                   modifierGroupLabel: (item.modifier_group_label as string | null) ?? null,
-                  modifiers: modifierRows
-                    .filter((modifier) => modifier.item_id === item.id)
+                  modifiers: (Array.isArray(item._modifiers) ? (item._modifiers as Row[]) : modifierRows.filter((modifier) => modifier.item_id === item.id))
                     .sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0))
                     .map((modifier) => ({
                       id: String(modifier.id),

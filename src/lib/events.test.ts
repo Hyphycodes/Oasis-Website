@@ -456,3 +456,29 @@ describe('ineligibleReason', () => {
     expect(ineligibleReason({ ...event, title: '  ' }, now)).toBe('No name');
   });
 });
+
+describe('September production regressions', () => {
+  it('advances both weekly nights past September 11 and 12', () => {
+    const now = new Date('2026-09-15T18:00:00Z');
+    expect(nextPerSeries(input(), now).map(event => venueIsoDate(event.startsAt))).toEqual(['2026-09-18', '2026-09-19']);
+  });
+  it('applies an override stored as a UTC instant to its Chicago night', () => {
+    const now = new Date('2026-09-17T18:00:00Z');
+    const records = [override({ startsAt: '2026-09-19T03:00:00Z', endsAt: '2026-09-19T07:00:00Z', status: 'cancelled' })];
+    expect(venueIsoDate(nextEvent(input(eventSeries, records), now, 'oasis-fridays')!.startsAt)).toBe('2026-09-25');
+  });
+  it('never promotes a postponed night', () => {
+    const now = new Date('2026-09-17T18:00:00Z');
+    const records = [override({ startsAt: '2026-09-18', status: 'postponed' })];
+    expect(venueIsoDate(nextEvent(input(eventSeries, records), now, 'oasis-fridays')!.startsAt)).toBe('2026-09-25');
+  });
+  it('rejects invalid timestamps rather than displaying an immortal event', () => {
+    const now = new Date('2026-09-17T18:00:00Z');
+    const event = nextEvent(input(), now)!;
+    expect(ineligibleReason({ ...event, endsAt: 'not-a-date' }, now)).toBe('Invalid date or duration');
+  });
+  it('does not fabricate online ticket links for door-only entry', () => {
+    const event = nextEvent(input([{ ...fridays, ticketPolicy: 'door' }]), new Date('2026-09-17T18:00:00Z'))!;
+    expect(event.ticketUrl).toBeNull();
+  });
+});

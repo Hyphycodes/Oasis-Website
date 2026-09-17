@@ -4,26 +4,19 @@ import { Flyer } from '@/components/events/Flyer';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
-import { eventSeries as staticSeries, oneTimeEvents } from '@/content/events';
 import { getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
 import type { EventInput } from '@/lib/events';
 import type { ResolvedEvent } from '@/content/types';
 import { EventDetail, eventShareImage } from '@/components/events/EventDetail';
-import { addToCalendarUrl, getSeriesOccurrences, standaloneEvents, STATUS_LABEL } from '@/lib/events';
+import { addToCalendarUrl, getSeriesOccurrences, standaloneEvents, nextEvent, STATUS_LABEL } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
 // Bounded staleness, for the same reason as /events: a cached page must never be
 // able to hold a finished night for long.
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
-export function generateStaticParams() {
-  return [
-    ...staticSeries.map((series) => ({ slug: series.slug })),
-    ...oneTimeEvents.map((event) => ({ slug: event.slug })),
-  ];
-}
 
 /**
  * A standalone event by slug — a Paint & Sip, a brunch, a comedy night.
@@ -94,7 +87,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
   // list could run indefinitely — but publishing months of nights the owner has
   // not looked at turns a schedule into a promise. Six is "the next few weeks".
   const occurrences = getSeriesOccurrences(input, slug, now, 6);
-  const next = occurrences[0];
+  const next = nextEvent(input, now, slug);
   // The series keeps its own identity across the site: Friday is teal, Latin
   // Saturday is plum, on the listing and on its own page alike.
   const tone = series.cadence.kind === 'weekly' && series.cadence.weekday === 5 ? 'teal' : 'plum';

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { Asset } from '@/components/media/Asset';
 import { Frame } from '@/components/primitives/Band';
 import { ButtonLink } from '@/components/primitives/Button';
 import { Reveal } from '@/components/primitives/Reveal';
@@ -30,14 +32,15 @@ export function AfterDark({
 
   return (
     <section className="relative isolate">
-      {/* A short graded step, not a slab. Ivory into teal, over 64px. */}
+      {/* A restrained transition into the evening programme. */}
       <div
         aria-hidden="true"
-        className="h-12 w-full bg-linear-to-b from-ivory to-teal sm:h-16"
+        className="h-1 w-full bg-amber"
       />
 
       <div className="bg-teal on-dark py-(--spacing-band-sm)">
         <Frame wide>
+          <div className="mb-8 overflow-hidden"><Asset id="roomCrowd" className="aspect-[16/9] w-full sm:aspect-[21/7]" sizes="100vw" rounded={false} /></div>
           <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
             <Reveal className="lg:col-span-5">
               <Eyebrow tone="night">{section.eyebrow ?? 'Oasis After Dark'}</Eyebrow>
@@ -70,7 +73,7 @@ export function AfterDark({
                     <Reveal delay={index * 70}>
                       <div className={`border-t-2 ${rule} pt-4`}>
                         <p className={`display text-[1.375rem] ${accent}`}>
-                          {event.title.replace('Oasis ', '')}
+                          <Link href={`/events/${event.seriesSlug}`} className="underline-offset-4 hover:underline">{event.title.replace('Oasis ', '')} ↗</Link>
                         </p>
                         <p className="tabular mt-2 text-[0.9375rem] text-night-text">
                           {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}

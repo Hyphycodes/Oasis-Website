@@ -1,4 +1,4 @@
-import { getUpcomingEvents, venueIsoDate, type EventInput } from './events';
+import { getUpcomingEvents, ineligibleReason, venueIsoDate, type EventInput } from './events';
 import type { ResolvedEvent } from '@/content/types';
 import type { EventCategory } from '@/content/event-presentation';
 import { CATEGORY_FILTERS } from '@/content/event-presentation';
@@ -111,7 +111,7 @@ export function buildCalendar(
   // A horizon rather than everything: recurring nights are generated from
   // cadence and would otherwise run forever, and publishing a year of dates
   // nobody has checked turns a calendar into a promise.
-  const upcoming = getUpcomingEvents(input, now, 90);
+  const upcoming = getUpcomingEvents(input, now, 90).filter((event) => ineligibleReason(event, now) === null);
 
   // One entry per recurring series: its next night, which is the only date on
   // it anybody needs from this page.

@@ -217,7 +217,7 @@ function resolve(
     'ticketUrl',
     occurrence?.ticketUrl ?? null,
     series
-      ? (series.ticketUrl ?? ticketUrlForOccurrence(series.slug, resolvedStart))
+      ? (series.ticketPolicy && series.ticketPolicy !== 'required' ? null : series.ticketUrl ?? ticketUrlForOccurrence(series.slug, resolvedStart))
       : null,
   );
 
@@ -317,7 +317,9 @@ export function generateOccurrences(
   const byDate = new Map<string, OccurrenceRecord>();
   for (const record of occurrences) {
     if (record.seriesSlug !== series.slug) continue;
-    byDate.set(record.startsAt.slice(0, 10), record);
+    // Date-only overrides are venue dates; instants must be converted from UTC.
+    const date = record.startsAt.length === 10 ? record.startsAt : venueIsoDate(record.startsAt);
+    byDate.set(date, record);
   }
 
   const results: ResolvedEvent[] = [];
@@ -423,8 +425,10 @@ export function ineligibleReason(event: ResolvedEvent, now: Date): string | null
   if (event.archivedAt) return 'Archived';
   if (event.series?.paused) return 'Series paused';
   if (event.series?.archivedAt) return 'Series archived';
+  if (!Number.isFinite(Date.parse(event.startsAt)) || !Number.isFinite(Date.parse(event.endsAt)) || Date.parse(event.endsAt) <= Date.parse(event.startsAt)) return 'Invalid date or duration';
   if (new Date(event.endsAt).getTime() <= now.getTime()) return 'Already finished';
   if (event.status === 'cancelled') return 'Cancelled';
+  if (event.status === 'postponed') return 'Postponed';
   if (!event.title.trim()) return 'No name';
   return null;
 }
@@ -446,7 +450,7 @@ export function getUpcomingEvents(input: EventInput, now: Date, limit?: number):
       const reason = ineligibleReason(event, now);
       if (reason === null) return true;
       // The single exception, so ticket-holders are informed.
-      return reason === 'Cancelled' && isSoon(event.startsAt, now);
+      return (reason === 'Cancelled' || reason === 'Postponed') && isSoon(event.startsAt, now);
     })
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 

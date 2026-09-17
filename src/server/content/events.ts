@@ -132,7 +132,6 @@ async function load(db: Db, mode: Mode): Promise<EventInput> {
     db.list<Row>('event_occurrences', { orderBy: 'starts_at' }),
   ]);
 
-  if (seriesRows.length === 0) return staticInput();
 
   return {
     series: seriesRows
@@ -156,8 +155,9 @@ export const getPublicEvents = cache(async (): Promise<EventInput> => {
   try {
     return await load(db, 'published');
   } catch (error) {
-    console.error('[events] falling back to static content:', error);
-    return staticInput();
+    console.error('[events] content unavailable:', error);
+    // An outage must not resurrect events staff have cancelled or unpublished.
+    return { series: [], occurrences: [] };
   }
 });
 

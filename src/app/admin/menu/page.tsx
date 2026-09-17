@@ -6,6 +6,7 @@ import { getReadDb, isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
 import { getEditableMenus } from '@/server/content/menu';
 import { canOpen } from '@/server/permissions';
+import { AddCategory, CategoryControls } from './CategoryControls';
 import { AddItem } from './AddItem';
 import { MenuRow } from './MenuRow';
 
@@ -170,6 +171,7 @@ export default async function AdminMenuPage({
                     </summary>
 
                     <div className="border-t border-brown/12 px-4 pb-4">
+                      {canPublish ? <CategoryControls id={category.id} name={category.name} note={category.note} siblings={active.categories.map(c => c.id)} /> : null}
                       <ul>
                         {items.map((item) => (
                           <MenuRow
@@ -187,6 +189,8 @@ export default async function AdminMenuPage({
               })}
             </div>
           ) : null}
+
+          {canPublish && active ? <AddCategory menuSlug={active.slug} /> : null}
 
           {!canPublish ? (
             <div className="mt-6">

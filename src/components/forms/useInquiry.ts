@@ -29,7 +29,9 @@ export function useInquiry(type: InquiryType) {
 
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
-      const next = await submitInquiry(type, formData);
+      let next: InquiryResult;
+      try { next = await submitInquiry(type, formData); }
+      catch { next = { ok: false, fieldErrors: {}, formError: 'Could not connect. Your details are still here. Please try again or call us.' }; }
       setResult(next);
       if (next.ok) formRef.current?.reset();
       // Move focus to the status so the outcome is announced, not just painted.

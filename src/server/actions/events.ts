@@ -25,6 +25,11 @@ const httpsUrl = z
     message: 'A ticket link has to start with https://',
   });
 
+const dateInput = z.string().refine((value) => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value, 'Pick a valid date.');
+const timeInput = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use a valid time like 22:00.');
+const ageInput = z.string().trim().refine((value) => value === '' || /^\d{1,2}$/.test(value), 'Use an age from 0 to 99.');
+
 /* ------------------------------------------------------------------ series */
 
 const seriesSchema = z.object({
@@ -32,15 +37,18 @@ const seriesSchema = z.object({
   title: z.string().trim().min(1, 'The night needs a name.').max(120),
   summary: z.string().trim().max(200),
   description: z.string().trim().max(1200),
-  ageMin: z.string().trim().max(3),
+  ageMin: ageInput,
   ageNote: z.string().trim().max(120),
   music: z.string().trim().max(200),
   price: z.string().trim().max(12),
+  weekday: z.coerce.number().int().min(0).max(6),
+  seriesEndsOn: dateInput.or(z.literal('')),
+  ticketUrl: httpsUrl,
   ticketPolicy: z.enum(['required', 'door', 'free', 'later']),
   flyerAssetId: z.string().trim().optional(),
   flyerPrintedDate: z.string().trim().max(60).optional(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 22:00.'),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 02:00.'),
+  startTime: timeInput,
+  endTime: timeInput,
   publish: z.string().optional(),
 });
 
@@ -78,6 +86,9 @@ export async function saveSeries(_prev: ActionState, formData: FormData): Promis
       music_formats: value.music.split(',').map((s) => s.trim()).filter(Boolean),
       price_cents: price ? Math.round(Number(price) * 100) : null,
       ticket_policy: value.ticketPolicy,
+      ticket_url: value.ticketUrl || null,
+      cadence: `weekly:${value.weekday}`,
+      series_ends_on: value.seriesEndsOn || null,
       start_minutes: start,
       end_minutes: end,
     };
@@ -137,7 +148,7 @@ export async function setSeriesPaused(
 
 const overrideSchema = z.object({
   seriesSlug: z.string().min(1),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: dateInput,
   status: z.enum(['scheduled', 'sold-out', 'cancelled', 'postponed', 'free']),
   ticketUrl: httpsUrl,
   price: z.string().trim().max(12),
@@ -154,7 +165,7 @@ const overrideSchema = z.object({
  * override that says "nothing", and the night would lose its music or its name.
  */
 export async function saveOccurrence(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  return run('content.edit', async ({ db }) => {
+  return run('content.publish', async ({ db }) => {
     const parsed = overrideSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
       return { ok: false, message: parsed.error.issues[0]?.message ?? 'Please check the form.' };
@@ -166,12 +177,20 @@ export async function saveOccurrence(_prev: ActionState, formData: FormData): Pr
       return { ok: false, message: 'Enter the entry price as a number, for example 10.' };
     }
 
-    const id = `${value.seriesSlug}:${value.date}`;
+    const series = await db.get<Row>('event_series', value.seriesSlug);
+    if (!series) return { ok: false, message: 'That repeating night no longer exists.' };
+    const existing = (await db.list<Row>('event_occurrences', { where: { series_slug: value.seriesSlug } }))
+      .find((row) => (String(row.starts_at).length === 10 ? String(row.starts_at) : venueIsoDate(String(row.starts_at))) === value.date);
+    const id = String(existing?.id ?? crypto.randomUUID());
+    const [year, month, day] = value.date.split('-').map(Number);
+    const start = venueLocalIso(year!, month!, day!, Number(series.start_minutes));
+    const end = venueLocalIso(year!, month!, day!, Number(series.end_minutes));
     const fields: Row = {
+      ...existing,
       id,
       series_slug: value.seriesSlug,
-      starts_at: value.date,
-      ends_at: value.date,
+      starts_at: start,
+      ends_at: end,
       status: value.status,
       ticket_url: value.ticketUrl || null,
       price_cents: price ? Math.round(Number(price) * 100) : null,
@@ -211,7 +230,7 @@ export async function saveOccurrence(_prev: ActionState, formData: FormData): Pr
 const clearSchema = z.object({ id: z.string().min(1) });
 
 export async function clearOccurrence(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  return run('content.edit', async ({ db }) => {
+  return run('content.publish', async ({ db }) => {
     const parsed = clearSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { ok: false, message: 'Could not reset that night.' };
     await db.remove('event_occurrences', parsed.data.id);
@@ -231,7 +250,7 @@ const bulkSchema = z.object({
 });
 
 export async function setTicketLinks(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  return run('content.edit', async ({ db }) => {
+  return run('content.publish', async ({ db }) => {
     const parsed = bulkSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { ok: false, message: 'Could not read that list.' };
 
@@ -253,16 +272,18 @@ export async function setTicketLinks(_prev: ActionState, formData: FormData): Pr
         continue;
       }
 
-      const id = `${parsed.data.seriesSlug}:${date}`;
-      const existing = await db.get<Row>('event_occurrences', id);
+      if (!dateInput.safeParse(date).success) { problems.push(`${date}: invalid date`); continue; }
+      const series = await db.get<Row>('event_series', parsed.data.seriesSlug);
+      if (!series) return { ok: false, message: 'That repeating night no longer exists.' };
+      const existing = (await db.list<Row>('event_occurrences', { where: { series_slug: parsed.data.seriesSlug } }))
+        .find(row => (String(row.starts_at).length === 10 ? String(row.starts_at) : venueIsoDate(String(row.starts_at))) === date);
+      const [y, m, d] = date!.split('-').map(Number);
       await db.upsert('event_occurrences', {
         ...(existing ?? {
-          id,
-          series_slug: parsed.data.seriesSlug,
-          starts_at: date,
-          ends_at: date,
-          status: 'scheduled',
-          published: true,
+          id: crypto.randomUUID(), series_slug: parsed.data.seriesSlug,
+          starts_at: venueLocalIso(y!, m!, d!, Number(series.start_minutes)),
+          ends_at: venueLocalIso(y!, m!, d!, Number(series.end_minutes)),
+          status: 'scheduled', published: true,
         }),
         ticket_url: url,
       });
@@ -284,11 +305,11 @@ export async function setTicketLinks(_prev: ActionState, formData: FormData): Pr
 
 const oneTimeSchema = z.object({
   title: z.string().trim().min(1, 'Give the event a name.').max(120),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date.'),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 21:00.'),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 01:00.'),
+  date: dateInput,
+  startTime: timeInput,
+  endTime: timeInput,
   description: z.string().trim().max(1200),
-  ageMin: z.string().trim().max(3),
+  ageMin: ageInput,
   music: z.string().trim().max(200),
   price: z.string().trim().max(12),
   ticketUrl: httpsUrl,
@@ -382,7 +403,7 @@ export async function createOneTimeEvent(
     }
 
     await db.insert('event_occurrences', {
-      id: `one-time:${slug}:${value.date}`,
+      id: crypto.randomUUID(),
       series_slug: null,
       slug: `${slug}-${value.date}`,
       title: value.title,
@@ -410,18 +431,7 @@ export async function createOneTimeEvent(
 function venueInstant(date: string, time: string): string {
   const [year, month, day] = date.split('-').map(Number);
   const [hour, minute] = time.split(':').map(Number);
-  const naive = Date.UTC(year!, month! - 1, day!, hour!, minute!);
-  const offset = (): number => {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Chicago',
-      timeZoneName: 'shortOffset',
-    }).formatToParts(new Date(naive));
-    const name = parts.find((p) => p.type === 'timeZoneName')?.value ?? 'GMT-6';
-    const match = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(name);
-    if (!match) return -360;
-    return (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3] ?? 0));
-  };
-  return new Date(naive - offset() * 60_000).toISOString();
+  return venueLocalIso(year!, month!, day!, hour! * 60 + minute!);
 }
 
 const publishOccurrenceSchema = z.object({ id: z.string().min(1), published: z.enum(['true', 'false']) });
@@ -464,12 +474,14 @@ const oneOffSchema = z.object({
   title: z.string().trim().min(1, 'The event needs a name.').max(120),
   summary: z.string().trim().max(200),
   description: z.string().trim().max(1200),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a date.'),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 19:00.'),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 22:00.'),
+  date: dateInput,
+  startTime: timeInput,
+  endTime: timeInput,
   ticketUrl: httpsUrl,
   status: z.enum(['scheduled', 'sold-out', 'cancelled', 'postponed', 'free']),
-  ageMin: z.string().trim().max(3),
+  ageMin: ageInput,
+  price: z.string().trim().max(12),
+  music: z.string().trim().max(200),
   venueName: z.string().trim().max(120),
   publish: z.string().optional(),
 });
@@ -498,7 +510,11 @@ export async function saveOneTimeEvent(_prev: ActionState, formData: FormData): 
     // A finish before the start means it runs past midnight, which is normal.
     if (endMinutes <= startMinutes) endMinutes += 1440;
 
+    const price = value.price.replace(/[$,\s]/g, '');
+    if (price && (!Number.isFinite(Number(price)) || Number(price) < 0)) return { ok: false, message: 'Enter a valid entry price.' };
     const fields: Row = {
+      price_cents: price ? Math.round(Number(price) * 100) : null,
+      music_formats: value.music.split(',').map((part) => part.trim()).filter(Boolean),
       title: value.title,
       summary: value.summary || null,
       description: value.description || null,
@@ -518,5 +534,31 @@ export async function saveOneTimeEvent(_prev: ActionState, formData: FormData): 
 
     await saveDraft(db, 'event_occurrences', value.id, fields, staff);
     return saved('Saved as a draft. A manager needs to publish it.');
+  });
+}
+
+/** Duplicate as an unpublished manual event; never reuse another night's tickets. */
+export async function duplicateEvent(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.edit', async ({ db }) => {
+    const id = String(formData.get('id') ?? '');
+    const row = await db.get<Row>('event_occurrences', id);
+    if (!row || row.series_slug) return { ok: false, message: 'Choose a one-time event to duplicate.' };
+    const copyId = crypto.randomUUID();
+    const { created_at: _created, updated_at: _updated, updated_by: _by, ...content } = row;
+    void _created; void _updated; void _by;
+    await db.insert('event_occurrences', { ...content, id: copyId, slug: `event-${copyId}`, title: `${row.title} (copy)`, published: false, archived_at: null, draft: null, ticket_url: null, source: 'manual', source_event_id: null, source_url: null, synced_at: null, featured: false, treatment: 'standard', takeover_start_at: null, takeover_end_at: null });
+    return done('Copy saved in Drafts. Set its date, flyer and ticket link before publishing.', 'events');
+  });
+}
+
+export async function createSeries(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.publish', async ({ db }) => {
+    const parsed = z.object({ title: z.string().trim().min(1).max(120), weekday: z.coerce.number().int().min(0).max(6), startTime: timeInput, endTime: timeInput }).safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the times.' };
+    const value = parsed.data;
+    const start = minutesOf(value.startTime);
+    const end = minutesOf(value.endTime);
+    await db.insert('event_series', { slug: `weekly-${crypto.randomUUID().slice(0, 8)}`, title: value.title, summary: '', description: '', cadence: `weekly:${value.weekday}`, start_minutes: start, end_minutes: end <= start ? end + 1440 : end, paused: true, sort: Date.now() % 1000000, ticket_policy: 'later' });
+    return done('Repeating night created and paused. Fill in the details, then start it from Repeating nights.', 'events');
   });
 }

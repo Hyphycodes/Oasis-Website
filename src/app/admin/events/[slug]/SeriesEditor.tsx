@@ -74,6 +74,12 @@ export function SeriesEditor({
         </Card>
 
         <Card title="When">
+          <div className="mb-4 grid gap-4 sm:grid-cols-2">
+            <div><Label htmlFor="weekday">Repeats every</Label><Select id="weekday" name="weekday" defaultValue={series.cadence.kind === 'weekly' ? series.cadence.weekday : 5}>
+              {['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day, i) => <option key={day} value={i}>{day}</option>)}
+            </Select></div>
+            <div><Label htmlFor="seriesEndsOn">Last date (optional)</Label><TextInput id="seriesEndsOn" name="seriesEndsOn" type="date" defaultValue={series.seriesEndsOn ?? ''} /></div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="startTime">Doors</Label>
@@ -104,6 +110,7 @@ export function SeriesEditor({
         </Card>
 
         <Card title="Getting in">
+          <div className="mb-4"><Label htmlFor="ticketUrl">Series ticket link (optional)</Label><TextInput id="ticketUrl" name="ticketUrl" type="url" defaultValue={series.ticketUrl ?? ''} placeholder="https://" /></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="price" hint="Leave blank for “at the door”.">

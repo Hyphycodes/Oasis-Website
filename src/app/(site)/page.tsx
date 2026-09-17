@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SocialScene } from '@/components/home/SocialScene';
 import { AfterDark } from '@/components/home/AfterDark';
 import { BarAndBrunch } from '@/components/home/BarAndBrunch';
 import { CateringAndVisit } from '@/components/home/CateringAndVisit';
@@ -26,7 +27,7 @@ export const metadata: Metadata = buildMetadata({ ...seo.home!, path: '/' });
  * staleness is just bounded to something shorter than a service.
  * See docs/EVENTS-FRESHNESS.md.
  */
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 /**
  * Homepage — six movements, no more.
@@ -82,6 +83,7 @@ export default async function HomePage() {
       <BarAndBrunch section={bar} />
       <AfterDark section={afterDark} events={nights} />
       <ThemeDivider tone="dark" />
+      <SocialScene />
       <CateringAndVisit section={twoPaths} packages={packages} />
     </>
   );

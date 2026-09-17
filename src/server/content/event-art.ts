@@ -1,5 +1,6 @@
 import 'server-only';
 
+import flyers from '@/content/imported-flyers.json';
 import type { EventArtwork } from '@/components/events/EventArt';
 import { defaultEventArt, defaultEventFlyer } from '@/content/event-art-defaults';
 import { getMediaMap, type PublicAsset } from '@/content/media';
@@ -15,6 +16,16 @@ import type { ResolvedEvent } from '@/content/types';
  * composition handles that: an event with nothing but its flyer still renders,
  * and an event with nothing at all still renders as its own lit colour field.
  */
+/** Exact provider ID matching prevents same-title nights using one another's flyer. */
+function importedFlyer(event: ResolvedEvent): PublicAsset | null {
+  const id = event.provenance.sourceEventId;
+  if (!id) return null;
+  const flyer = (flyers as Record<string, {path: string; width: number; height: number; startsAt: string}>)[id];
+  // Do not show dated artwork after staff reschedule a night.
+  if (!flyer || Date.parse(flyer.startsAt) !== Date.parse(event.startsAt)) return null;
+  return { ...flyer, kind: 'image', alt: `Official flyer for ${event.title}`, ratio: `${flyer.width}:${flyer.height}`, focal: '50% 50%', status: 'final' };
+}
+
 export async function resolveEventArtwork(event: ResolvedEvent): Promise<EventArtwork> {
   const media = await getMediaMap();
   const pick = (id: string | null): PublicAsset | null => {
@@ -27,7 +38,7 @@ export async function resolveEventArtwork(event: ResolvedEvent): Promise<EventAr
   return {
     // The official flyer, first and always available. An uploaded or imported
     // flyer wins; a flyer that ships in the repo only ever fills an empty slot.
-    flyer: pick(event.flyerAssetId) ?? defaultEventFlyer(event.slug, event.title),
+    flyer: pick(event.flyerAssetId) ?? importedFlyer(event) ?? defaultEventFlyer(event.slug, event.title),
     // An uploaded background wins; otherwise the shipped one; otherwise none,
     // and the composition falls back to showing the flyer large.
     keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
@@ -53,7 +64,7 @@ export async function resolveManyEventArtwork(
       return [
         event.id,
         {
-          flyer: pick(event.flyerAssetId) ?? defaultEventFlyer(event.slug, event.title),
+          flyer: pick(event.flyerAssetId) ?? importedFlyer(event) ?? defaultEventFlyer(event.slug, event.title),
           keyArt: pick(event.presentation.keyArtAssetId) ?? shipped?.wide ?? null,
           keyArtMobile: pick(event.presentation.keyArtMobileAssetId) ?? shipped?.tall ?? null,
           foreground: pick(event.presentation.foregroundAssetId),

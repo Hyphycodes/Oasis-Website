@@ -76,7 +76,8 @@ export function MenuExperience({
     }
 
     function fromHash() {
-      const hash = decodeURIComponent(window.location.hash.replace('#', ''));
+      let hash = window.location.hash.replace('#', '');
+      try { hash = decodeURIComponent(hash); } catch { /* Ignore malformed inbound hashes. */ }
 
       if (slugs.includes(hash as MenuSlug)) {
         apply(hash as MenuSlug);
@@ -183,7 +184,7 @@ export function MenuExperience({
                 <a
                   key={category.id}
                   href={`#${category.id}`}
-                  className={`eyebrow shrink-0 whitespace-nowrap py-1 text-brown-soft transition-colors ${theme.link}`}
+                  className={`eyebrow shrink-0 whitespace-nowrap min-h-11 inline-flex items-center py-1 text-brown-soft transition-colors ${theme.link}`}
                 >
                   {category.name}
                 </a>

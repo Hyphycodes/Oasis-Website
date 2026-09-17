@@ -3,6 +3,7 @@ import { Asset } from '@/components/media/Asset';
 import { MenuExperience } from '@/components/menu/MenuExperience';
 import { Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink } from '@/components/primitives/Button';
+import { getPageCopy } from '@/server/content/pages';
 import { pageCopy, seo } from '@/content/pages';
 import { getAllMenus, getSiteSettings } from '@/content/resolve';
 
@@ -34,7 +35,7 @@ const STRIP: AssetId[] = ['consommeDip', 'plateTorta', 'cocktailPour'];
  * they are going to use first.
  */
 export default async function MenuPage() {
-  const [menus, site] = await Promise.all([getAllMenus(), getSiteSettings()]);
+  const [menus, site, copy] = await Promise.all([getAllMenus(), getSiteSettings(), getPageCopy('menu')]);
 
   // The bar list is the only menu with items the restaurant does not publish a
   // price for, so its note belongs at the foot of the bar list — not in an
@@ -51,12 +52,12 @@ export default async function MenuPage() {
         <Frame>
           <div className="grid items-center gap-6 py-7 sm:grid-cols-12 sm:gap-10 lg:py-8">
             <div className="sm:col-span-7">
-              <p className="eyebrow text-clay">{pageCopy.menu.eyebrow}</p>
+              <p className="eyebrow text-clay">{copy.eyebrow ?? pageCopy.menu.eyebrow}</p>
               <h1 className="display mt-2.5 text-[clamp(1.875rem,3.6vw,2.75rem)] text-brown">
-                {pageCopy.menu.heading}
+                {copy.heading ?? pageCopy.menu.heading}
               </h1>
               <p className="measure mt-2.5 text-[0.9375rem] leading-relaxed text-brown-soft">
-                {pageCopy.menu.body}
+                {copy.body ?? pageCopy.menu.body}
               </p>
               {/* One action. Reserving a table is a header-level job on every
                   page; ordering is what this page is for. */}

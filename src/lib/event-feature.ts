@@ -22,7 +22,7 @@ export interface HomepageEvents {
 
 /** A cancelled night is never advertised; it stays visible only on /events. */
 function advertisable(event: ResolvedEvent): boolean {
-  return event.status !== 'cancelled';
+  return event.status !== 'cancelled' && event.status !== 'postponed';
 }
 
 /**

@@ -5,7 +5,8 @@ import { ThemeHeroBackground, ThemeHeroLayer } from '@/components/theme/ThemeHer
 import { getPublicAsset } from '@/content/media';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
-import { site } from '@/content/site';
+import { getSiteSettings } from '@/content/resolve';
+import { getPageCopy } from '@/server/content/pages';
 import type { ResolvedEvent } from '@/content/types';
 import { presetVars } from '@/components/events/EventArt';
 import { resolveEventArtwork } from '@/server/content/event-art';
@@ -36,8 +37,8 @@ export async function Hero({
 }) {
   // Resolved here, on the server, because AssetVideo runs in the browser and the
   // media store does not.
-  const [video, theme] = await Promise.all([getPublicAsset('heroVideo'), getActiveTheme()]);
-  if (!video) return null;
+  const [video, theme, site, hero] = await Promise.all([getPublicAsset('heroVideo'), getActiveTheme(), getSiteSettings(), getPageCopy('home', 'hero')]);
+
 
   const takeoverArt = takeover ? await resolveEventArtwork(takeover) : null;
   // Key art only. A takeover borrows the event's WEBSITE art for the hero — the
@@ -70,14 +71,14 @@ export async function Hero({
           />
         ) : themedBackdrop ? (
           <ThemeHeroBackground theme={theme} />
-        ) : (
+        ) : video ? (
           <AssetVideo
             asset={video}
             mobileBelow={0}
             className="size-full"
             objectPosition="50% 42%"
           />
-        )}
+        ) : null}
       </div>
 
       {/* Directional scrims, not a blanket.
@@ -119,7 +120,7 @@ export async function Hero({
           <p className="eyebrow text-amber">Lockport, Illinois</p>
 
           <h1 className="display mt-5 text-[clamp(2rem,6vw,3.25rem)] leading-[1.06] text-night-text">
-            {(takeover ? [takeover.title] : pageCopy.home.heroHeadlineLines).map((line) => (
+            {(takeover ? [takeover.title] : (hero.heading ? hero.heading.split(/\n/) : pageCopy.home.heroHeadlineLines)).map((line) => (
               <span key={line} className="block">
                 {line}
               </span>
@@ -129,7 +130,7 @@ export async function Hero({
           <p className="mt-5 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
             {takeover
               ? takeover.summary || pageCopy.home.heroBody
-              : pageCopy.home.heroBody}
+              : hero.body || pageCopy.home.heroBody}
           </p>
 
           {/* Reserve is primary, Explore Events is a strong secondary, Order
@@ -190,7 +191,8 @@ export async function Hero({
  * Utility rail — open state, directions, phone. The things people open a
  * restaurant site for, one line, immediately under the hero.
  */
-export function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
+export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
+  const site = await getSiteSettings();
   return (
     <div className="border-b border-brown/12 bg-ivory-deep">
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">

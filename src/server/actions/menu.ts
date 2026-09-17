@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import type { Row } from '@/lib/db/types';
-import { stableUuid } from '@/lib/stable-uuid';
+import { parseModifiers } from '../content/modifiers';
 import { staffCan } from '../auth';
 import {
   archive,
@@ -125,7 +125,7 @@ const itemSchema = z.object({
  */
 export async function saveMenuItem(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return run('content.edit', async ({ db, staff }) => {
-    const parsed = itemSchema.safeParse(Object.fromEntries(formData));
+    const parsed = itemSchema.safeParse({ ...Object.fromEntries(formData), dietary: formData.getAll('dietary').map(String).filter(Boolean).join(',') });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       return {
@@ -143,6 +143,7 @@ export async function saveMenuItem(_prev: ActionState, formData: FormData): Prom
       availability: value.availability,
       available: value.availability === 'available',
       modifier_group_label: value.modifierGroupLabel || null,
+      _modifiers: parseModifiers(value.choices, value.addOns),
       dietary: value.dietary ? value.dietary.split(',').filter(Boolean) : [],
       featured: value.featured,
       ...priceFields(value.mode as PriceMode, value.amount),
@@ -156,60 +157,11 @@ export async function saveMenuItem(_prev: ActionState, formData: FormData): Prom
       await saveDraft(db, 'menu_items', value.id, fields, staff);
     }
 
-    await replaceModifiers(db, value.id, value.choices, value.addOns);
 
     return wantsPublish
       ? done(`“${value.name}” is live.`, 'menu')
       : saved('Saved as a draft. Publish when you are ready.');
   });
-}
-
-/**
- * Choices and add-ons are rewritten wholesale.
- *
- * They are small, ordered, and belong to exactly one dish, so a diff would be
- * more code and more ways to be wrong than simply replacing the set.
- */
-async function replaceModifiers(
-  db: import('@/lib/db/types').Db,
-  itemId: string,
-  choices: string,
-  addOns: string,
-): Promise<void> {
-  const existing = await db.list<Row>('menu_modifiers');
-  for (const row of existing) {
-    if (row.item_id === itemId) await db.remove('menu_modifiers', String(row.id));
-  }
-
-  const rows: Row[] = [];
-  let sort = 0;
-
-  for (const label of choices.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)) {
-    rows.push({
-      id: stableUuid('menu-modifier', `${itemId}:${sort}`),
-      item_id: itemId,
-      label,
-      price_cents: null,
-      sort,
-    });
-    sort += 1;
-  }
-
-  // "Add meat +4" / "Shrimp 6" — the number is the surcharge.
-  for (const line of addOns.split('\n').map((s) => s.trim()).filter(Boolean)) {
-    const match = /^(.*?)\s*\+?\$?(\d+(?:\.\d{1,2})?)\s*$/.exec(line);
-    if (!match) continue;
-    rows.push({
-      id: stableUuid('menu-modifier', `${itemId}:${sort}`),
-      item_id: itemId,
-      label: match[1]!.trim(),
-      price_cents: Math.round(Number(match[2]) * 100),
-      sort,
-    });
-    sort += 1;
-  }
-
-  for (const row of rows) await db.insert('menu_modifiers', row);
 }
 
 /* ----------------------------------------------------------------- ordering */
@@ -311,7 +263,7 @@ export async function addMenuItem(_prev: ActionState, formData: FormData): Promi
   });
 }
 
-const idSchema = z.object({ table: z.string().min(1), id: z.string().min(1) });
+const idSchema = z.object({ table: z.enum(['menu_items', 'menu_categories', 'menus', 'event_series', 'event_occurrences']), id: z.string().min(1) });
 
 export async function archiveRow(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return run('content.archive', async ({ db, staff }) => {
@@ -355,5 +307,32 @@ export async function discardRowDraft(
     if (!parsed.success) return { ok: false, message: 'Could not discard that.' };
     await discardDraft(db, parsed.data.table, parsed.data.id);
     return saved('Draft discarded. The website is unchanged.');
+  });
+}
+
+const categorySchema = z.object({
+  name: z.string().trim().min(1, 'Name the category.').max(80),
+  note: z.string().trim().max(300).optional(),
+});
+
+export async function addCategory(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.publish', async ({ db }) => {
+    const parsed = categorySchema.extend({ menuSlug: z.enum(['food', 'cocktails', 'brunch']) }).safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the category.' };
+    const { name, menuSlug } = parsed.data;
+    if (!await db.get('menus', menuSlug)) return { ok: false, message: 'That menu no longer exists.' };
+    const rows = await db.list<Row>('menu_categories', { where: { menu_slug: menuSlug } });
+    const id = `${menuSlug}-${crypto.randomUUID().slice(0, 8)}`;
+    await db.insert('menu_categories', { id, menu_slug: menuSlug, name, note: null, sort: Math.max(0, ...rows.map(row => Number(row.sort))) + 1 });
+    return done(`Added “${name}”. Add dishes below.`, 'menu');
+  });
+}
+
+export async function saveCategory(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.publish', async ({ db, staff }) => {
+    const parsed = categorySchema.extend({ id: z.string().min(1) }).safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the category.' };
+    await publishDirect(db, 'menu_categories', parsed.data.id, { name: parsed.data.name, note: parsed.data.note || null }, staff);
+    return done('Category updated.', 'menu');
   });
 }

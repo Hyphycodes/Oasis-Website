@@ -17,7 +17,7 @@ An occurrence is eligible only if **all** of these hold:
 - it is published;
 - it is not archived;
 - its **end** timestamp is later than now — not its start;
-- it is not cancelled;
+- it is not cancelled or postponed;
 - its series is neither paused nor archived;
 - it has a name.
 
@@ -35,25 +35,10 @@ of weekly instants and asserts that nothing returned has already ended.
 
 ## 2. A correct answer could be served from a stale cache
 
-The selector is only half of it. These pages are statically rendered and revalidated on a timer, so
-a cached copy can outlive the event it describes. Before this work the homepage revalidated **every
-hour**, which is long enough to advertise a finished night for most of a morning.
-
-| Route | Revalidate | Why |
-|---|---|---|
-| `/` | 5 minutes | Renders the next event date |
-| `/events` | 5 minutes | Same |
-| `/events/[slug]` | 5 minutes | Same |
-| `/menu`, `/catering`, `/visit` | 1 hour | No date on them |
-
-Five minutes is short enough that the worst case is minutes, not hours, and long enough that the
-page is still effectively static.
-
-On top of the timer, publishing anything through the admin revalidates the affected routes
-immediately — including the `/events` **subtree**, because `/events/oasis-fridays` is a dynamic
-route and clearing `/events` alone leaves the series page serving its old copy. That was a real bug
-found in testing: an occurrence override with its own ticket link was invisible on the one page a
-guest was most likely to be looking at.
+As of September 17, 2026, the public site layout and sitemap use request-time rendering.
+This includes the homepage, events index and every event detail route. Event selectors use the
+request clock; they no longer wait for a five-minute ISR window to expire. Publishing through
+admin also invalidates affected paths. Tests cover midnight, DST, cancellations and postponements.
 
 ## 3. The dashboard says so if it ever happens anyway
 

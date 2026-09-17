@@ -10,7 +10,7 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 const config = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
-    ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts', 'supabase/**'],
+    ignores: ['.next/**', '.next-dev/**', 'node_modules/**', 'next-env.d.ts', 'supabase/**'],
   },
   {
     rules: {
@@ -23,7 +23,7 @@ const config = [
   },
   {
     // Build/CLI scripts are allowed to write to stdout.
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'scripts/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
 ];

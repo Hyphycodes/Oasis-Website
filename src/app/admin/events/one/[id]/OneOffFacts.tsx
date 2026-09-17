@@ -31,6 +31,8 @@ export function OneOffFacts({
     status: string;
     ageMin: string;
     venueName: string;
+    price: string;
+    music: string;
   };
 }) {
   return (
@@ -60,6 +62,10 @@ export function OneOffFacts({
         </div>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><Label htmlFor="f-price">Entry price (optional)</Label><TextInput id="f-price" name="price" inputMode="decimal" defaultValue={facts.price} /></div>
+        <div><Label htmlFor="f-music">Music / genre</Label><TextInput id="f-music" name="music" defaultValue={facts.music} /></div>
+      </div>
       <div>
         <Label htmlFor="f-summary" hint="One line. It is what the card on the events page says.">
           Short line

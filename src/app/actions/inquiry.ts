@@ -1,5 +1,6 @@
 'use server';
 
+import { getReadDb, isLocalDb } from '@/lib/db';
 import { headers } from 'next/headers';
 import type { InquiryType } from '@/content/types';
 import { makeReference, SCHEMAS, type InquiryResult } from '@/lib/inquiries';
@@ -9,16 +10,13 @@ import { getServiceClient, isSupabaseConfigured } from '@/lib/supabase/server';
  * Inquiry submission.
  *
  * Honesty rules enforced here:
- *  - The success message states where the submission actually went. When Supabase
- *    is not configured, it says the message was recorded on the server and gives
- *    the phone number — it does not claim an email was sent.
+ *  - Success requires durable database persistence. Failure asks guests to retry or call.
  *  - NOTHING claims email notification anywhere, because no mailer is configured.
  *    See docs/ENVIRONMENT.md.
  */
 
 /**
- * Naive in-process rate limit. Adequate for a restaurant site on a single
- * instance; the real defence is the honeypot plus validation.
+ * Naive in-process rate limit. Adequate for a restaurant site on a warm instance; validation and the honeypot also apply.
  */
 const recent = new Map<string, number[]>();
 const WINDOW_MS = 10 * 60_000;
@@ -36,6 +34,7 @@ function rateLimited(key: string): boolean {
 }
 
 export async function submitInquiry(type: InquiryType, formData: FormData): Promise<InquiryResult> {
+  if (!Object.hasOwn(SCHEMAS, type)) return { ok: false, fieldErrors: {}, formError: 'Choose a valid inquiry form.' };
   const schema = SCHEMAS[type];
   const raw = Object.fromEntries(formData.entries());
 
@@ -74,6 +73,11 @@ export async function submitInquiry(type: InquiryType, formData: FormData): Prom
 
   const reference = makeReference(type, new Date());
 
+  try {
+  if (isLocalDb()) {
+    await getReadDb()!.insert('inquiries', { id: crypto.randomUUID(), type, name, email, phone, payload, reference, status: 'new', created_at: new Date().toISOString() });
+    return { ok: true, reference, stored: 'database' };
+  }
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     if (supabase) {
@@ -86,10 +90,8 @@ export async function submitInquiry(type: InquiryType, formData: FormData): Prom
     }
   }
 
-  // No CMS configured. Recorded in the server log so it is not lost, and the UI
-  // says exactly that plus the phone number — it does not pretend an email went out.
-  console.warn(
-    `[inquiry] ${reference} ${type} — ${String(name)} <${String(email)}> ${String(phone)} :: ${JSON.stringify(payload)}`,
-  );
-  return { ok: true, reference, stored: 'log' };
+  } catch {
+    console.error('[inquiry] storage unavailable');
+  }
+  return { ok: false, fieldErrors: {}, formError: 'Your message could not be saved. Please try again or call (815) 545-7556. Your details are still in the form.' };
 }

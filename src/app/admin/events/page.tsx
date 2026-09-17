@@ -6,11 +6,12 @@ import { Card, EmptyState, Notice, StateChip } from '@/components/admin/ui';
 import { getMediaMap } from '@/content/media';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
-import { getUpcomingEvents, ineligibleReason, venueIsoDate } from '@/lib/events';
+import { getUpcomingEvents, standaloneEvents, ineligibleReason, venueIsoDate } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { getStaff, staffCan } from '@/server/auth';
 import { getEditableEvents } from '@/server/content/events';
 import { canOpen } from '@/server/permissions';
+import { NewSeries } from './EventControls';
 import { NewOneTimeEvent } from './NewOneTimeEvent';
 import { TickeriSync } from './TickeriSync';
 import { OccurrencePublish } from './OccurrencePublish';
@@ -79,9 +80,9 @@ export default async function AdminEventsPage({
   const horizon = windowDays ? now.getTime() + windowDays * 86_400_000 : Infinity;
 
   const visible = upcoming.filter((event) => new Date(event.startsAt).getTime() <= horizon);
-  const drafts = visible.filter((event) => !event.published);
+  const drafts = standaloneEvents(events.occurrences).filter((event) => !event.published && !event.archivedAt);
   const cancelled = visible.filter((event) => event.status === 'cancelled');
-  const ready = visible.filter((event) => event.published && event.status !== 'cancelled');
+  const ready = visible.filter((event) => ineligibleReason(event, now) === null);
 
   // Special events are the one-off rows: everything on the calendar that is not
   // a Friday or a Saturday. They are what staff actually add and dress up.
@@ -234,6 +235,7 @@ export default async function AdminEventsPage({
 
           {tab === 'series' ? (
             <div className="grid gap-4">
+              {canPublish ? <NewSeries /> : null}
               {events.series.map((series) => {
                 const next = ready.filter((event) => event.seriesSlug === series.slug);
                 return (

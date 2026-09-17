@@ -85,6 +85,10 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> =>
         ...((row?.payload as Partial<SiteSettings>) ?? {}),
       };
 
+      if (merged.socials.some((social) => social.platform === 'facebook' && social.url === 'https://www.facebook.com/OasisMexicanKitchenandBar/')) {
+        merged.socials = merged.socials.map((social) => social.platform === 'facebook' ? site.socials.find((entry) => entry.platform === 'facebook')! : social);
+        if (!merged.socials.some((social) => social.platform === 'tiktok')) merged.socials.push(site.socials.find((entry) => entry.platform === 'tiktok')!);
+      }
       const today = new Date().toISOString().slice(0, 10);
       const closures: TemporaryClosure[] = exceptions
         // A holiday that has passed is history, not a notice.

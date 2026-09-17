@@ -47,7 +47,7 @@ export default async function InquiriesPage() {
     >
       {!db ? (
         <EmptyState>
-          Enquiries are written to the server log until the content system is connected.
+          The inbox is not connected. Forms ask guests to call instead of claiming their message was saved.
         </EmptyState>
       ) : inquiries.length === 0 ? (
         <EmptyState>No enquiries yet.</EmptyState>

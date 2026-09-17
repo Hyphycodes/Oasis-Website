@@ -120,8 +120,9 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 
 ## Deployment
 
-Not yet deployed. No hosting project exists and DNS has not been touched; the existing Wix site is
-untouched and still live.
+Vercel project `oasis-website` deploys this repository. Production is
+https://oasis-website-mu.vercel.app/. See [the September release audit](docs/PRODUCTION-POLISH-2026-09-17.md)
+for verification and required staff account setup.
 
 ```bash
 npm run verify

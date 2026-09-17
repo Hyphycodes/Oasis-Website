@@ -33,7 +33,8 @@ export async function EventDetail({
   const category = event.presentation.category;
   const address = `${settings.street}, ${settings.locality}, ${settings.region} ${settings.postalCode}`;
   const statusLabel = STATUS_LABEL[event.status] ?? '';
-  const isOff = event.status === 'cancelled' || event.status === 'postponed';
+  const ended = Date.parse(event.endsAt) <= Date.now();
+  const isOff = ended || event.status === 'cancelled' || event.status === 'postponed';
 
   const elsewhere = (
     <div className="flex flex-wrap gap-3">
@@ -101,8 +102,7 @@ export async function EventDetail({
                   read as an invitation. */}
               {isOff ? (
                 <p className="rounded-(--radius-md) border-2 border-danger bg-danger/10 px-4 py-3 text-[1rem] font-semibold text-danger">
-                  {statusLabel || 'This event is not going ahead'} — if you bought a ticket, refunds
-                  are handled where you bought it.
+                  {ended ? 'This event has ended. Browse upcoming events for your next night at Oasis.' : `${statusLabel || 'This event is not going ahead'} — contact the ticket provider about your booking.`}
                 </p>
               ) : null}
 

@@ -48,9 +48,7 @@ export function FormShell({
           Thanks — we have your message.
         </p>
         <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">
-          {result.stored === 'database'
-            ? 'It is saved in our inbox and the Oasis team will follow up. '
-            : 'It has been recorded on our server and the Oasis team will follow up. '}
+          It is saved in our inbox for the Oasis team.
           If your date is soon, call us at{' '}
           <a
             href={`tel:+1${phone.replace(/\D/g, '')}`}

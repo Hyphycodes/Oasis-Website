@@ -134,7 +134,7 @@ export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site)
     endDate: event.endsAt,
     eventStatus: EVENT_STATUS[event.status] ?? EVENT_STATUS.scheduled,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    url: absoluteUrl(event.seriesSlug ? `/events/${event.seriesSlug}` : '/events'),
+    url: absoluteUrl(event.slug ? `/events/${event.slug}` : '/events'),
     location: {
       '@type': 'Place',
       name: event.venueName,
@@ -148,7 +148,7 @@ export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site)
       },
     },
     organizer: { '@type': 'Organization', name: settings.name, url: SITE_URL },
-    ...(event.priceCents != null && event.ticketUrl
+    ...(event.priceCents != null && event.ticketUrl && Date.parse(event.endsAt) > Date.now() && !['cancelled', 'postponed'].includes(event.status)
       ? {
           offers: {
             '@type': 'Offer',

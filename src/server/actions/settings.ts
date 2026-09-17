@@ -31,6 +31,7 @@ const detailsSchema = z.object({
   directionsUrl: httpsOnly,
   facebook: httpsOnly,
   instagram: httpsOnly,
+  tiktok: httpsOnly.optional(),
 });
 
 export async function saveBusinessDetails(
@@ -61,6 +62,7 @@ export async function saveBusinessDetails(
     if (value.directionsUrl) payload.directionsUrl = value.directionsUrl;
 
     const socials: { platform: string; handle: string; url: string }[] = [];
+    if (value.tiktok) socials.push({ platform: 'tiktok', handle: `@${handleOf(value.tiktok).replace(/^@/, '')}`, url: value.tiktok });
     if (value.facebook) {
       socials.push({ platform: 'facebook', handle: handleOf(value.facebook), url: value.facebook });
     }

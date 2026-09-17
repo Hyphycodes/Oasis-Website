@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { EditorialState, VersionEntry } from '@/content/admin-types';
 import type { Db, Row } from '@/lib/db/types';
+import { replaceModifiers } from './modifiers';
 import type { Staff } from '../auth';
 
 /**
@@ -121,11 +122,15 @@ export async function publishDraft(
   const row = await db.get<EditorialRow>(table, id);
   if (!row) throw new Error('That item no longer exists.');
 
-  const draft = (row.draft as Row) ?? {};
+  const draft = { ...((row.draft as Row) ?? {}) };
   const fields = Object.keys(draft);
   if (fields.length === 0 && row.published !== false) return [];
 
   await snapshot(db, table, id, staff, 'Before publishing');
+  if (table === 'menu_items' && Array.isArray(draft._modifiers)) {
+    await replaceModifiers(db, id, draft._modifiers as Row[]);
+    delete draft._modifiers;
+  }
   await db.update(table, id, {
     ...draft,
     draft: null,
@@ -150,6 +155,11 @@ export async function publishDirect(
   staff: Staff,
 ): Promise<void> {
   await snapshot(db, table, id, staff, 'Before change');
+  patch = { ...patch };
+  if (table === 'menu_items' && Array.isArray(patch._modifiers)) {
+    await replaceModifiers(db, id, patch._modifiers as Row[]);
+    delete patch._modifiers;
+  }
   await db.update(table, id, {
     ...patch,
     draft: null,
@@ -206,6 +216,7 @@ export async function restoreVersion(
   const current = await db.get<EditorialRow>(table, id);
   if (!current) throw new Error('That item no longer exists.');
 
+  if (version.table_name !== table || version.row_id !== id) throw new Error('That version belongs to a different item.');
   const snap = (version.snapshot as Row) ?? {};
   const patch: Row = {};
   // Identity, ordering and bookkeeping columns are not content and must not be

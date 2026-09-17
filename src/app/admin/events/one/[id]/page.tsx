@@ -13,6 +13,7 @@ import { getStaff, staffCan } from '@/server/auth';
 import { canOpen } from '@/server/permissions';
 import { occurrenceFromRow } from '@/server/content/events';
 import { venueLocalParts } from '@/themes/schedule';
+import { EventControls } from '../../EventControls';
 import { OneOffFacts } from './OneOffFacts';
 
 export const dynamic = 'force-dynamic';
@@ -104,6 +105,7 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
       }
     >
       <div className="grid gap-5">
+        <EventControls id={String(row.id)} canPublish={canPublish} />
         {record.provenance?.source === 'tickeri' ? (
           <Notice tone="info">
             This event came from Tickeri. Checking Tickeri again can correct its date, price,
@@ -120,7 +122,7 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
 
         <Card title="The event">
           <OneOffFacts
-            id={eventId}
+            id={String(row.id)}
             canPublish={canPublish}
             published={record.published !== false}
             facts={{
@@ -134,6 +136,8 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
               status: record.status ?? 'scheduled',
               ageMin: record.ageMin === null ? '' : String(record.ageMin),
               venueName: record.venueName ?? '',
+              price: record.priceCents == null ? '' : String(record.priceCents / 100),
+              music: record.musicFormats?.join(', ') ?? '',
             }}
           />
         </Card>
@@ -141,7 +145,7 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
         {presentation ? (
           <EventPresentationEditor
             table="event_occurrences"
-            id={eventId}
+            id={String(row.id)}
             title={record.title ?? 'this event'}
             presentation={presentation as never}
             art={art}

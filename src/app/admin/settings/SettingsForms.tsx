@@ -15,6 +15,7 @@ import {
 
 export function BusinessDetails({ settings }: { settings: SiteSettings }) {
   const facebook = settings.socials.find((s) => s.platform === 'facebook')?.url ?? '';
+  const tiktok = settings.socials.find((s) => s.platform === 'tiktok')?.url ?? '';
   const instagram = settings.socials.find((s) => s.platform === 'instagram')?.url ?? '';
 
   return (
@@ -93,6 +94,7 @@ export function BusinessDetails({ settings }: { settings: SiteSettings }) {
           <Label htmlFor="instagram">Instagram</Label>
           <TextInput id="instagram" name="instagram" defaultValue={instagram} inputMode="url" />
         </div>
+        <div><Label htmlFor="tiktok">TikTok</Label><TextInput id="tiktok" name="tiktok" defaultValue={tiktok} inputMode="url" /></div>
       </fieldset>
 
       <div>

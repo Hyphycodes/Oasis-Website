@@ -3,6 +3,8 @@ import { getPublicEvents } from '@/server/content/events';
 import { buildCalendar } from '@/lib/event-calendar';
 import { absoluteUrl } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const input = await getPublicEvents();
@@ -28,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     // Archived or paused series drop out of the sitemap automatically, because
     // the loader has already filtered them.
-    ...series.map((entry) => ({
+    ...series.filter((entry) => !entry.paused && !entry.archivedAt).map((entry) => ({
       url: absoluteUrl(`/events/${entry.slug}`),
       lastModified: now,
       changeFrequency: 'weekly' as const,

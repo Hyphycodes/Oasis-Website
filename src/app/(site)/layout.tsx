@@ -4,6 +4,9 @@ import { SiteChrome } from '@/components/layout/SiteChrome';
 import { getActiveTheme } from '@/themes/resolve';
 import '@/themes/halloween-dotd/theme.css';
 
+// Dates, hours, announcements and scheduled themes must use the request clock.
+export const dynamic = 'force-dynamic';
+
 /** Phone browser chrome matches the seasonal canvas while a theme is on. */
 export async function generateViewport(): Promise<Viewport> {
   const theme = await getActiveTheme();

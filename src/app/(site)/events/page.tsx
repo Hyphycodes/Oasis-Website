@@ -23,7 +23,7 @@ export const metadata: Metadata = buildMetadata({ ...seo.events!, path: '/events
 // Five minutes. Anything that renders a "next date" has to have a small, bounded
 // staleness window — a cached page holding a finished night is the exact defect
 // the August 15 audit found. See docs/EVENTS-FRESHNESS.md.
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 /** Friday leans amber on teal; Saturday leans coral on plum. Related, not identical. */
 const ACCENT = {

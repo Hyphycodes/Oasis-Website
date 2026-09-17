@@ -1,15 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-/**
- * Mirrors OPEN_ADMIN in src/server/admin-access.ts.
- *
- * Middleware runs on the edge runtime and must not pull in the server module
- * graph, so the value is repeated here rather than imported. Both are turned off
- * by the same environment variable, which is the switch that actually matters in
- * a deployment — but if you flip the constant, flip this one too.
- */
-const OPEN_ADMIN_DEFAULT = true;
+import { isAdminOpen } from '@/server/admin-access';
 
 /**
  * Edge gate for /admin.
@@ -23,7 +15,7 @@ export async function middleware(request: NextRequest) {
   // The admin is open: there is nothing to gate, and bouncing people to a login
   // screen they cannot use would be the worst of both. See
   // src/server/admin-access.ts for how to turn sign-in back on.
-  if (process.env.ADMIN_REQUIRE_SIGN_IN?.trim() !== 'true' && OPEN_ADMIN_DEFAULT) {
+  if (isAdminOpen()) {
     return NextResponse.next();
   }
 
@@ -66,13 +58,6 @@ export async function middleware(request: NextRequest) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = '/admin/login';
     redirect.searchParams.set('next', pathname);
-    return NextResponse.redirect(redirect);
-  }
-
-  if (user && pathname === '/admin/login') {
-    const redirect = request.nextUrl.clone();
-    redirect.pathname = '/admin';
-    redirect.search = '';
     return NextResponse.redirect(redirect);
   }
 

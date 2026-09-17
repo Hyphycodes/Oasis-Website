@@ -65,11 +65,13 @@ export const site: SiteSettings = {
   // Only accounts that actually exist. The live site also links youtube.com,
   // x.com, linkedin.com and tiktok.com — all platform homepages, not Oasis
   // accounts. Those are deliberately dropped. CONTENT-QUESTIONS.md §9.
+  // Accounts verified against https://linktr.ee/OasisMexBar on 2026-09-17.
   socials: [
+    { platform: 'tiktok', handle: '@oasislockport', url: 'https://www.tiktok.com/@oasislockport' },
     {
       platform: 'facebook',
-      handle: 'OasisMexicanKitchenandBar',
-      url: 'https://www.facebook.com/OasisMexicanKitchenandBar/',
+      handle: 'Oasis Mexican Kitchen & Bar',
+      url: 'https://www.facebook.com/profile.php?id=61582541071820',
     },
     {
       platform: 'instagram',

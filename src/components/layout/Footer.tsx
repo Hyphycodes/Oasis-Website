@@ -6,6 +6,7 @@ import { primaryNav, secondaryNav } from './nav';
 
 function SocialIcon({ platform }: { platform: string }) {
   const paths: Record<string, string> = {
+    tiktok: 'M16.7 3c.3 2.3 1.6 3.7 3.8 3.9v3a8 8 0 0 1-3.8-1.1v6.1a6 6 0 1 1-5.2-5.9v3.1a3 3 0 1 0 2.2 2.8V3z',
     facebook:
       'M13.5 9V7.2c0-.7.2-1.2 1.3-1.2h1.4V3.6A18 18 0 0 0 14.2 3.5c-2 0-3.4 1.2-3.4 3.5V9H8.6v2.6h2.2V18h2.7v-6.4h2.2l.3-2.6z',
     instagram:
