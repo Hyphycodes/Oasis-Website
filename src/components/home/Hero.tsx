@@ -112,7 +112,7 @@ export async function Hero({
           the default look is on. */}
       <ThemeHeroLayer theme={theme} />
 
-      <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-10 pt-24 sm:px-8 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-12 lg:pt-40">
+      <div className="relative mx-auto flex max-w-[1600px] flex-col justify-end px-5 pb-12 pt-24 sm:px-8 sm:pb-14 sm:pt-32 lg:min-h-[560px] lg:px-12 lg:pb-16 lg:pt-40">
         <div className="max-w-xl">
           {/* One quiet line above the headline, and nothing else. A live
               NEXT UP pill sat here and made the hero busy: it competed with the
@@ -129,23 +129,29 @@ export async function Hero({
             ))}
           </h1>
 
-          <p className="mt-5 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
+          <p className="mt-4 max-w-md text-[1.0625rem] leading-relaxed text-night-text/85">
             {takeover
               ? takeover.summary || pageCopy.home.heroBody
               : hero.body || pageCopy.home.heroBody}
           </p>
 
-          {/* Reserve is primary, Explore Events is a strong secondary, Order
-              online is tertiary. A takeover slots its ticket link in at the
-              front and pushes the rest along — it never removes them, because
-              the hero still has to work as a restaurant's front door. */}
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          {/* ONE dominant action and one quiet second one — nothing else.
+              Order online used to sit here as a third, always-visible link,
+              which is what made three things read as equally worth doing.
+              It now lives in the utility row below, with the rest of the
+              practical facts (hours, directions, phone) rather than beside
+              the two decisions a guest is actually choosing between: book a
+              table, or see what is on. A takeover's ticket link takes the
+              filled treatment and pushes Reserve to the outline it would
+              otherwise have — the hero still has to work as a restaurant's
+              front door even when an event is borrowing it. */}
+          <div className="hero-actions-row mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
             {takeover?.ticketUrl && takeover.status !== 'sold-out' ? (
               <a
                 href={takeover.ticketUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-[color:var(--e-accent)] px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-obsidian transition-opacity hover:opacity-90"
+                className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) bg-[color:var(--e-accent)] px-7 text-[0.9375rem] font-semibold tracking-[0.02em] text-obsidian transition-opacity hover:opacity-90"
               >
                 Get tickets
                 <span className="sr-only">for {takeover.title} (opens the ticket page in a new tab)</span>
@@ -156,7 +162,7 @@ export async function Hero({
               href={site.reservationUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex min-h-12 items-center justify-center rounded-(--radius-md) px-6 text-[0.9375rem] font-semibold tracking-[0.02em] transition-colors ${
+              className={`inline-flex min-h-12 items-center justify-center rounded-(--radius-md) px-7 text-[0.9375rem] font-semibold tracking-[0.02em] transition-colors ${
                 takeover
                   ? 'border border-night-text/45 text-night-text hover:bg-night-text/12'
                   : 'bg-coral text-on-orange hover:bg-coral-deep'
@@ -166,22 +172,15 @@ export async function Hero({
               <span className="sr-only">(opens Toast in a new tab)</span>
             </a>
 
+            {/* A text link, not a second button: it reads as the obvious next
+                thing to click without competing with Reserve for the eye. */}
             <Link
               href="/events"
-              className="inline-flex min-h-12 items-center justify-center rounded-(--radius-md) border border-night-text/45 px-6 text-[0.9375rem] font-semibold tracking-[0.02em] text-night-text transition-colors hover:bg-night-text/12"
+              className="inline-flex min-h-12 items-center gap-1.5 text-[0.9375rem] font-semibold text-night-text underline-offset-4 transition-[text-underline-offset] hover:underline hover:underline-offset-[6px]"
             >
-              Explore events
+              Events
+              <span aria-hidden="true">→</span>
             </Link>
-
-            <a
-              href={site.orderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center text-[0.9375rem] font-medium text-night-text/85 underline underline-offset-4 transition-[text-underline-offset] hover:underline-offset-[6px]"
-            >
-              Order online
-              <span className="sr-only">(opens Toast in a new tab)</span>
-            </a>
           </div>
         </div>
       </div>
@@ -193,6 +192,28 @@ export async function Hero({
  * Utility rail — open state, directions, phone. The things people open a
  * restaurant site for, one line, immediately under the hero.
  */
+/** A quiet divider between utility-row items. Hidden on phones, where the row
+    wraps onto its own lines and a dangling "·" before the wrap reads as a
+    stray mark rather than a separator. */
+function RailDot() {
+  return (
+    <span aria-hidden="true" className="hidden text-brown-soft/50 sm:inline">
+      ·
+    </span>
+  );
+}
+
+/**
+ * Utility row — open state, order online, directions, phone. Everything a
+ * visitor opens a restaurant site to find, in one compact line rather than
+ * four separate asks.
+ *
+ * Order online used to sit in the hero as a third button; it belongs here
+ * instead, among the other practical facts, not beside the two decisions the
+ * hero is actually for (book a table, see what's on). This row is deliberately
+ * one notch quieter than either of those: smaller type, a lighter surface,
+ * plain text rather than buttons — useful, not competing.
+ */
 export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
   const site = await getSiteSettings();
   return (
@@ -201,9 +222,9 @@ export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isO
           rail is exactly its usual height without a theme. */}
       <ThemeRailGuest />
       {/* `action-rail-row` is a stable hook, not a style: the theme reserves
-          space here on phones and tablets so wrapping puts the phone number
+          space here on phones and tablets so wrapping puts the last item
           on its own line rather than letting the seasonal guest sit over it. */}
-      <div className="action-rail-row mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">
+      <div className="action-rail-row mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-2.5 gap-y-2 px-5 py-3.5 text-[0.875rem] sm:px-8 sm:text-[0.9375rem] lg:px-12">
         <span className="inline-flex items-center gap-2 font-semibold">
           <span
             aria-hidden="true"
@@ -212,9 +233,19 @@ export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isO
           <span className={isOpen ? 'text-success' : 'text-brown-soft'}>{openLabel}</span>
         </span>
 
+        <RailDot />
+
+        <ExternalTextLink href={site.orderUrl} destination="Toast ordering" className="text-brown">
+          Order online
+        </ExternalTextLink>
+
+        <RailDot />
+
         <ExternalTextLink href={site.directionsUrl} destination="Google Maps" className="text-brown">
           Directions
         </ExternalTextLink>
+
+        <RailDot />
 
         <a
           href={`tel:+1${site.phone.value.replace(/\D/g, '')}`}
@@ -222,10 +253,6 @@ export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isO
         >
           {site.phone.value}
         </a>
-
-        <span className="hidden text-brown-soft sm:inline">
-          {site.street}, {site.locality}
-        </span>
       </div>
     </div>
   );

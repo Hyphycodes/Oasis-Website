@@ -86,7 +86,10 @@ export default async function HomePage() {
       <ThemeWorld scene="paint" />
       {/* The kitchen and the bar, formerly two bands. */}
       <Offerings section={breadth} />
-      <ThemeWorld scene="music" />
+      {/* Selena and Junior H used to stand right here, in a strip between the
+          menu cards and Celebrations — close enough to the menu that they
+          read as belonging to it. They now live inside Celebrations, tied to
+          the section their own "music" scene is actually about. */}
       <Celebrations />
       <FindUs section={twoPaths} />
     </>

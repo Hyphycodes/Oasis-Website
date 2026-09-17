@@ -34,7 +34,14 @@ export async function FeaturedEvents({
   const artwork = await resolveManyEventArtwork([lead, ...supporting]);
 
   return (
-    <section className="o-band relative isolate bg-espresso on-dark py-(--spacing-band-sm)" aria-labelledby="whats-on">
+    // Top padding steps up to the larger rhythm token so this reads as the
+    // NEXT section rather than a continuation of the hero/utility-row
+    // cluster above it; the bottom keeps the tighter one, since the scene
+    // that follows is already its own clear break.
+    <section
+      className="o-band relative isolate bg-espresso on-dark pb-(--spacing-band-sm) pt-(--spacing-band)"
+      aria-labelledby="whats-on"
+    >
       <Frame wide>
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">

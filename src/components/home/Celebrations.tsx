@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Asset } from '@/components/media/Asset';
 import { Frame } from '@/components/primitives/Band';
 import { Reveal } from '@/components/primitives/Reveal';
-import { ThemePhotoGuest } from '@/components/theme/ThemeWorld';
+import { ThemePhotoGuest, ThemeWorld } from '@/components/theme/ThemeWorld';
 
 /**
  * Birthdays and celebrations — the second thing worth booking.
@@ -19,6 +19,12 @@ import { ThemePhotoGuest } from '@/components/theme/ThemeWorld';
  * birthday is dessert, the staff song, the LED show and a confetti popper, so
  * the section says that in those words and lets the seasonal companions play
  * along the edges.
+ *
+ * Selena and Junior H — ThemeWorld's "music" scene, already the pairing
+ * private-events/page.tsx uses for the same reason — close the section below
+ * the grid rather than standing between it and Offerings. That is what moved
+ * them off the menu cards: they now read as this section's own flourish, not
+ * a corridor between two unrelated ones.
  */
 export function Celebrations() {
   return (
@@ -78,6 +84,7 @@ export function Celebrations() {
           </Reveal>
         </div>
       </Frame>
+      <ThemeWorld scene="music" />
     </section>
   );
 }

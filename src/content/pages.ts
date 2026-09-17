@@ -35,15 +35,16 @@ export const homeSections: PageSection[] = [
 
 export const pageCopy = {
   home: {
-    // Was "Dinner first. Music after." — which sold the place as a sequence,
-    // dinner and then a night out, on a calendar where a paint night starts at
-    // seven and a ticketed brunch runs at midday. The owner's own description
-    // is that it is all together and all the time, so the headline says that
-    // the kitchen is never the whole story instead of putting it first in a
-    // running order. Truthful — no awards, no heritage, no invented claims.
-    heroHeadlineLines: ['Never just', 'dinner.'],
-    heroBody:
-      'Modern Mexican in Lockport — birria, tacos and margaritas by the tower, with paint nights, live DJs and something on most nights of the week.',
+    // Was "Dinner first. Music after.", then "Never just dinner." — both still
+    // implied an order or led with a negation. This says the same true thing
+    // plainly: food, music and staying a while are three parts of one night,
+    // not a sequence. Two short lines so it reads as one held breath, not a
+    // list. Truthful — no awards, no heritage, no invented claims.
+    heroHeadlineLines: ['Good food. Good music.', 'Stay awhile.'],
+    // One sentence. The previous body ran two independent clauses joined by
+    // "with", which read as two thoughts stapled together and made the hero
+    // feel like it was still explaining itself after the headline already had.
+    heroBody: 'Modern Mexican food, margaritas, music and events.',
   },
 
   menu: {

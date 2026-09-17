@@ -1029,14 +1029,13 @@
   }
 }
 
-/* He is taller than the rail, so he also leans up into the strip ABOVE it —
-   where the ticket button lives. From 640px that button is aligned right,
-   which is exactly where his easel is, so the same reserve applies there.
-   Below 640px the button is full width and sits well clear of him, and
-   reserving there would only squash it. */
+/* He is taller than the rail, so he also leans up into whatever sits directly
+   above it — the hero's own button row, now that nothing sits between them.
+   Reserved below via `.hero-actions-row`, the same footprint-reservation
+   pattern as the rail row itself. */
 @media (min-width: 640px) and (max-width: 1023px) {
-  [data-theme='halloween-dotd'] main .next-up-row {
-    padding-right: 172px;
+  [data-theme='halloween-dotd'] main .hero-actions-row {
+    padding-bottom: 84px;
   }
 }
 
@@ -1382,26 +1381,34 @@
   --f-delay: -2.5s;
 }
 
-/* Standing in open space, never on the artwork.
-   
+/* Standing in open space, never on the artwork — and never on the caption
+   above it either.
+
    A companion parked over a photograph covers the thing the photograph is
    selling — at one point Hello Kitty sat across a third of a menu card and hid
-   the end of its label. This placement puts her on the baseline of a row that
-   has room to spare (the "see the full menu" line), so she reads as standing
-   next to the button rather than blocking anything. Declared last and with two
-   classes on purpose: the base placement and the phone override both set
-   `bottom` and `right`, and either would otherwise win. */
+   the end of its label. Anchoring her to the row's BOTTOM edge fixed that, but
+   the row sits close under a two-column card grid, and centring her on the
+   button (as a bottom anchor with `height: auto` does, since her art is close
+   to square) put roughly half of her taller sizes back up into the card
+   caption above — the same mistake in a smaller dose. She is anchored to the
+   TOP of the row instead, so nothing above the button is ever hers to cover,
+   and she is sized to stay clear of the section's own bottom edge on her way
+   down. Declared last and with two classes on purpose: the base placement and
+   the phone override both set `top` and `right`, and either would otherwise
+   win. */
 .theme-character.theme-photo-guest-beside {
+  top: 0;
   right: 0;
-  bottom: -0.75rem;
-  width: clamp(96px, 10vw, 132px);
+  bottom: auto;
+  width: clamp(76px, 7vw, 100px);
   height: auto;
 }
 
 @media (max-width: 639px) {
   .theme-character.theme-photo-guest-beside {
-    right: -6px;
-    bottom: -0.5rem;
-    width: 104px;
+    top: 2px;
+    right: -4px;
+    bottom: auto;
+    width: 80px;
   }
 }

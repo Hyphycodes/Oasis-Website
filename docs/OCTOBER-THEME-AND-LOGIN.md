@@ -268,3 +268,37 @@ That command overwrites live copy with the repository's values, including any wo
 in the admin, so the dry run (without `--write`) is the default for a reason. It never deletes,
 so the retired `home:bar` and `home:after-dark` rows will still be listed in the admin even
 though nothing renders them; hide or archive them there.
+
+## Homepage refinement — hero hierarchy, utility row, character placement
+
+A layout pass, not a redesign: same visual identity (marigolds, papel picado, characters,
+photography, colours), reorganised so the top of the page reads as one clear decision
+instead of four competing ones.
+
+**Hero.** Headline is now "Good food. Good music. Stay awhile." — two short lines, three
+parts of one night rather than a sequence (the previous "Dinner first. Music after." and
+"Never just dinner." both still implied an order or led with a negation). Body copy is one
+sentence. The button row is two things, not three: Reserve a table (filled, primary) and
+Events (an underlined text link with an arrow, deliberately quieter — not a second button
+of equal weight). Order online moved out entirely.
+
+**Utility row** (`ActionRail`). Open status, Order online, Directions and the phone number
+are one compact line with `·` separators, one notch quieter than the hero (smaller type,
+lighter surface, plain text rather than buttons) — everything a visitor opens the site to
+find, without it reading as a second action row. The street/locality text that used to
+trail the row on wide screens is gone; the address still lives in Find us and the footer.
+
+**Character placement.** Selena and Junior H — `ThemeWorld`'s "music" scene, the same pairing
+`private-events/page.tsx` already uses for this reason — moved from a standalone strip
+directly under the menu cards into the Celebrations section itself, below its grid. They now
+read as that section's own flourish instead of a corridor between two unrelated ones. Hello
+Kitty stays at the menu cards, but her placement was quietly wrong: anchored to the bottom of
+her row with `height: auto`, she centred on the "See the full menu" button and her top edge
+reached back up into the card caption above on the two-column grid — a smaller version of the
+exact problem ("a companion parked over a photograph covers the thing it's selling") the
+placement was written to avoid. She is anchored to the row's TOP now, so nothing above the
+button is ever hers to cover.
+
+**Spacing.** The hero's button row and its bottom padding both grew (not shrank) so Reserve,
+Events and the utility row below have real air between them; "What's on" gained extra
+top padding so it reads as the next section rather than a continuation of the hero cluster.
