@@ -302,3 +302,27 @@ button is ever hers to cover.
 **Spacing.** The hero's button row and its bottom padding both grew (not shrank) so Reserve,
 Events and the utility row below have real air between them; "What's on" gained extra
 top padding so it reads as the next section rather than a continuation of the hero cluster.
+
+## The events calendar ran out of order
+
+The page printed September, November, then October. October is the restaurant's biggest month
+and is shown louder than the rest — a dark room, the seasonal framing, cards instead of rows —
+but it got that treatment by being filtered OUT of the calendar and re-rendered after every
+other month. A calendar has one job before any of the styling, and that is to run forwards.
+
+`buildCalendar` was never at fault: `getUpcomingEvents` sorts by start time, so the months came
+out in order and `event-calendar.test.ts` already asserted it. The reordering was entirely in
+the page, which did `months.filter(isOctober)` and `months.filter(!isOctober)` and rendered the
+second list first.
+
+Months are now walked once, in order, and split into runs of the same treatment by
+`groupMonthRuns` — consecutive ordinary months share one band rather than each paying for a
+band's padding, and an October drops in at its own date with its own. Same two treatments, same
+emphasis, right order. The grouping lives in `event-calendar.ts` rather than the page, with the
+rest of the "which events, in what order, under which month" rules, and is tested there —
+including the exact September/October/November case that was wrong.
+
+The page's opener copy lost its "— dinner first, music after" tail for the same reason the
+homepage headline did: it sells a running order the calendar does not keep, on a page whose
+paint nights start at seven. "Brunches" stays: those are the ticketed Paint & Brunch and Sunday
+events, which are real and on sale. It is the kitchen's brunch SERVICE that does not exist.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCalendar, monthLabel } from './event-calendar';
+import { buildCalendar, groupMonthRuns, monthLabel, type EventMonth } from './event-calendar';
 import type { EventInput } from './events';
 import { DEFAULT_PRESENTATION } from '@/content/types';
 import type { EventCategory } from '@/content/event-presentation';
@@ -193,5 +193,54 @@ describe('buildCalendar and recurring nights', () => {
     expect(calendar.months.flatMap((m) => m.events.map((e) => e.slug))).toEqual(['a']);
     expect(calendar.lead?.slug).toBe('a');
     expect(calendar.counts.all).toBe(1);
+  });
+});
+
+describe('groupMonthRuns', () => {
+  /** Only the fields the grouping actually reads. */
+  function month(key: string): EventMonth {
+    return { key, label: monthLabel(key), isOctober: key.endsWith('-10'), events: [] };
+  }
+
+  it('keeps the months in calendar order with October among them', () => {
+    // THE BUG THIS EXISTS FOR: the page used to render every non-October month
+    // and then October afterwards, which put September, November, October on
+    // the screen in that order.
+    const runs = groupMonthRuns([month('2026-09'), month('2026-10'), month('2026-11')]);
+
+    expect(runs.flatMap((run) => run.months.map((m) => m.key))).toEqual([
+      '2026-09',
+      '2026-10',
+      '2026-11',
+    ]);
+    expect(runs.map((run) => run.october)).toEqual([false, true, false]);
+  });
+
+  it('gives consecutive ordinary months one run, so they share one band', () => {
+    const runs = groupMonthRuns([month('2026-11'), month('2026-12'), month('2027-01')]);
+
+    expect(runs).toHaveLength(1);
+    expect(runs[0]!.october).toBe(false);
+    expect(runs[0]!.months.map((m) => m.key)).toEqual(['2026-11', '2026-12', '2027-01']);
+  });
+
+  it('opens with October when October is first', () => {
+    const runs = groupMonthRuns([month('2026-10'), month('2026-11')]);
+
+    expect(runs.map((run) => run.october)).toEqual([true, false]);
+  });
+
+  it('treats every year’s October as the loud one', () => {
+    const runs = groupMonthRuns([month('2026-10'), month('2027-10')]);
+
+    // Both are October, so they share a run — and the page renders one band
+    // per month inside a run, so each still gets its own dark room.
+    expect(runs).toHaveLength(1);
+    expect(runs[0]!.october).toBe(true);
+    expect(runs[0]!.months.map((m) => m.key)).toEqual(['2026-10', '2027-10']);
+  });
+
+  it('has nothing to group when the calendar is empty', () => {
+    expect(groupMonthRuns([])).toEqual([]);
   });
 });

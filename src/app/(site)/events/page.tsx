@@ -15,7 +15,7 @@ import { getSiteSettings } from '@/content/resolve';
 import { CATEGORY_FILTERS } from '@/content/event-presentation';
 import { seo } from '@/content/pages';
 import type { ResolvedEvent } from '@/content/types';
-import { buildCalendar, type CategoryFilter } from '@/lib/event-calendar';
+import { buildCalendar, groupMonthRuns, type CategoryFilter } from '@/lib/event-calendar';
 import { STATUS_LABEL } from '@/lib/events';
 import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
 import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
@@ -154,10 +154,10 @@ function NightFeature({
  *   1  what this place is on a night out, once, in a sentence
  *   2  the filter, if there is more than one kind of night on
  *   3  the one event we are leading with
- *   4  every remaining upcoming event, in date order, grouped by month
- *   5  October, when it comes, as its own dark room rather than another month
- *   6  the two recurring nights, which have their own pages
- *   7  the kitchen is open before the music starts
+ *   4  every upcoming event, in date order, grouped by month — October among
+ *      them at its own date, in a dark room instead of a row of rows
+ *   5  the two recurring nights, which have their own pages
+ *   6  the kitchen is open before the music starts
  *
  * Past events disappear on their own: everything comes from `buildCalendar`,
  * which reads `getUpcomingEvents`, which drops anything already finished. There
@@ -195,8 +195,8 @@ export default async function EventsPage({
   ];
   const artwork = await resolveManyEventArtwork(listed);
 
-  const october = calendar.months.filter((month) => month.isOctober);
-  const ordinary = calendar.months.filter((month) => !month.isOctober);
+  // MONTHS STAY IN ORDER, October included — see `groupMonthRuns`.
+  const runs = groupMonthRuns(calendar.months);
 
   return (
     <>
@@ -283,63 +283,74 @@ export default async function EventsPage({
         </Frame>
       </Band>
 
-      {/* 4 — the calendar proper, month by month. */}
-      {ordinary.length > 0 ? (
-        <Band surface="ivory" size="sm">
-          <Frame wide>
-            {ordinary.map((month) => (
-              <section key={month.key} className="mt-10 first:mt-0" aria-labelledby={`month-${month.key}`}>
+      {/* 4 — the calendar proper, month by month, forwards. An October run
+             gets the dark room, the seasonal framing and cards rather than
+             rows: the same events, said louder, at their own place in the
+             year. The characters stay on their own events; this is
+             atmosphere. */}
+      {runs.map((run) =>
+        run.october ? (
+          run.months.map((month) => (
+            <Band key={month.key} surface="espresso" size="sm" topRule>
+              <Frame wide>
+                <Eyebrow tone="night">Halloween &amp; Día de los Muertos</Eyebrow>
                 <h2
                   id={`month-${month.key}`}
-                  className="display border-b-2 border-brown/15 pb-3 text-[1.375rem] leading-[1.1] text-brown"
+                  className="display mt-3.5 text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.06] text-night-text"
                 >
-                  {month.label}
+                  {month.label} at Oasis
                 </h2>
-                <div className="mt-1">
+                <p className="measure mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
+                  The whole month leans into it — costumes, marigolds, painted faces and a
+                  different reason to be here most nights.
+                </p>
+                {/* The grid fits the month. One card stretched across three
+                    columns reads as a mistake; one card at card width reads as
+                    a choice. */}
+                <div
+                  className={`mt-7 grid gap-5 ${
+                    month.events.length === 1
+                      ? 'sm:max-w-md'
+                      : month.events.length === 2
+                        ? 'sm:grid-cols-2'
+                        : 'sm:grid-cols-2 lg:grid-cols-3'
+                  }`}
+                >
                   {month.events.map((event) => (
-                    <EventRow key={event.id} event={event} artwork={artwork.get(event.id)!} />
+                    <EventCard key={event.id} event={event} artwork={artwork.get(event.id)!} />
                   ))}
                 </div>
-              </section>
-            ))}
-          </Frame>
-        </Band>
-      ) : null}
-
-      {/* 5 — October is the restaurant's biggest month. It gets the dark room,
-          the seasonal accent and cards rather than rows: the same events, said
-          louder. The characters stay on their own events; this is atmosphere. */}
-      {october.map((month) => (
-        <Band key={month.key} surface="espresso" size="sm" topRule>
-          <Frame wide>
-            <Eyebrow tone="night">Halloween &amp; Día de los Muertos</Eyebrow>
-            <h2 className="display mt-3.5 text-[clamp(1.75rem,3vw,2.5rem)] leading-[1.06] text-night-text">
-              {month.label} at Oasis
-            </h2>
-            <p className="measure mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
-              The whole month leans into it — costumes, marigolds, painted faces and a different
-              reason to be here most nights.
-            </p>
-            {/* The grid fits the month. One card stretched across three columns
-                reads as a mistake; one card at card width reads as a choice. */}
-            <div
-              className={`mt-7 grid gap-5 ${
-                month.events.length === 1
-                  ? 'sm:max-w-md'
-                  : month.events.length === 2
-                    ? 'sm:grid-cols-2'
-                    : 'sm:grid-cols-2 lg:grid-cols-3'
-              }`}
-            >
-              {month.events.map((event) => (
-                <EventCard key={event.id} event={event} artwork={artwork.get(event.id)!} />
+              </Frame>
+            </Band>
+          ))
+        ) : (
+          <Band key={run.months[0]!.key} surface="ivory" size="sm">
+            <Frame wide>
+              {run.months.map((month) => (
+                <section
+                  key={month.key}
+                  className="mt-10 first:mt-0"
+                  aria-labelledby={`month-${month.key}`}
+                >
+                  <h2
+                    id={`month-${month.key}`}
+                    className="display border-b-2 border-brown/15 pb-3 text-[1.375rem] leading-[1.1] text-brown"
+                  >
+                    {month.label}
+                  </h2>
+                  <div className="mt-1">
+                    {month.events.map((event) => (
+                      <EventRow key={event.id} event={event} artwork={artwork.get(event.id)!} />
+                    ))}
+                  </div>
+                </section>
               ))}
-            </div>
-          </Frame>
-        </Band>
-      ))}
+            </Frame>
+          </Band>
+        ),
+      )}
 
-      {/* 6 — the two recurring nights, once each. */}
+      {/* 5 — the two recurring nights, once each. */}
       {featured.length > 0 ? (
         <Band surface="ivory-deep" size="sm">
           <Frame wide>
@@ -366,7 +377,7 @@ export default async function EventsPage({
         </Band>
       ) : null}
 
-      {/* 7 — restaurant context, one line. */}
+      {/* 6 — restaurant context, one line. */}
       <Band surface="ivory-deep" size="sm">
         <Frame>
           <div className="flex flex-wrap items-center justify-between gap-4">

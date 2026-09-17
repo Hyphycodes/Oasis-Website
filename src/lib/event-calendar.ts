@@ -43,6 +43,37 @@ export interface Calendar {
   total: number;
 }
 
+/** Consecutive months that share one treatment, in calendar order. */
+export interface MonthRun {
+  /** October's run is the loud one: a dark room and cards instead of rows. */
+  october: boolean;
+  months: EventMonth[];
+}
+
+/**
+ * The months, in order, split into runs of the same treatment.
+ *
+ * October is the restaurant's biggest month and is shown louder than the rest.
+ * The page used to get that by filtering October OUT of the calendar and
+ * re-rendering it after every other month, which printed September, November,
+ * then October — a calendar that does not run forwards is simply broken,
+ * whatever it looks like.
+ *
+ * Runs keep both properties at once: the sequence is walked exactly once, so
+ * the year always moves forwards, and each run carries the treatment its months
+ * want. Consecutive ordinary months share a run so they can share one band
+ * rather than each paying for a band's padding.
+ */
+export function groupMonthRuns(months: EventMonth[]): MonthRun[] {
+  const runs: MonthRun[] = [];
+  for (const month of months) {
+    const last = runs[runs.length - 1];
+    if (last && last.october === month.isOctober) last.months.push(month);
+    else runs.push({ october: month.isOctober, months: [month] });
+  }
+  return runs;
+}
+
 const MONTH_NAME = [
   'January',
   'February',

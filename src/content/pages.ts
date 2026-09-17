@@ -71,7 +71,14 @@ export const pageCopy = {
     heading: 'Something on almost every night.',
     // Entry price, ID rules and fees belong on the event feature and the ticket
     // page — not in a hero that has to be right about all three forever.
-    body: 'Paint nights, brunches, comedy and the weekly nights — dinner first, music after.',
+    //
+    // "brunches" here means the ticketed brunch EVENTS — Paint & Brunch, the
+    // Sunday ones — which are real and on sale. The kitchen runs no brunch
+    // service and no brunch menu; that claim was removed everywhere else.
+    // The line used to end "— dinner first, music after", retired for the same
+    // reason the homepage headline was: it sells a running order the calendar
+    // does not keep, on a page whose paint nights start at seven.
+    body: 'Paint nights, brunches, comedy, and the two nights that come round every week.',
   },
 
   catering: {
