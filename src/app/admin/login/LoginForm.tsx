@@ -1,11 +1,12 @@
 'use client';
 
+import { sendSignInLink } from '@/server/actions/passwordless';
 import { ActionForm, SubmitButton } from '@/components/admin/ActionForm';
 import { Label, TextInput } from '@/components/admin/ui';
 import { signIn, signInAs } from '@/server/actions/team';
 import type { Role } from '@/server/permissions';
 
-export function LoginForm() {
+function PasswordForm() {
   return (
     <ActionForm action={signIn} className="grid gap-4">
       <div>
@@ -16,7 +17,6 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          autoFocus
           placeholder="you@oasis.com"
         />
       </div>
@@ -59,4 +59,16 @@ export function LocalSignIn({
       </button>
     </ActionForm>
   );
+}
+
+export function LoginForm() {
+  return <div className="grid gap-6">
+    <div><p className="mb-4 text-sm leading-relaxed text-brown-soft">Use your staff email. We’ll send a secure sign-in link—no password to remember.</p>
+      <ActionForm action={sendSignInLink} className="grid gap-4">
+        <div><Label htmlFor="staff-email">Email</Label><TextInput id="staff-email" name="email" type="email" autoComplete="email" required autoFocus placeholder="you@example.com" /></div>
+        <SubmitButton>Email me a sign-in link</SubmitButton>
+      </ActionForm>
+    </div>
+    <details className="border-t border-brown/20 pt-4"><summary className="min-h-11 cursor-pointer text-sm font-semibold text-brown">Use a password instead</summary><div className="mt-3"><PasswordForm /></div></details>
+  </div>;
 }

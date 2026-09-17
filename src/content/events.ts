@@ -33,7 +33,8 @@ export const eventSeries: EventSeries[] = [
     // be right for every date, and the date-less slug resolved to the WRONG
     // event entirely. See ticketUrlForOccurrence in src/lib/events.ts.
     ticketUrl: null,
-    priceCents: 1000,
+    priceCents: 0,
+    ticketPolicy: 'free',
     status: 'scheduled',
     seriesEndsOn: null,
   },
@@ -58,7 +59,8 @@ export const eventSeries: EventSeries[] = [
     flyerAssetId: 'flyerLatinSaturdays',
     flyerPrintedDate: 'August 8th',
     ticketUrl: null,
-    priceCents: 1000,
+    priceCents: 0,
+    ticketPolicy: 'free',
     status: 'scheduled',
     seriesEndsOn: null,
   },

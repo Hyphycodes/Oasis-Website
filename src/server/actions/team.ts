@@ -1,9 +1,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { findAuthUser, normalizeEmail } from '../owner-onboarding';
 import { z } from 'zod';
 import { isLocalDb } from '@/lib/db';
-import { getSessionClient } from '@/lib/supabase/server';
+import { getServiceClient, getSessionClient } from '@/lib/supabase/server';
 import { signInLocally, signOutLocally, type Role } from '../auth';
 import { run, saved, type ActionState } from './shared';
 
@@ -86,5 +88,31 @@ export async function saveTeamMember(_prev: ActionState, formData: FormData): Pr
     });
 
     return saved('Account updated.');
+  });
+}
+
+/** Owner-only provisioning; recipients prove mailbox ownership through the sign-in link. */
+export async function addTeamMember(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('team.manage', async () => {
+    const parsed = z.object({email:z.string().trim().email().max(254),name:z.string().trim().min(1).max(100),role:z.enum(['admin','editor'])}).safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return {ok:false,message:'Enter a name, valid email and staff role.'};
+    const service = getServiceClient();
+    if (!service) return {ok:false,message:'Account creation is unavailable.'};
+    const email = normalizeEmail(parsed.data.email);
+    let user = await findAuthUser(service,email);
+    if (user) {
+      const {data:profile,error} = await service.from('profiles').select('role').eq('user_id',user.id).maybeSingle();
+      if (error) throw error;
+      if (profile) return {ok:false,message:'This account already exists. Update its permissions in the list below.'};
+    } else {
+      const {data,error} = await service.auth.admin.createUser({email,email_confirm:false,user_metadata:{name:parsed.data.name}});
+      if (error) throw error;
+      user = data.user;
+    }
+    if (!user) return {ok:false,message:'Could not create the account.'};
+    const {error} = await service.from('profiles').upsert({user_id:user.id,name:parsed.data.name,role:parsed.data.role,active:true,sections:[]},{onConflict:'user_id'});
+    if (error) throw error;
+    revalidatePath('/admin/team');
+    return saved(`Account created for ${email}. Send them the staff sign-in page; they can request their own link. No email has been sent yet.`);
   });
 }

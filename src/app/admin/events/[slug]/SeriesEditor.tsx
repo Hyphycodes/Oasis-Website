@@ -1,5 +1,6 @@
 'use client';
 
+import { isFreeHouseNight } from '@/content/admission';
 import Link from 'next/link';
 import { ActionForm, IntentField, SubmitButton } from '@/components/admin/ActionForm';
 import { Card, FieldNote, Label, Select, TextArea, TextInput } from '@/components/admin/ui';
@@ -110,7 +111,8 @@ export function SeriesEditor({
         </Card>
 
         <Card title="Getting in">
-          <div className="mb-4"><Label htmlFor="ticketUrl">Series ticket link (optional)</Label><TextInput id="ticketUrl" name="ticketUrl" type="url" defaultValue={series.ticketUrl ?? ''} placeholder="https://" /></div>
+          {isFreeHouseNight(series.slug) ? <p className="mb-4 text-sm text-brown-soft">This weekly house night is free with no tickets. Create a separate special event for ticketed bookings.</p> : null}
+          <div className="mb-4"><Label htmlFor="ticketUrl">Series ticket link (optional)</Label><TextInput id="ticketUrl" name="ticketUrl" type="url" readOnly={isFreeHouseNight(series.slug)} defaultValue={series.ticketUrl ?? ''} placeholder="https://" /></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="price" hint="Leave blank for “at the door”.">
@@ -119,6 +121,7 @@ export function SeriesEditor({
               <TextInput
                 id="price"
                 name="price"
+                readOnly={isFreeHouseNight(series.slug)}
                 inputMode="decimal"
                 defaultValue={series.priceCents != null ? String(series.priceCents / 100) : ''}
                 placeholder="10"
@@ -127,7 +130,7 @@ export function SeriesEditor({
             <div>
               <Label htmlFor="ticketPolicy">Tickets</Label>
               <Select id="ticketPolicy" name="ticketPolicy" defaultValue={series.ticketPolicy ?? 'required'}>
-                {Object.entries(TICKET_POLICY).map(([value, label]) => (
+                {Object.entries(TICKET_POLICY).filter(([value]) => !isFreeHouseNight(series.slug) || value === 'free').map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>

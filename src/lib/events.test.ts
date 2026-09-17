@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { eventSeries } from '@/content/events';
+import { eventSeries as houseSeries } from '@/content/events';
+// Generic paid-series fixtures retain override and ticket-generation coverage.
+const eventSeries = houseSeries.map(series => ({ ...series, ticketPolicy: 'required' as const, priceCents: 1000 }));
 import type { EventSeries } from '@/content/types';
 import {
   generateOccurrences,
@@ -480,5 +482,17 @@ describe('September production regressions', () => {
   it('does not fabricate online ticket links for door-only entry', () => {
     const event = nextEvent(input([{ ...fridays, ticketPolicy: 'door' }]), new Date('2026-09-17T18:00:00Z'))!;
     expect(event.ticketUrl).toBeNull();
+  });
+});
+
+
+describe('free house nights', () => {
+  it('suppresses stale paid overrides and ticket URLs on both recurring nights', () => {
+    for (const series of houseSeries) {
+      const result = nextEvent({series:[series], occurrences:[{id:'old-paid', seriesSlug:series.slug, startsAt:series.slug === 'oasis-fridays' ? '2026-09-18' : '2026-09-19', priceCents:1000, ticketUrl:'https://example.com/old-ticket', published:true}]}, new Date('2026-09-17T12:00:00Z'))!;
+      expect(result.priceCents).toBe(0);
+      expect(result.ticketUrl).toBeNull();
+      expect(result.presentation.priceText).toBe('Free entry · No tickets needed');
+    }
   });
 });

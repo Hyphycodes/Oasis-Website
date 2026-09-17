@@ -132,6 +132,7 @@ export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site)
     description: event.description,
     startDate: event.startsAt,
     endDate: event.endsAt,
+    ...(event.priceCents != null ? { isAccessibleForFree: event.priceCents === 0 } : {}),
     eventStatus: EVENT_STATUS[event.status] ?? EVENT_STATUS.scheduled,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     url: absoluteUrl(event.slug ? `/events/${event.slug}` : '/events'),

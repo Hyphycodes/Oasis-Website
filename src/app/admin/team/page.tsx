@@ -5,6 +5,7 @@ import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getStaff, LOCAL_STAFF, staffCan } from '@/server/auth';
 import { ROLE_LABEL, ROLE_SUMMARY, SECTIONS, type Role } from '@/server/permissions';
+import { AddTeamMember } from './AddTeamMember';
 import { TeamMemberForm } from './TeamMemberForm';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,7 @@ export default async function TeamPage() {
       description="Who can change what. Only you can change these."
     >
       <div className="grid gap-5">
+        {!local ? <Card title="Add a staff member"><AddTeamMember /></Card> : null}
         <Card title="What each role can do">
           <dl className="grid gap-3">
             {(['owner', 'admin', 'editor'] as Role[]).map((role) => (
@@ -79,8 +81,7 @@ export default async function TeamPage() {
           <Card title="Accounts">
             {profiles.length === 0 ? (
               <EmptyState>
-                No staff accounts yet. Invite people from the Supabase dashboard — they arrive as
-                Contributors, and you promote them here.
+                No staff accounts yet. Add someone using the form above.
               </EmptyState>
             ) : (
               <ul className="grid gap-4">

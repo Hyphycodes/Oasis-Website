@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { isFreeHouseNight } from '@/content/admission';
 import type { Row } from '@/lib/db/types';
 import { venueIsoDate, venueLocalIso } from '@/lib/events';
 import { registerDirectMedia, storeMediaFile } from '@/server/media-files';
@@ -84,9 +85,9 @@ export async function saveSeries(_prev: ActionState, formData: FormData): Promis
       age_min: value.ageMin ? Number(value.ageMin) : null,
       age_note: value.ageNote || null,
       music_formats: value.music.split(',').map((s) => s.trim()).filter(Boolean),
-      price_cents: price ? Math.round(Number(price) * 100) : null,
-      ticket_policy: value.ticketPolicy,
-      ticket_url: value.ticketUrl || null,
+      price_cents: isFreeHouseNight(value.slug) ? 0 : price ? Math.round(Number(price) * 100) : null,
+      ticket_policy: isFreeHouseNight(value.slug) ? 'free' : value.ticketPolicy,
+      ticket_url: isFreeHouseNight(value.slug) ? null : value.ticketUrl || null,
       cadence: `weekly:${value.weekday}`,
       series_ends_on: value.seriesEndsOn || null,
       start_minutes: start,

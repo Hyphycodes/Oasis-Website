@@ -13,7 +13,7 @@ import { primaryKey } from './types';
  *   - a SESSION client carries the signed-in staff member's JWT, so Row Level
  *     Security and the publish trigger apply. Every admin write uses this.
  *   - a SERVICE client bypasses RLS. Used only for reading published public
- *     content during SSR, never for a write that originated in a browser.
+ *     content during SSR. Auth provisioning uses a separate service client only after explicit owner authorization or verified first-owner onboarding.
  *
  * This adapter therefore adds no authorization of its own, deliberately: it must
  * not become a place where a check can be forgotten. Authorization lives in the

@@ -52,6 +52,7 @@ export async function Hero({
 
   return (
     <section
+      data-oasis-hero="true"
       className="relative isolate overflow-hidden bg-plum"
       style={takeover ? presetVars(takeover.presentation.visualPreset) : undefined}
     >

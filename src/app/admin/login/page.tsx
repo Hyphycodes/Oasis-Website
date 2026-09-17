@@ -8,7 +8,8 @@ import { LocalSignIn, LoginForm } from './LoginForm';
 
 export const dynamic = 'force-dynamic';
 
-export default function LoginPage() {
+export default async function LoginPage({searchParams}: {searchParams: Promise<{error?: string}>}) {
+  const {error} = await searchParams;
   // Nothing to sign in to while the admin is open. Anyone landing here from an
   // old bookmark goes straight through rather than staring at a dead form.
   if (isAdminOpen()) redirect('/admin');
@@ -24,6 +25,7 @@ export default function LoginPage() {
       <p className="mt-3 text-[0.9375rem] text-brown-soft">Sign in to update the website.</p>
 
       <div className="mt-8">
+        {error ? <p role="alert" className="mb-5 text-sm text-danger">{error === 'access' ? 'Your account does not have active staff access. Ask the owner to check Team & permissions.' : 'This sign-in link expired or was opened in a different browser. Request a fresh link below and open it here.'}</p> : null}
         {configured ? (
           <LoginForm />
         ) : local ? (

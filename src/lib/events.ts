@@ -207,13 +207,14 @@ function resolve(
   const resolvedEnd = occurrence?.seriesSlug ? take('endsAt', occurrence.endsAt && occurrence.endsAt.length > 10 ? occurrence.endsAt : null, endsAt) : endsAt;
 
   const status = take('status', occurrence?.status ?? null, series?.status ?? 'scheduled');
-  const priceCents = take(
+  const freeEntry = series?.ticketPolicy === 'free';
+  const priceCents = freeEntry ? 0 : take(
     'priceCents',
     occurrence?.priceCents === undefined ? null : occurrence.priceCents,
     series?.priceCents ?? null,
   );
 
-  const ticketUrl = take(
+  const ticketUrl = freeEntry ? null : take(
     'ticketUrl',
     occurrence?.ticketUrl ?? null,
     series
@@ -253,7 +254,7 @@ function resolve(
     // Presentation resolves field by field, occurrence over series over the
     // defaults, so featuring ONE night of a weekly series does not require
     // restating everything else that night inherits.
-    presentation: mergePresentation(series?.presentation, occurrence?.presentation),
+    presentation: { ...mergePresentation(series?.presentation, occurrence?.presentation), ...(freeEntry ? { priceText: 'Free entry · No tickets needed' } : {}) },
     provenance: occurrence?.provenance ?? DEFAULT_PROVENANCE,
   };
 }

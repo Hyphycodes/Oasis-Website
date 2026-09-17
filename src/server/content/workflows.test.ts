@@ -253,10 +253,10 @@ describe('one night, changed', () => {
       (e) => venueIsoDate(e.startsAt) === '2026-08-28',
     )!;
 
-    expect(changed.ticketUrl).toBe('https://tickets.example.com/aug21');
+    expect(changed.ticketUrl).toBeNull(); // House nights cannot inherit legacy paid ticket links.
     expect(changed.flyerAssetId).toBe('flyerLatinSaturdays');
     expect(untouched.flyerAssetId).toBe('flyerFridays');
-    expect(untouched.ticketUrl).toContain('oasis-fridays-2026-08-28');
+    expect(untouched.ticketUrl).toBeNull();
   });
 
   it('cancelling it advances the next event without touching later dates', async () => {

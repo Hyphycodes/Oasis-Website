@@ -1,3 +1,4 @@
+import { ThemeCharacter } from './ThemeCharacter';
 import { getActiveTheme } from '@/themes/resolve';
 
 /**
@@ -17,6 +18,7 @@ export async function ThemeDivider({ tone = 'light' }: { tone?: 'light' | 'dark'
     <div aria-hidden="true" className="theme-divider" data-tone={tone}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={divider.path} alt="" loading="lazy" decoding="async" />
+      <ThemeCharacter name={tone === 'dark' ? 'scream' : 'kitty'} className="theme-divider-companion" />
     </div>
   );
 }
@@ -30,6 +32,7 @@ export async function ThemeFooterLayer() {
 
   return (
     <div aria-hidden="true" className="theme-footer">
+      <div className="theme-footer-companions"><ThemeCharacter name="kitty" /><ThemeCharacter name="scream" /><ThemeCharacter name="snoopy" /></div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={art.path} alt="" className="theme-footer-left" loading="lazy" decoding="async" />
       {/* eslint-disable-next-line @next/next/no-img-element */}

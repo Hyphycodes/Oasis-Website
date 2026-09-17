@@ -59,7 +59,7 @@
 
   /* --- Accents ----------------------------------------------------------- */
   --color-agave: #cfa456; /* antique gold */
-  --color-agave-light: #e6c27a;
+  --color-agave-light: #efb8d4;
   --color-amber: #f0b24a;
   --color-amber-bright: #f7c76a;
 
@@ -101,9 +101,9 @@
   opacity: var(--t-glow, 1);
   background:
     radial-gradient(58vmax 42vmax at 84% 12%, rgb(236 150 62 / 0.26), transparent 62%),
-    radial-gradient(52vmax 40vmax at 8% 86%, rgb(190 74 44 / 0.24), transparent 62%),
+    radial-gradient(52vmax 40vmax at 8% 86%, rgb(190 74 124 / 0.20), transparent 62%),
     radial-gradient(70vmax 50vmax at 50% 110%, rgb(120 30 40 / 0.28), transparent 65%),
-    radial-gradient(36vmax 30vmax at 92% 70%, rgb(240 178 74 / 0.1), transparent 62%);
+    radial-gradient(36vmax 30vmax at 92% 70%, rgb(158 118 206 / 0.16), transparent 62%);
   animation: theme-breathe 16s ease-in-out infinite alternate;
 }
 
@@ -528,7 +528,7 @@
 /* Warmer highlights, deeper blacks, a little more amber. Kept gentle so the
    food stays food. Applied to photographs only, never to artwork the theme
    itself draws. */
-[data-theme='halloween-dotd'] main img:not(.theme-hero img, .theme-divider img, .theme-footer img),
+[data-theme='halloween-dotd'] main img:not(.theme-hero img, .theme-divider img, .theme-footer img, .theme-character),
 [data-theme='halloween-dotd'] main video {
   filter: sepia(0.16) saturate(1.08) contrast(1.05) brightness(0.94);
 }
@@ -603,4 +603,39 @@
   .theme-hero-right {
     animation: none;
   }
+}
+
+/* Flyer-inspired companions belong to the seasonal look, never the base site. */
+[data-theme='halloween-dotd'] #main { position: relative; }
+[data-theme='halloween-dotd'] .theme-character {
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 8px 18px rgb(0 0 0 / .3));
+}
+.theme-hero-companion { position: absolute; width: clamp(150px, 17vw, 245px); height: auto; right: 3%; bottom: 4%; opacity: .88; }
+.theme-divider .theme-divider-companion { position: absolute; width: 122px; height: 122px; right: 9%; top: -22px; opacity: .88; }
+.theme-divider[data-tone='dark'] .theme-divider-companion { left: 9%; right: auto; }
+.theme-footer-companions { position: absolute; display: flex; align-items: end; justify-content: center; gap: clamp(24px, 8vw, 120px); inset: auto 0 8px; }
+.theme-footer-companions .theme-character { width: 140px; height: 150px; opacity: .86; }
+.theme-page-companion { position: absolute; right: 24px; top: 30px; width: 130px; z-index: 2; pointer-events: none; opacity: .45; }
+#main:has([data-oasis-hero]) > .theme-page-companion { display: none; }
+@media (max-width: 1439px) { .theme-page-companion { display: none; } }
+@media (max-width: 1023px) {
+  .theme-hero-companion { display: none; }
+  [data-theme='halloween-dotd'] footer > div:not(.theme-footer) { padding-bottom: 9rem; }
+  .theme-footer-companions .theme-character { width: 86px; height: 102px; }
+  .theme-footer-companions { gap: 24px; }
+  .theme-divider .theme-divider-companion { width: 80px; height: 80px; top: -8px; right: 5%; }
+  .theme-divider[data-tone='dark'] .theme-divider-companion { left: 5%; }
+}
+/* Give every companion its own breathing room alongside the existing flowers. */
+.theme-hero-companion { right: 19%; width: clamp(160px, 15vw, 215px); z-index: 1; }
+.theme-divider,
+.theme-divider[data-tone='dark'] { margin: 0 auto; min-height: 124px; align-items: center; }
+.theme-divider .theme-divider-companion { top: 0; }
+@media (max-width: 1023px) {
+  .theme-divider,
+  .theme-divider[data-tone='dark'] { min-height: 90px; }
+  .theme-divider .theme-divider-companion { top: 5px; }
 }

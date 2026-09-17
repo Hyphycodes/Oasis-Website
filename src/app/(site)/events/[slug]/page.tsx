@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ sl
                   {/* Base entry only. Any service fee is whatever the ticket page
                       charges on the day — quoting it here would go stale. */}
                   <dd className="tabular mt-1.5 text-night-text">
-                    {next?.priceCents != null ? formatPrice(next.priceCents) : 'Ask at the door'}
+                    {series.ticketPolicy === 'free' ? 'Free entry · No tickets needed' : next?.priceCents != null ? formatPrice(next.priceCents) : 'Ask at the door'}
                   </dd>
                 </div>
                 <div className="sm:col-span-2">

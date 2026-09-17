@@ -122,7 +122,7 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 
 Vercel project `oasis-website` deploys this repository. Production is
 https://oasis-website-mu.vercel.app/. See [the September release audit](docs/PRODUCTION-POLISH-2026-09-17.md)
-for verification and required staff account setup.
+for verification. The [October theme and login guide](docs/OCTOBER-THEME-AND-LOGIN.md) covers passwordless owner onboarding and adding staff.
 
 ```bash
 npm run verify

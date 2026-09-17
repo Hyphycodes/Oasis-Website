@@ -1,3 +1,4 @@
+import { ThemeCharacter } from './ThemeCharacter';
 import type { ResolvedTheme } from '@/themes/types';
 
 /**
@@ -16,6 +17,7 @@ export function ThemeHeroLayer({ theme }: { theme: ResolvedTheme }) {
   return (
     <div aria-hidden="true" className="theme-hero">
       <div className="theme-hero-haze" />
+      <ThemeCharacter name="snoopy" className="theme-hero-companion" />
       {theme.config.options.glow ? <div className="theme-hero-candle" /> : null}
       {topDecoration.path ? (
         <>

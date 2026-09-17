@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { cache } from 'react';
+import { isFreeHouseNight } from '@/content/admission';
 import { eventSeries as staticSeries, oneTimeEvents } from '@/content/events';
 import type { EventSeries, EventStatus } from '@/content/types';
 import { getReadDb } from '@/lib/db';
@@ -82,13 +83,13 @@ function seriesFromRow(row: Row, mode: Mode): EventSeries {
     artworkAssetId: (source.artwork_asset_id as string | null) ?? null,
     flyerAssetId: (source.flyer_asset_id as string | null) ?? null,
     flyerPrintedDate: (source.flyer_printed_date as string | null) ?? null,
-    ticketUrl: (source.ticket_url as string | null) ?? null,
-    priceCents: (source.price_cents as number | null) ?? null,
+    ticketUrl: isFreeHouseNight(String(source.slug)) ? null : (source.ticket_url as string | null) ?? null,
+    priceCents: isFreeHouseNight(String(source.slug)) ? 0 : (source.price_cents as number | null) ?? null,
     status: (source.status as EventStatus) ?? 'scheduled',
     seriesEndsOn: (source.series_ends_on as string | null) ?? null,
     paused: Boolean(source.paused),
     archivedAt: (source.archived_at as string | null) ?? null,
-    ticketPolicy: (source.ticket_policy as EventSeries['ticketPolicy']) ?? 'required',
+    ticketPolicy: isFreeHouseNight(String(source.slug)) ? 'free' : (source.ticket_policy as EventSeries['ticketPolicy']) ?? 'required',
     presentation: presentationFromRow(source),
   };
 }

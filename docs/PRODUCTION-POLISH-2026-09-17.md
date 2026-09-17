@@ -60,6 +60,8 @@ existing events; it does not auto-publish unreviewed events or overwrite staff c
 
 ## Production access and staff setup
 
+**Updated:** passwordless owner onboarding is now implemented. Use [the current login guide](OCTOBER-THEME-AND-LOGIN.md); the manual setup steps below describe the earlier release.
+
 The user confirmed staff accounts still need setup. Vercel's connector confirms the project and
 Git deployment, but the local Vercel CLI and dashboard session are not authenticated. No production
 Supabase credentials are present in this checkout. Existing database content was not replaced or reseeded.
