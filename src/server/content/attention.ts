@@ -133,7 +133,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
       message: `${soldOut.length} ${soldOut.length === 1 ? 'dish is' : 'dishes are'} marked sold out: ${soldOut
         .slice(0, 3)
         .map(({ item }) => item.name)
-        .join(', ')}. Guests still see them, greyed out.`,
+        .join(', ')}. Guests still see ${soldOut.length === 1 ? 'it' : 'them'}, greyed out.`,
       href: '/admin/menu',
       actionLabel: 'Put them back',
     });

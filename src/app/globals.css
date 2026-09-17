@@ -266,6 +266,78 @@
     }
   }
 
+  /* --- Admin motion ------------------------------------------------------
+     Two small movements, used only behind the admin's own chrome.
+
+     `admin-rise` is the save indicator arriving. It is short on purpose: a
+     confirmation that takes half a second to appear reads as the save being
+     slow rather than the animation being slow.
+
+     `admin-settle` is a screen arriving after a navigation. It is what makes
+     moving between Menu and Events feel like the website rather than like a
+     page reload, and it is the only motion on the page body.
+
+     Both are switched off wholesale by the reduced-motion block at the end of
+     this file, which zeroes every animation duration. */
+  .admin-rise {
+    animation: admin-rise 220ms var(--ease-out-expo) both;
+  }
+
+  @keyframes admin-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .admin-settle {
+    animation: admin-settle 260ms var(--ease-out-expo) both;
+  }
+
+  @keyframes admin-settle {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* A tick that says "saved" and then gets out of the way, without a timer in
+     JavaScript and without the row changing height when it goes. */
+  .admin-flash {
+    animation: admin-flash 2600ms ease-out forwards;
+  }
+
+  @keyframes admin-flash {
+    0% {
+      opacity: 0;
+    }
+    8%,
+    70% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .admin-spin {
+    animation: admin-spin 700ms linear infinite;
+  }
+
+  @keyframes admin-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* --- Eyebrow ---------------------------------------------------------- */
   .eyebrow {
     font-size: 0.75rem;
@@ -345,5 +417,13 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+
+  /* The blanket rule above would collapse the "Saved" tick's fade-out to nothing
+     and leave it permanently invisible — the animation is how it is shown, not
+     just how it leaves. It stays put instead, and the next save replaces it. */
+  .admin-flash {
+    animation: none !important;
+    opacity: 1;
   }
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { EmptyState, Notice } from '@/components/admin/ui';
+import { EmptyState, HelpNote, LinkButton } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getStaff, staffCan } from '@/server/auth';
@@ -65,22 +65,11 @@ export default async function WebsitePageEditor({
       local={local}
       title={meta.label}
       description="Each panel below is a real section of this page, in the order it appears."
+      backTo={{ href: '/admin/website', label: 'All pages' }}
       actions={
-        <>
-          <Link
-            href="/admin/website"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            All pages
-          </Link>
-          <Link
-            href={meta.route}
-            target="_blank"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            Preview the page
-          </Link>
-        </>
+        <LinkButton href={meta.route} external>
+          Preview the page
+        </LinkButton>
       }
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
@@ -113,21 +102,46 @@ export default async function WebsitePageEditor({
           ))}
         </div>
 
-        <aside className="grid gap-4">
-          <Notice tone="info">
-            Business details — address, phone, hours, ordering and booking links — are in Settings.
-            They are typed once and appear everywhere.
-          </Notice>
-          {page === 'home' ? (
-            <Notice tone="info">
-              The dishes and the event dates on the homepage are pulled from the Menu and Events
-              sections. Change them there and the homepage follows.
-            </Notice>
-          ) : null}
+        {/* Three identical info boxes stacked down the side read as three
+            warnings about this page. They are one short note about where else
+            things live, which is all they ever were. */}
+        <aside className="grid gap-3">
+          <HelpNote>
+            <span className="mb-1 block font-semibold text-brown">Not finding something here?</span>
+            Address, phone, hours and the ordering and booking links live in{' '}
+            <Link
+              href="/admin/settings"
+              className="font-semibold text-clay underline underline-offset-4"
+            >
+              Hours &amp; contact
+            </Link>
+            . They are typed once and appear on every page.
+            {page === 'home' ? (
+              <>
+                {' '}
+                The dishes and event dates shown here come from{' '}
+                <Link
+                  href="/admin/menu"
+                  className="font-semibold text-clay underline underline-offset-4"
+                >
+                  Menu
+                </Link>{' '}
+                and{' '}
+                <Link
+                  href="/admin/events"
+                  className="font-semibold text-clay underline underline-offset-4"
+                >
+                  Events
+                </Link>
+                ; change them there and this page follows.
+              </>
+            ) : null}
+          </HelpNote>
           {!canPublish ? (
-            <Notice tone="info">
-              Your account saves changes as drafts. A manager publishes them.
-            </Notice>
+            <HelpNote>
+              Your account saves changes as drafts, and nothing is lost — a manager puts them on the
+              website.
+            </HelpNote>
           ) : null}
         </aside>
       </div>

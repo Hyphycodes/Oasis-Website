@@ -2,7 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { EmptyState, Notice } from '@/components/admin/ui';
+import { SearchField } from '@/components/admin/SearchField';
+import { EmptyState, SummaryStrip } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
 import {
@@ -69,22 +70,32 @@ export default async function MediaPage({
         </EmptyState>
       ) : (
         <>
-          {needsAlt.length > 0 ? (
-            <div className="mb-4">
-              <Notice tone="danger">
-                {needsAlt.length}{' '}
-                {needsAlt.length === 1 ? 'file has no description' : 'files have no description'},
-                so screen readers cannot describe them.
-              </Notice>
-            </div>
-          ) : null}
-
-          {missing.length > 0 ? (
-            <div className="mb-4">
-              <Notice tone="warning">
-                {missing.length} spots are still waiting for a real photo. They show a branded
-                placeholder in the meantime, so nothing looks broken.
-              </Notice>
+          {/* Two problems used to arrive as two full-width alarms, one red and
+              one orange, before a single photograph. They are one line now —
+              and only descriptions are anybody's job, so only descriptions get
+              a way in. */}
+          {needsAlt.length > 0 || missing.length > 0 ? (
+            <div className="mb-5">
+              <SummaryStrip tone={needsAlt.length > 0 ? 'warning' : 'info'}>
+                {needsAlt.length > 0 ? (
+                  <>
+                    <strong className="font-semibold">
+                      {needsAlt.length} {needsAlt.length === 1 ? 'file needs' : 'files need'} a
+                      description
+                    </strong>{' '}
+                    so screen readers can describe {needsAlt.length === 1 ? 'it' : 'them'} — open
+                    one below and add it.
+                  </>
+                ) : null}
+                {needsAlt.length > 0 && missing.length > 0 ? ' ' : null}
+                {missing.length > 0 ? (
+                  <>
+                    {missing.length} {missing.length === 1 ? 'spot is' : 'spots are'} still waiting
+                    for a real photo; a branded placeholder stands in until then, so nothing looks
+                    broken.
+                  </>
+                ) : null}
+              </SummaryStrip>
             </div>
           ) : null}
 
@@ -94,20 +105,18 @@ export default async function MediaPage({
             </div>
           ) : null}
 
-          <form className="mb-5 flex flex-wrap items-end gap-2" role="search">
-            <div className="min-w-48 flex-1">
-              <label htmlFor="media-search" className="block text-[0.8125rem] font-semibold text-brown">
-                Search
-              </label>
-              <input
-                id="media-search"
-                name="q"
-                type="search"
-                defaultValue={params.q ?? ''}
-                placeholder="Search by name or description"
-                className="mt-1.5 min-h-11 w-full rounded-(--radius-sm) border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown"
-              />
-            </div>
+          <form className="mb-5 flex flex-wrap items-end gap-3" role="search">
+            {showArchived ? <input type="hidden" name="show" value="archived" /> : null}
+            <SearchField
+              id="media-search"
+              name="q"
+              label="Find a photo"
+              placeholder="Name or description"
+              initial={params.q ?? ''}
+              basePath="/admin/media"
+              keep={{ tag: params.tag, show: showArchived ? 'archived' : undefined }}
+              submitLabel="Filter"
+            />
             <div>
               <label htmlFor="media-tag" className="block text-[0.8125rem] font-semibold text-brown">
                 Tag
@@ -116,7 +125,7 @@ export default async function MediaPage({
                 id="media-tag"
                 name="tag"
                 defaultValue={params.tag ?? ''}
-                className="mt-1.5 min-h-11 rounded-(--radius-sm) border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown"
+                className="mt-1.5 min-h-11 rounded-full border border-brown/25 bg-linen px-3 text-[0.9375rem] text-brown transition-colors hover:border-brown/40"
               >
                 <option value="">All</option>
                 {MEDIA_TAGS.map((tag) => (
@@ -128,13 +137,13 @@ export default async function MediaPage({
             </div>
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
+              className="inline-flex min-h-11 items-center rounded-full border border-brown/25 px-4 text-[0.9375rem] font-semibold text-brown transition-colors hover:border-brown/45 hover:bg-brown/6"
             >
-              Filter
+              Apply tag
             </button>
             <Link
               href={showArchived ? '/admin/media' : '/admin/media?show=archived'}
-              className="inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4"
+              className="inline-flex min-h-11 items-center text-[0.875rem] text-clay underline underline-offset-4 hover:text-coral-deep"
             >
               {showArchived ? 'Back to the library' : 'Show archived'}
             </Link>
@@ -150,7 +159,7 @@ export default async function MediaPage({
                   <li key={entry.assetId}>
                     <Link
                       href={`/admin/media/${entry.assetId}`}
-                      className="group flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-brown/20 bg-linen transition-colors hover:border-coral"
+                      className="group flex h-full flex-col overflow-hidden rounded-(--radius-md) border border-brown/20 bg-linen transition-all duration-200 hover:-translate-y-0.5 hover:border-coral hover:shadow-[0_18px_45px_rgba(78,49,20,0.10)]"
                     >
                       <span className="relative block aspect-4/3 w-full bg-ivory-deep">
                         {entry.path && entry.kind === 'video' ? (

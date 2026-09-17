@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin/AdminShell';
-import { Card, EmptyState, Notice } from '@/components/admin/ui';
+import { Card, EmptyState, SummaryStrip } from '@/components/admin/ui';
 import type { InquiryRecord } from '@/content/types';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
@@ -55,10 +55,13 @@ export default async function InquiriesPage() {
         <>
           {waiting.length > 0 ? (
             <div className="mb-5">
-              <Notice tone="warning">
-                {waiting.length} {waiting.length === 1 ? 'enquiry is' : 'enquiries are'} waiting for a
-                reply.
-              </Notice>
+              <SummaryStrip tone="warning">
+                <strong className="font-semibold">
+                  {waiting.length} {waiting.length === 1 ? 'enquiry is' : 'enquiries are'} waiting
+                  for a reply
+                </strong>{' '}
+                — they are open below, newest first.
+              </SummaryStrip>
             </div>
           ) : null}
           <Card>

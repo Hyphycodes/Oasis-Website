@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
+import { LinkButton } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
 import { listVersions } from '@/server/content/editorial';
@@ -42,22 +42,14 @@ export default async function MenuItemPage({ params }: { params: Promise<{ item:
       local={local}
       title={found.item.name}
       description={`${found.menu.title} · ${found.category.name}`}
+      backTo={{
+        href: `/admin/menu?menu=${found.menu.slug}`,
+        label: `Back to ${found.menu.title}`,
+      }}
       actions={
-        <>
-          <Link
-            href={`/admin/menu?menu=${found.menu.slug}`}
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            Back to the menu
-          </Link>
-          <Link
-            href={`/menu#${found.category.id}`}
-            target="_blank"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            View on the website
-          </Link>
-        </>
+        <LinkButton href={`/menu#${found.category.id}`} external>
+          View on the website
+        </LinkButton>
       }
     >
       <ItemEditor

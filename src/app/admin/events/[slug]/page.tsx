@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { Card, EmptyState, Notice, StateChip } from '@/components/admin/ui';
+import { Card, EmptyState, LinkButton, Notice, StateChip } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getSeriesOccurrences, venueIsoDate } from '@/lib/events';
@@ -81,22 +80,11 @@ export default async function SeriesPage({
       local={local}
       title={series.title}
       description="Change the details every night inherits, or change one night on its own."
+      backTo={{ href: '/admin/events', label: 'All events' }}
       actions={
-        <>
-          <Link
-            href="/admin/events"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            All events
-          </Link>
-          <Link
-            href={`/events/${series.slug}`}
-            target="_blank"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
-            View on the website
-          </Link>
-        </>
+        <LinkButton href={`/events/${series.slug}`} external>
+          View on the website
+        </LinkButton>
       }
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start">

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
 import { ArtworkSourceNote, ArtworkThumb, artworkSourceOf } from '@/components/admin/Artwork';
-import { Card, EmptyState, Notice, StateChip } from '@/components/admin/ui';
+import { Card, EmptyState, HelpNote, LinkButton, Notice, StateChip, Tabs } from '@/components/admin/ui';
 import { getMediaMap } from '@/content/media';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
@@ -27,6 +27,19 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'past', label: 'Past' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
+
+/** How many rows sit behind each tab, so a waiting draft is visible unopened. */
+const TAB_COUNT: Partial<
+  Record<
+    Tab,
+    (counts: { ready: unknown[]; drafts: unknown[]; cancelled: unknown[]; series: number }) => number
+  >
+> = {
+  upcoming: (counts) => counts.ready.length,
+  series: (counts) => counts.series,
+  drafts: (counts) => counts.drafts.length,
+  cancelled: (counts) => counts.cancelled.length,
+};
 
 /**
  * Events.
@@ -107,19 +120,12 @@ export default async function AdminEventsPage({
       description="Add a special event, or update one of your regular Friday and Saturday nights."
       actions={
         <>
-          <Link
-            href="/admin/events?new=1"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) bg-coral px-4 text-[0.9375rem] font-semibold text-on-orange"
-          >
+          <LinkButton href="/admin/events?new=1" variant="primary">
             Add an event
-          </Link>
-          <Link
-            href="/events"
-            target="_blank"
-            className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-          >
+          </LinkButton>
+          <LinkButton href="/events" external>
             View website
-          </Link>
+          </LinkButton>
         </>
       }
     >
@@ -146,13 +152,13 @@ export default async function AdminEventsPage({
               <Card title={`${specials.length} special ${specials.length === 1 ? 'event' : 'events'}`}>
                 <ul className="divide-y divide-brown/12">
                   {specials.map((special) => (
-                    <li key={special.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
-                      <span className="tabular w-28 shrink-0 text-[0.875rem] font-semibold text-brown">
-                        {formatEventDateLong(special.startsAt)}
-                      </span>
+                    <li key={special.id} className="flex items-center gap-x-4 gap-y-1 py-3">
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[0.9375rem] text-brown">
+                        <span className="block text-[0.9375rem] font-semibold text-brown">
                           {special.title}
+                        </span>
+                        <span className="tabular block text-[0.8125rem] text-brown-soft">
+                          {formatEventDateLong(special.startsAt)}
                         </span>
                         <span className="text-[0.75rem] text-brown-soft">
                           {special.flyerAssetId ? 'Official flyer ✓' : 'No flyer yet'}
@@ -162,13 +168,13 @@ export default async function AdminEventsPage({
                         </span>
                       </span>
                       {special.status === 'sold-out' ? (
-                        <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
+                        <span className="shrink-0 text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
                           Sold out
                         </span>
                       ) : null}
                       <Link
                         href={`/admin/events/one/${encodeURIComponent(special.id)}`}
-                        className="text-[0.8125rem] font-semibold text-clay underline underline-offset-4"
+                        className="shrink-0 text-[0.8125rem] font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
                       >
                         Edit
                       </Link>
@@ -179,25 +185,17 @@ export default async function AdminEventsPage({
             </div>
           ) : null}
 
-          <nav aria-label="Which events" className="mb-5">
-            <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {TABS.map((entry) => (
-                <li key={entry.id}>
-                  <Link
-                    href={`/admin/events?tab=${entry.id}`}
-                    aria-current={entry.id === tab ? 'page' : undefined}
-                    className={`inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-(--radius-sm) px-3 text-[0.9375rem] font-semibold ${
-                      entry.id === tab
-                        ? 'bg-teal text-amber'
-                        : 'text-brown-soft hover:bg-brown/8 hover:text-brown'
-                    }`}
-                  >
-                    {entry.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <div className="mb-5">
+            <Tabs
+              label="Which events"
+              items={TABS.map((entry) => ({
+                href: `/admin/events?tab=${entry.id}`,
+                label: entry.label,
+                active: entry.id === tab,
+                count: TAB_COUNT[entry.id]?.({ ready, drafts, cancelled, series: events.series.length }),
+              }))}
+            />
+          </div>
 
           {tab === 'upcoming' ? (
             <>
@@ -305,10 +303,10 @@ export default async function AdminEventsPage({
                 <EmptyState>Nothing is cancelled.</EmptyState>
               ) : (
                 <>
-                  <Notice tone="info">
+                  <HelpNote>
                     A cancelled night stays on the website for two weeks so anyone holding a ticket
                     finds out. It is never offered as “what’s on”.
-                  </Notice>
+                  </HelpNote>
                   <div className="mt-4">
                     <ReadinessTable events={cancelled} canPublish={canPublish} now={now} media={media} />
                   </div>
@@ -380,73 +378,79 @@ function ReadinessTable({
         const date = venueIsoDate(event.startsAt);
         const source = artworkSourceOf(event);
         return (
-          <li key={event.id} className="flex gap-4 py-3">
+          <li className="flex gap-4 py-3" key={event.id}>
             {/* The flyer itself. Two Fridays and a Saturday are only telling
                 apart by looking at them. */}
             <ArtworkThumb
               asset={event.flyerAssetId ? (media[event.flyerAssetId] ?? null) : null}
             />
-            <div className="grid min-w-0 flex-1 gap-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="tabular shrink-0 text-[0.9375rem] font-semibold text-brown">
-                {formatEventDateLong(event.startsAt)}
-              </span>
-              <span className="tabular shrink-0 text-[0.8125rem] text-brown-soft">
-                {formatTimeRange(event.startsAt, event.endsAt)}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[0.9375rem] text-brown">
-                {event.title}
-              </span>
-              <StateChip
-                state={
-                  event.archivedAt
-                    ? 'archived'
-                    : !event.published
-                      ? 'draft'
-                      : event.overriddenFields.length
-                        ? 'changed'
-                        : 'published'
-                }
-              />
-              {event.seriesSlug ? (
-                <Link
-                  href={`/admin/events/${event.seriesSlug}?date=${date}`}
-                  className="shrink-0 text-[0.8125rem] font-semibold text-clay underline underline-offset-4"
-                >
-                  Change this night
-                </Link>
-              ) : null}
-              {canPublish && !event.published && event.overrideId ? (
-                <OccurrencePublish id={event.overrideId} published={false} />
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem]">
-              {problem ? (
-                <span className="font-semibold text-warning">{problem}</span>
-              ) : null}
-              {!event.ticketUrl ? (
-                <span className="font-semibold text-danger">No ticket link</span>
-              ) : (
-                <span className="text-brown-soft">Tickets set</span>
-              )}
-              {source === 'none' && event.seriesSlug ? (
-                <Link
-                  href={`/admin/events/${event.seriesSlug}`}
-                  className="font-semibold text-warning underline underline-offset-4"
-                >
-                  Needs artwork
-                </Link>
-              ) : (
-                <ArtworkSourceNote source={source} />
-              )}
-              {event.overriddenFields.filter((f) => f !== 'flyerAssetId').length > 0 ? (
-                <span className="text-clay">
-                  Changed for this night:{' '}
-                  {event.overriddenFields.filter((f) => f !== 'flyerAssetId').join(', ')}
+            {/* Date first, then the name on its own line. The two used to share
+                one flex row, so on a phone "Oasis Latin Saturdays" arrived as
+                "Oasis La…" — the row still answered "is Friday ready" and no
+                longer answered "which night is this". */}
+            <div className="grid min-w-0 flex-1 gap-1.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="tabular text-[0.9375rem] font-semibold text-brown">
+                  {formatEventDateLong(event.startsAt)}
                 </span>
-              ) : null}
-            </div>
+                <span className="tabular text-[0.8125rem] text-brown-soft">
+                  {formatTimeRange(event.startsAt, event.endsAt)}
+                </span>
+                <StateChip
+                  state={
+                    event.archivedAt
+                      ? 'archived'
+                      : !event.published
+                        ? 'draft'
+                        : event.overriddenFields.length
+                          ? 'changed'
+                          : 'published'
+                  }
+                />
+              </div>
+
+              <p className="text-[0.9375rem] text-brown">{event.title}</p>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem]">
+                {problem ? (
+                  <span className="font-semibold text-warning">{problem}</span>
+                ) : null}
+                {!event.ticketUrl ? (
+                  <span className="font-semibold text-danger">No ticket link</span>
+                ) : (
+                  <span className="text-brown-soft">Tickets set</span>
+                )}
+                {source === 'none' && event.seriesSlug ? (
+                  <Link
+                    href={`/admin/events/${event.seriesSlug}`}
+                    className="font-semibold text-warning underline underline-offset-4"
+                  >
+                    Needs artwork
+                  </Link>
+                ) : (
+                  <ArtworkSourceNote source={source} />
+                )}
+                {event.overriddenFields.filter((f) => f !== 'flyerAssetId').length > 0 ? (
+                  <span className="text-clay">
+                    Changed for this night:{' '}
+                    {event.overriddenFields.filter((f) => f !== 'flyerAssetId').join(', ')}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {event.seriesSlug ? (
+                  <Link
+                    href={`/admin/events/${event.seriesSlug}?date=${date}`}
+                    className="text-[0.8125rem] font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
+                  >
+                    Change this night
+                  </Link>
+                ) : null}
+                {canPublish && !event.published && event.overrideId ? (
+                  <OccurrencePublish id={event.overrideId} published={false} />
+                ) : null}
+              </div>
             </div>
           </li>
         );

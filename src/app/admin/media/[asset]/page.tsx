@@ -52,14 +52,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ as
       local={local}
       title={entry.title}
       description={entry.kind === 'video' ? 'Video' : 'Photo'}
-      actions={
-        <Link
-          href="/admin/media"
-          className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-        >
-          All photos & videos
-        </Link>
-      }
+      backTo={{ href: '/admin/media', label: 'All photos & videos' }}
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
         <div className="grid gap-4">

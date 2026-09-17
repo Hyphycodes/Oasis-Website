@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
 import { EventPresentationEditor, type ArtSlotState } from '@/components/admin/EventPresentation';
-import { Card, Notice } from '@/components/admin/ui';
+import { Card, HelpNote, LinkButton, Notice } from '@/components/admin/ui';
 import { EVENT_ART_SLOTS } from '@/content/event-presentation';
 import { getMediaMap } from '@/content/media';
 import { getSiteSettings } from '@/content/resolve';
@@ -84,40 +83,32 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
       local={local}
       title={record.title ?? 'Event'}
       description={`${formatEventDateLong(record.startsAt)} · ${formatEventTime(record.startsAt)}`}
+      backTo={{ href: '/admin/events', label: 'All events' }}
       actions={
-        <>
-          {record.slug ? (
-            <Link
-              href={`/events/${record.slug}`}
-              target="_blank"
-              className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown"
-            >
-              Preview ↗
-            </Link>
-          ) : null}
-          <Link
-            href="/admin/events"
-            className="inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-clay underline underline-offset-4"
-          >
-            All events
-          </Link>
-        </>
+        record.slug ? (
+          <LinkButton href={`/events/${record.slug}`} external>
+            Preview
+          </LinkButton>
+        ) : null
       }
     >
       <div className="grid gap-5">
         <EventControls id={String(row.id)} canPublish={canPublish} />
-        {record.provenance?.source === 'tickeri' ? (
-          <Notice tone="info">
-            This event came from Tickeri. Checking Tickeri again can correct its date, price,
-            sold-out state and ticket link — it never changes the artwork or how the event looks
-            here.
-          </Notice>
-        ) : null}
-
+        {/* Only the draft state is a thing to act on. Where the event came
+            from is background, and it does not need a bordered alarm of its
+            own above the form. */}
         {record.published === false ? (
           <Notice tone="warning">
             This event is a draft. Guests cannot see it until it is published.
           </Notice>
+        ) : null}
+
+        {record.provenance?.source === 'tickeri' ? (
+          <HelpNote>
+            This event came from Tickeri. Checking Tickeri again can correct its date, price,
+            sold-out state and ticket link — it never changes the artwork or how the event looks
+            here.
+          </HelpNote>
         ) : null}
 
         <Card title="The event">

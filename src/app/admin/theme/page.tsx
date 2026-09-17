@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { EmptyState, Notice } from '@/components/admin/ui';
+import { EmptyState, HelpNote } from '@/components/admin/ui';
 import { getMediaMap } from '@/content/media';
 import { getSiteSettings } from '@/content/resolve';
 import { getReadDb, isLocalDb } from '@/lib/db';
@@ -85,10 +85,10 @@ export default async function ThemePage() {
     >
       {!canPublish ? (
         <div className="mb-5">
-          <Notice tone="info">
+          <HelpNote>
             Your account can see these settings but only a manager or the owner can change the
             website&apos;s look.
-          </Notice>
+          </HelpNote>
         </div>
       ) : null}
 
