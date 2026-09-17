@@ -40,9 +40,21 @@ export async function ThemeRailGuest() {
   return <ThemeCharacter name="snoopy" className="theme-rail-guest" />;
 }
 
-/** Place inside a relative photo composition, away from words and controls. */
-export async function ThemePhotoGuest({ name }: { name: ThemeCharacterName }) {
+/**
+ * Place inside a relative photo composition, away from words and controls.
+ *
+ * `className` exists for compositions whose lower edge is not the photograph —
+ * a grid with a caption under each tile, say — so the guest can be lifted clear
+ * of the words instead of sitting on them.
+ */
+export async function ThemePhotoGuest({
+  name,
+  className = '',
+}: {
+  name: ThemeCharacterName;
+  className?: string;
+}) {
   const theme = await getActiveTheme();
   if (!theme.definition || !theme.config.options.edges) return null;
-  return <ThemeCharacter name={name} className="theme-photo-guest" />;
+  return <ThemeCharacter name={name} className={`theme-photo-guest ${className}`} />;
 }

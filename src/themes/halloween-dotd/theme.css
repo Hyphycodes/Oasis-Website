@@ -1348,3 +1348,22 @@
   --f-dur: 8.5s;
   --f-delay: -2.5s;
 }
+
+/* Lifted clear of a caption line.
+   
+   In a grid of tiles the bottom of the composition is the last caption, not
+   the last photograph, so a guest anchored to the bottom sits straight on the
+   words. Declared last and with two classes on purpose: the base placement and
+   the phone override both set `bottom`, and either would otherwise win. */
+.theme-character.theme-photo-guest-raised {
+  right: -6px;
+  bottom: 4.25rem;
+}
+
+@media (max-width: 639px) {
+  .theme-character.theme-photo-guest-raised {
+    right: -10px;
+    bottom: 3.75rem;
+    width: clamp(88px, 26vw, 112px);
+  }
+}

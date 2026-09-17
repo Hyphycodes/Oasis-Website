@@ -146,3 +146,33 @@ Those two cards are now rows on phones — flyer as a thumbnail, facts beside it
 shape a list of dates wants. The lead event keeps its full poster, so the hierarchy is sharper
 rather than flatter. With the scenes trimmed a little the page is 7.6 screens and the events
 section is 1,228px.
+
+## Homepage, condensed
+
+The homepage was nine content bands and three seasonal scenes. It is now five bands and
+two scenes, and on a phone it runs 6.1 screens instead of 8.5.
+
+**The kitchen and the bar are one band.** "Come hungry. Stay awhile." (six category tiles in
+a horizontal scroller) and "Margaritas by the tower." (two more photographs, its own headline,
+its own two buttons) together spent about 1100px saying that Oasis serves food and drinks.
+They are one band of four photographs that all fit on screen at once — no scroller, so nothing
+is hidden behind a swipe — over a line carrying the bar-and-brunch facts and a single route to
+the menu. The two tiles that were colour fields rather than photographs (Starters and Brunch,
+neither of which has approved photography) are gone rather than padding the grid; brunch keeps
+its hours on the facts line, where they are more use than a swatch was.
+
+**Catering is no longer a section.** It was a headline, three packages with serving ranges,
+a private-events blurb and a second photograph — about 1470px on a phone, ahead of the address.
+Catering and private events are real parts of the business with their own pages, nav items and
+footer links, so on the homepage they are one line each at the bottom of the closing block, and
+arrival details lead it instead.
+
+**Social is quieter.** Its heading was set up to 3.75rem, louder than the section above it that
+sells a table; it now matches every other section. The three accounts were a stacked list
+spelling out platform, handle and arrow each time, and are now one wrapping row of chips
+labelled by @handle (or by platform where the "handle" is just the restaurant's name again,
+as Facebook's is).
+
+Every admin control still drives something visible. The `bar` section keeps its own eyebrow and
+heading on the facts line rather than becoming a lone visibility toggle, and `two-paths` drives
+the catering and celebration links in the closing block.
