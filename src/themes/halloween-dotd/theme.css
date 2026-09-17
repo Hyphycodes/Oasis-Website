@@ -334,42 +334,49 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* An earlier version sized this ellipse with explicit rx/ry (e.g. "72% 50%
-     at 42% 50%") and gave its last stop a low residual colour instead of
-     transparent, to stop the pool hitting true zero at the band's own top
-     and bottom edge. That traded one hard edge for a worse one: an explicit
-     rx/ry ellipse does not reach a box's CORNERS even when it reaches the
-     edges, and past a gradient's last stop CSS just keeps painting flat with
-     that colour, clipped by `inset: 0` — so every corner of every band was
-     filled with a flat, non-transparent rectangle right up to a hard clip.
-     `ellipse farthest-corner` (the same sizing radial-gradient() defaults to
-     with no size given) fixes both problems at once: it is defined to always
-     reach every corner of the box, so there is no leftover region for a flat
-     fill to occupy, and the ONLY point that ever reaches the true "transparent"
-     stop is the single farthest corner — everywhere else, including the
-     top/bottom-centre points where a seam with the next band actually sits,
-     keeps a little smoothly-fading colour instead of hitting zero outright.
-     Centres sit off to one side so consecutive sections do not stack their
-     bright spots in a column. */
-  background: radial-gradient(ellipse farthest-corner at 42% 50%, rgb(70 32 60 / 0.3), transparent);
+  /* Two earlier versions both tried to make the pool's OWN edge smooth —
+     first an explicit rx/ry ellipse with a residual last-stop colour (which
+     filled every band's corners with a flat, hard-edged rectangle, since
+     that colour paints forever past the ellipse and `inset: 0` clips it),
+     then `ellipse farthest-corner` sizing (which fixed the corners, but
+     still puts real colour right up to the band's own top and bottom edge).
+     Neither was ever going to work: an ivory band is lightly tinted and
+     warm, an espresso band is heavily tinted and near black, and those two
+     colours cannot meet at a shared edge without a visible seam no matter
+     how softly each side fades ON ITS OWN — the seam is a difference in
+     destination colour, not a difference in softness.
+
+     The fix is not a softer pool, it is a SMALLER one: a fixed vertical
+     reach (in vmax, so it does not balloon on a very tall band the way a
+     percentage of the band's own height would) that dies out to true
+     transparent well inside the band, leaving real breathing room at the
+     top and bottom on every band from a thin strip to a twelve-hundred-
+     pixel one. A guest never sees an ivory edge meet an espresso edge,
+     because there is no tinted "edge" on either side to begin with — both
+     bands are back to the same bare candle-glow for the last stretch before
+     the seam, and that glow is one fixed layer behind the whole page, so it
+     is already identical on both sides by construction. Centres sit off to
+     one side so consecutive sections do not stack their bright spots in a
+     column. */
+  background: radial-gradient(92% 22vmax at 42% 50%, rgb(70 32 60 / 0.36), transparent 100%);
 }
 
 [data-theme='halloween-dotd'] .o-band.bg-ivory-deep::after {
-  background: radial-gradient(ellipse farthest-corner at 60% 50%, rgb(78 34 62 / 0.32), transparent);
+  background: radial-gradient(94% 22vmax at 60% 50%, rgb(78 34 62 / 0.38), transparent 100%);
 }
 
 /* Deeper night for the evening programme. */
 [data-theme='halloween-dotd'] .o-band.bg-espresso::after {
-  background: radial-gradient(ellipse farthest-corner at 50% 50%, rgb(6 3 9 / 0.55), transparent);
+  background: radial-gradient(96% 24vmax at 50% 50%, rgb(6 3 9 / 0.62), transparent 100%);
 }
 
 [data-theme='halloween-dotd'] .o-band.bg-teal::after {
-  background: radial-gradient(ellipse farthest-corner at 52% 50%, rgb(4 2 9 / 0.58), transparent);
+  background: radial-gradient(98% 24vmax at 52% 50%, rgb(4 2 9 / 0.64), transparent 100%);
 }
 
 /* Burgundy, kept, but as a warm pool rather than a slab. */
 [data-theme='halloween-dotd'] .o-band.bg-sand::after {
-  background: radial-gradient(ellipse farthest-corner at 40% 50%, rgb(82 24 48 / 0.62), transparent);
+  background: radial-gradient(92% 20vmax at 40% 50%, rgb(82 24 48 / 0.68), transparent 100%);
 }
 
 /* The paper grain is drawn for a solid sand field; with the field gone it is

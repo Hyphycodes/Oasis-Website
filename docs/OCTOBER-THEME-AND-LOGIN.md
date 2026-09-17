@@ -415,6 +415,29 @@ ever actually reaches that final `transparent` stop, every other point, includin
 top/bottom-centre where a `ThemeWorld` scene actually sits, keeps a little smoothly-fading colour
 instead of hitting literal zero. Centre alphas were trimmed slightly (0.34→0.3, 0.62→0.55, and so
 on) since the larger ellipse holds its colour further out than the old explicit sizing did.
-Verified at both flagged locations (paint scene, music scene), on `/private-events` and `/events`
-where the same scenes recur, and at both desktop and mobile widths — no rectangle, no seam,
-smoothly one field of night from top to bottom.
+
+## Still rectangles — the actual root cause
+
+"i still see rectangles for the sections. the background should gradient however it needs to to
+keep a smooth flow with no breaks." Right again: `farthest-corner` sizing fixed the corner-fill
+bug, but every version so far had been solving the wrong problem. The visible boundary was never
+about how softly one band's own pool faded at its own edge — it was that an ivory band is
+lightly tinted and warm (mostly the raw candle-glow showing through a nearly-transparent surface)
+and an espresso band is heavily tinted and near black, and two bands that different in actual
+brightness cannot share an edge without a seam, no matter how gently either one gets there on its
+own side. A soft fade to a dark colour is still a visible line next to a soft fade to a light one.
+
+The fix is a smaller pool, not a softer one: every `.o-band::after` now uses a fixed vertical
+reach in `vmax` (22–24vmax, not a percentage of the band's own height) so it dies out to true
+`transparent` well inside the band, with real untinted space left at the top and bottom — on a
+73px strip and a 1200px section alike, since a percentage-of-self radius would have scaled the
+"safe zone" away on a very tall band. Right at any seam, both neighbours are back to the same
+bare, viewport-fixed candle-glow (`.theme-layer-glow`) instead of each other's distinct colour —
+and since that glow is one layer painted once behind the entire page, it is already identical on
+both sides by construction. There is nothing left to draw a line with.
+
+Checked across every page that carries more than one full-bleed tone — home, `/events`,
+`/catering`, `/private-events`, `/visit`, `/careers` — at every tone pairing that actually touches
+directly with no `ThemeWorld` gap between them (ivory↔espresso, teal↔ivory, cream↔sand,
+sand↔cream, cream↔ivory-deep), and at both desktop and mobile widths. Every one reads as one
+continuous field of night now, not a stack of coloured boxes.
