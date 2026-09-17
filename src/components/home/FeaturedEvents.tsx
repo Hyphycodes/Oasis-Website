@@ -34,7 +34,7 @@ export async function FeaturedEvents({
   const artwork = await resolveManyEventArtwork([lead, ...supporting]);
 
   return (
-    <section className="relative isolate bg-espresso on-dark py-(--spacing-band-sm)" aria-labelledby="whats-on">
+    <section className="o-band relative isolate bg-espresso on-dark py-(--spacing-band-sm)" aria-labelledby="whats-on">
       <Frame wide>
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
@@ -169,26 +169,41 @@ function SupportingEvent({
 
   return (
     <article
-      className="group flex h-full flex-col overflow-hidden rounded-(--radius-lg) border border-night-text/12 bg-obsidian/60 transition-colors hover:border-[color:var(--e-accent)]/45"
+      // A ROW on a phone, a stacked card from `sm`.
+      //
+      // Stacked, each supporting event put a near-square flyer across the full
+      // width of the screen before it said a single fact, so the two of them
+      // cost about two and a half phone screens of scrolling and the section
+      // read as a pile of posters rather than a list of nights. As a row the
+      // flyer becomes a thumbnail and the facts sit beside it, which is the
+      // shape a list of dates wants: scannable top to bottom, one line of
+      // travel per event. The lead event above keeps the full poster, so the
+      // hierarchy gets sharper rather than flatter.
+      className="group flex h-full flex-row overflow-hidden rounded-(--radius-lg) border border-night-text/12 bg-obsidian/60 transition-colors hover:border-[color:var(--e-accent)]/45 sm:flex-col"
       style={presetVars(event.presentation.visualPreset)}
     >
       {/* The picture and the title link to the same place. Giving the picture
           its own label would make a screen reader announce the event twice and
           add a tab stop that goes nowhere new, so it is hidden from assistive
           technology instead — it stays clickable for a pointer. */}
-      <Link href={eventHref(event)} className="block" aria-hidden="true" tabIndex={-1}>
+      <Link
+        href={eventHref(event)}
+        className="block w-28 shrink-0 self-stretch sm:w-auto sm:self-auto"
+        aria-hidden="true"
+        tabIndex={-1}
+      >
         <EventArt
           art={artwork}
           title={event.title}
           preset={event.presentation.visualPreset}
           size="card"
-          // Full width of its own card on a phone, half the row from `sm`.
-          sizes="(min-width: 1024px) 34vw, (min-width: 640px) 45vw, 92vw"
-          className="rounded-b-none"
+          // A 7rem thumbnail on a phone, half the row from `sm`.
+          sizes="(min-width: 1024px) 34vw, (min-width: 640px) 45vw, 7rem"
+          className="h-full rounded-none sm:h-auto sm:rounded-(--radius-lg) sm:rounded-b-none"
         />
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3.5 sm:gap-2 sm:p-5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <p className="tabular text-[0.9375rem] font-semibold text-[color:var(--e-accent)]">
             {formatEventDate(event.startsAt)} · {formatEventTime(event.startsAt)}

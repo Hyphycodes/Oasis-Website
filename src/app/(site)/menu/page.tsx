@@ -49,7 +49,7 @@ export default async function MenuPage() {
 
   return (
     <>
-      <section className="bg-ivory">
+      <section className="o-band bg-ivory">
         <Frame>
           <div className="grid items-center gap-6 py-7 sm:grid-cols-12 sm:gap-10 lg:py-8">
             <div className="sm:col-span-7">

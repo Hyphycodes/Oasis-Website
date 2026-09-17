@@ -196,7 +196,7 @@ export async function Hero({
 export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
   const site = await getSiteSettings();
   return (
-    <div className="relative border-b border-brown/12 bg-ivory-deep">
+    <div className="o-band relative border-b border-brown/12 bg-ivory-deep">
       {/* Seasonal only; nothing in the default look. Reserves no space, so the
           rail is exactly its usual height without a theme. */}
       <ThemeRailGuest />

@@ -201,7 +201,7 @@ export default async function EventsPage({
   return (
     <>
       {/* 1 — compact, atmosphere-led intro with real photography. */}
-      <section className="relative isolate overflow-hidden bg-teal on-dark">
+      <section className="o-band relative isolate overflow-hidden bg-teal on-dark">
         {/* Wrapped, not positioned directly: Asset sets `relative` and an
             aspect-ratio on its own root, which would otherwise size this
             background layer to 3:2 of the full page width. */}

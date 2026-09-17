@@ -6,7 +6,7 @@ import { ThemePhotoGuest } from '@/components/theme/ThemeWorld';
 /** Real venue photography and verified accounts; no simulated social feed. */
 export async function SocialScene() {
   const settings = await getSiteSettings();
-  return <section className="overflow-hidden bg-espresso py-10 text-night-text sm:py-14" aria-labelledby="social-scene-heading">
+  return <section className="o-band overflow-hidden bg-espresso py-10 text-night-text sm:py-14" aria-labelledby="social-scene-heading">
     <Frame wide>
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div><p className="eyebrow text-amber">Your local escape</p><h2 id="social-scene-heading" className="display mt-3 text-[clamp(2rem,5vw,3.75rem)] leading-none">Good food. Better company.</h2></div>

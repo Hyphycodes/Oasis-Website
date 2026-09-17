@@ -114,3 +114,35 @@ phones with near full-size guests, a wider orbit and bigger stars; a third scene
 width, Scream joins the social collage's corner, the footer trio grows, and the phone petal
 field is denser (9 at standard, 12 at full). Nothing reserves layout space when the theme
 is off.
+
+### What was actually drawing the banner edges
+
+The first pass at "one continuous night" thinned the surface tokens instead of removing
+the surfaces. A translucent fill is not a soft fill: `background-color` covers a box evenly
+and stops dead at its edge, so an 8–20% wash still drew a hard horizontal line wherever two
+sections met — and the character scenes, sitting in the untinted gap between two tinted
+rectangles, read as banners with an edge top and bottom.
+
+Full-bleed surfaces now carry an `o-band` marker (the `Band` primitive plus the handful of
+sections that do not use it) and clear their background entirely; only a feathered `::after`
+pool carries the tone, and every pool reaches full transparency before any edge. The colour
+tokens went back to real opaque surfaces, which is what the phone drawer, the menu's sticky
+category nav, form fields and category tiles need — so no special-casing is required for them.
+
+Two other fixes came out of the same pass. Petals moved behind the page content
+(`z-index: -1`): with no rectangles left to hide them they are still visible everywhere, but
+they no longer fall across a headline or a price. And every two-layer `mask-image` combined
+with `mask-composite: intersect` was replaced by a single-layer radial — that pattern
+composites the bottom layer against nothing and had been erasing the papel picado outright,
+which only showed over brighter frames of the hero reel. Hero artwork keeps close to its own
+colour now; the pocket of dark air above it (`.theme-hero::before`) does the setting-back, so
+it no longer disappears depending on which frame is playing.
+
+### Phones get a shorter read
+
+The homepage ran 8.5 phone screens, and "What's on" alone was 1,927px of it, because each
+supporting event put a near-square flyer across the full width before stating a single fact.
+Those two cards are now rows on phones — flyer as a thumbnail, facts beside it — which is the
+shape a list of dates wants. The lead event keeps its full poster, so the hierarchy is sharper
+rather than flatter. With the scenes trimmed a little the page is 7.6 screens and the events
+section is 1,228px.

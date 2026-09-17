@@ -49,7 +49,12 @@ export function Band({
   return (
     <Tag
       id={id}
-      className={`relative isolate ${SURFACE[surface]} ${padding} ${
+      // `o-band` is a stable hook, not a style. It marks a FULL-BLEED surface,
+      // which is the only thing a seasonal theme may dissolve into a pool of
+      // light — a colour token alone cannot be trusted for that, because the
+      // same token also fills small solid things (menu chips, category tiles)
+      // that must keep a real surface.
+      className={`o-band relative isolate ${SURFACE[surface]} ${padding} ${
         topRule ? 'border-t-2 border-t-orange' : ''
       } ${className}`}
     >

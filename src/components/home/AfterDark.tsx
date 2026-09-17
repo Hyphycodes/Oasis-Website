@@ -38,7 +38,7 @@ export function AfterDark({
         className="h-1 w-full bg-amber"
       />
 
-      <div className="bg-teal on-dark py-(--spacing-band-sm)">
+      <div className="o-band bg-teal on-dark py-(--spacing-band-sm)">
         <Frame wide>
           <div className="mb-8 overflow-hidden"><Asset id="roomCrowd" className="aspect-[16/9] w-full sm:aspect-[21/7]" sizes="100vw" rounded={false} /></div>
           <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
