@@ -665,7 +665,7 @@
 .theme-world-star-two { right: 32%; top: 64%; color: #9bafff; font-size: 22px; }
 .theme-world-star-three { left: 49%; top: 72%; color: #f6ac55; font-size: 10px; }
 .theme-world-edges { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }
-.theme-edge-guest { position: absolute; width: clamp(62px, 5.5vw, 100px); height: 125px; opacity: .65; }
+.theme-edge-guest { position: absolute; width: clamp(28px, calc((100vw - 1344px) / 2 - 12px), 100px); height: 125px; opacity: .65; }
 .theme-edge-guest-0 { left: 2px; top: 10%; rotate: -9deg; }
 .theme-edge-guest-1 { right: 4px; top: 26%; rotate: 12deg; }
 .theme-edge-guest-2 { left: 1px; top: 43%; rotate: -7deg; }
