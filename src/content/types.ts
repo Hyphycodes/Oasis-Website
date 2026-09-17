@@ -96,7 +96,7 @@ export interface Announcement {
 /* Menus                                                                      */
 /* -------------------------------------------------------------------------- */
 
-export type MenuSlug = 'food' | 'cocktails' | 'brunch';
+export type MenuSlug = 'food' | 'cocktails';
 
 export type Dietary = 'vegetarian' | 'vegan' | 'gluten-free-option' | 'spicy';
 
@@ -134,9 +134,9 @@ export interface MenuCategory {
 export interface Menu {
   slug: MenuSlug;
   title: string;
-  /** Rendered above the categories. Used for the brunch service window. */
+  /** Rendered above the categories. */
   note: string | null;
-  /** Shown when a menu has no categories yet — brunch. Never invented items. */
+  /** Shown when a menu has no categories yet. Never invented items. */
   emptyState: string | null;
   categories: MenuCategory[];
 }

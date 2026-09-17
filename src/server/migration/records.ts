@@ -358,7 +358,11 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
     page: 'home',
     key: 'hero',
     eyebrow: 'Lockport, Illinois',
-    heading: pageCopy.home.heroHeadlineLines.join(' '),
+    // Joined with a NEWLINE, not a space: the hero splits its heading on
+    // newlines to set each line of the marquee, so a space here would collapse
+    // a deliberate two-line statement into one and the seeded row would render
+    // differently from the built-in default it was made from.
+    heading: pageCopy.home.heroHeadlineLines.join('\n'),
     body: pageCopy.home.heroBody,
     visible: true,
     variant: 'band',

@@ -22,12 +22,12 @@ const fd=(data:Record<string,string>)=>{const form=new FormData();for(const [key
 beforeEach(async()=>{directory=await mkdtemp(path.join(tmpdir(),'oasis-action-'));db=new LocalDb(directory,()=>buildRecords().tables);context.db=db;});
 afterEach(async()=>{await rm(directory,{recursive:true,force:true});});
 describe('staff workflows',()=>{
-  it('creates a brunch category and keeps unfinished dishes hidden',async()=>{
-    expect((await addCategory(idle,fd({menuSlug:'brunch',name:'QA brunch category'}))).ok).toBe(true);
-    const category=(await db.list<Row>('menu_categories')).find(r=>r.name==='QA brunch category')!;
+  it('creates a category and keeps unfinished dishes hidden',async()=>{
+    expect((await addCategory(idle,fd({menuSlug:'cocktails',name:'QA category'}))).ok).toBe(true);
+    const category=(await db.list<Row>('menu_categories')).find(r=>r.name==='QA category')!;
     expect((await addMenuItem(idle,fd({categoryId:String(category.id),name:'QA dish'}))).ok).toBe(true);
-    const brunch=(await getPublicMenus()).find(m=>m.slug==='brunch')!;
-    expect(brunch.categories.flatMap(c=>c.items).find(i=>i.name==='QA dish')).toBeUndefined();
+    const cocktails=(await getPublicMenus()).find(m=>m.slug==='cocktails')!;
+    expect(cocktails.categories.flatMap(c=>c.items).find(i=>i.name==='QA dish')).toBeUndefined();
   });
   it('stores one-off drafts and duplicates without reusing tickets',async()=>{
     expect((await createOneTimeEvent(idle,fd({title:'QA special',date:'2026-10-02',startTime:'22:00',endTime:'02:00',description:'QA only',ageMin:'18',music:'House',price:'10',ticketUrl:'https://example.com/ticket',publish:'false'}))).ok).toBe(true);

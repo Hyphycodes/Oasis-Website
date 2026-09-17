@@ -19,34 +19,9 @@ export const homeSections: PageSection[] = [
     key: 'breadth',
     eyebrow: 'From the kitchen to the bar',
     heading: 'Come hungry. Stay awhile.',
-    body: 'Tacos and plates from the kitchen, a bar built on tequila, and brunch on the weekend.',
+    body: 'Tacos, plates and birria from the kitchen, and a bar built on tequila.',
     visible: true,
     variant: 'stagger',
-  },
-  {
-    // Was "Bar & brunch — Margaritas by the tower." That was written when the
-    // bar had a band of its own; it now sits under a grid whose Cocktails card
-    // already says margaritas and whose Brunch card already carries the hours,
-    // so it said both of those a second time. It carries the one thing neither
-    // card does: that the drinks come by the tower and the pitcher.
-    key: 'bar',
-    eyebrow: 'Built to share',
-    heading: 'Towers, pitchers and cantaritos.',
-    body: null,
-    visible: true,
-    variant: 'editorial-right',
-  },
-  {
-    key: 'after-dark',
-    eyebrow: 'Oasis After Dark',
-    // Deliberately NOT "becomes a club" — Oasis is a restaurant and bar that
-    // goes late, and describing it as a nightclub misrepresents the business.
-    heading: 'The room changes after ten.',
-    // No door price here. It is stated once, on the event feature, and the
-    // ticket page is what settles the final total.
-    body: 'Dinner first, music after. Friday and Saturday go later — eighteen and up.',
-    visible: true,
-    variant: 'band',
   },
   {
     key: 'two-paths',
@@ -60,12 +35,15 @@ export const homeSections: PageSection[] = [
 
 export const pageCopy = {
   home: {
-    // Two short lines, one idea: the food, and what happens to the room later.
-    // Set in the display face, so it works as a marquee statement rather than a
-    // sentence. Truthful — no awards, no heritage, no invented claims.
-    heroHeadlineLines: ['Dinner first.', 'Music after.'],
+    // Was "Dinner first. Music after." — which sold the place as a sequence,
+    // dinner and then a night out, on a calendar where a paint night starts at
+    // seven and a ticketed brunch runs at midday. The owner's own description
+    // is that it is all together and all the time, so the headline says that
+    // the kitchen is never the whole story instead of putting it first in a
+    // running order. Truthful — no awards, no heritage, no invented claims.
+    heroHeadlineLines: ['Never just', 'dinner.'],
     heroBody:
-      'Modern Mexican in Lockport — birria, tortas and margaritas by the tower, in a room that keeps going after the kitchen closes.',
+      'Modern Mexican in Lockport — birria, tacos and margaritas by the tower, with paint nights, live DJs and something on most nights of the week.',
   },
 
   menu: {
@@ -74,7 +52,7 @@ export const pageCopy = {
     // One sentence about the unified menu. The old line opened the page with an
     // operational disclaimer about unpriced items; that note now sits at the
     // foot of the one menu it actually concerns.
-    body: 'Food, cocktails and weekend brunch — all in one place.',
+    body: 'Food and the full bar list — all in one place.',
     unpricedNote:
       'A few things on the bar list are priced by the pour or by the bottle. Where a price is not shown, ask your server — we would rather tell you than print a number that moves.',
   },
@@ -83,12 +61,6 @@ export const pageCopy = {
     eyebrow: 'Bar',
     heading: 'Cocktails, cervezas, and things built for the table.',
     body: 'Tequila-forward classics, shareable towers and pitchers, and a full beer and wine list.',
-  },
-
-  brunch: {
-    eyebrow: 'Weekends',
-    heading: 'Brunch, Saturday and Sunday.',
-    body: 'Served 10am to 3pm.',
   },
 
   events: {
@@ -144,13 +116,13 @@ export const seo: Record<string, PageSeo> = {
   home: {
     title: 'Oasis Mexican Kitchen & Bar — Modern Mexican in Lockport, IL',
     description:
-      'Modern Mexican kitchen and bar in Lockport, IL. Birria, quesabirrias, handcrafted cocktails, weekend brunch, and 18+ nightlife Friday and Saturday. Reserve a table or order online.',
+      'Modern Mexican kitchen and bar in Lockport, IL. Birria, quesabirrias, handcrafted cocktails, and 18+ nightlife Friday and Saturday. Reserve a table or order online.',
     ogAssetId: null,
   },
   menu: {
     title: 'Menu — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Food, cocktails and weekend brunch at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.',
+      'Food and cocktails at Oasis Mexican Kitchen & Bar in Lockport, IL. Quesabirrias, the Bizza, birria ramen, fajitas, carne asada, margaritas and towers.',
     ogAssetId: null,
   },
   events: {

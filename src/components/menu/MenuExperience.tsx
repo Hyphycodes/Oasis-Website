@@ -7,7 +7,6 @@ import { MenuSections } from './MenuSections';
 const TAB_LABEL: Record<MenuSlug, string> = {
   food: 'Food',
   cocktails: 'Cocktails & Bar',
-  brunch: 'Brunch',
 };
 
 /**
@@ -18,12 +17,10 @@ const TAB_LABEL: Record<MenuSlug, string> = {
  * Contrast, on the ivory reading surface, verified per pair:
  *   food      chile/coral fill with the near-black label — 4.72:1
  *   cocktails agave/teal fill with amber                 — 8.9:1
- *   brunch    plum fill with coral-light                 — 6.89:1
  */
 const MODE: Record<MenuSlug, { fill: string; rule: string; link: string }> = {
   food: { fill: 'bg-coral text-on-orange', rule: 'bg-coral', link: 'hover:text-clay' },
   cocktails: { fill: 'bg-teal text-amber', rule: 'bg-teal', link: 'hover:text-agave' },
-  brunch: { fill: 'bg-plum text-coral-light', rule: 'bg-plum', link: 'hover:text-clay' },
 };
 
 /**

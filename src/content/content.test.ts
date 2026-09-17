@@ -49,12 +49,15 @@ describe('menus', () => {
     }
   });
 
-  it('keeps the brunch menu genuinely empty with an honest empty state', () => {
-    const brunch = allMenus.find((menu) => menu.slug === 'brunch')!;
-    expect(brunch.categories).toHaveLength(0);
-    expect(brunch.emptyState).toBeTruthy();
-    // It must not pretend a menu exists.
-    expect(brunch.emptyState).toMatch(/finali/i);
+  // The restaurant has no separate brunch service and no brunch menu. The site
+  // carried an empty brunch tab for months on the strength of the old Wix
+  // site's structure; the owner confirmed there is nothing behind it. This
+  // guards against it coming back, here and in any copy that would advertise it.
+  it('publishes no brunch menu, because there is no brunch service', () => {
+    expect(allMenus.map((menu) => menu.slug)).toEqual(['food', 'cocktails']);
+    for (const menu of allMenus) {
+      expect(menu.categories.length).toBeGreaterThan(0);
+    }
   });
 
   it('carries no placeholder or development text', () => {

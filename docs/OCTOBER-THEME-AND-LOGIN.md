@@ -212,3 +212,59 @@ anywhere, they depend on the date, and the inquiry form is what settles them.
 One placement note: the rail companion is taller than the action rail, so he leans up into the
 "on next" strip above it. From 640px that strip's ticket button is aligned right, exactly where
 his easel is, so the row reserves his footprint the same way the rail below it does.
+
+## There is no brunch, and the page stopped saying so
+
+The owner confirmed there is no separate brunch service and no brunch menu. The site had
+carried an empty brunch tab since the rebuild, on the strength of the old Wix site's
+structure, with an honest "being finalized" empty state behind it — see
+docs/CONTENT-QUESTIONS.md §6, now answered. The tab, its slug, its admin label, its seeded
+row, its homepage card and every line of copy advertising weekend brunch are gone. The menu
+has exactly two rooms: Food, and Cocktails & Bar.
+
+Brunch EVENTS are a different thing and stay. Ticketed paint-and-brunch nights are real and
+keep their event category; what was removed is the claim that the kitchen runs a brunch
+service with a menu of its own. `content.test.ts` now guards the rule rather than the old
+empty state, so an empty tab cannot come back by accident.
+
+## The top of the page, and what the homepage stopped claiming
+
+Three changes, all removals.
+
+**"Dinner first. Music after." is gone.** It sold the place as a running order — dinner, then
+a night out — on a calendar whose paint nights start at seven and whose ticketed brunches run
+at midday. The owner's own description is that it is all together and all the time, so the
+hero says the kitchen is never the whole story instead of putting it first in a sequence.
+
+**The "on next" strip is gone.** It named the soonest event, dated it and offered tickets
+directly above a What's on section that leads with the same event, the same date and the same
+ticket button. Two of everything inside one screen is what made the top of the page read as a
+wall of things to tap. Events did not lose their place — What's on is still the first content
+section, and it is where the detail belongs.
+
+**"The room changes after ten" is gone.** It previewed Fridays and Latin Saturdays, which are
+already the two supporting cards in What's on, and it promised a change of room at an hour the
+calendar does not keep.
+
+The menu cards went from four to two. Every previous version had overlapping categories —
+Tacos beside Plates when a taco dinner IS a plate, Margaritas beside The bar when a margarita
+comes FROM the bar — so which tile you picked depended on how you happened to describe what
+you wanted. Food and Cocktails & Bar are the two rooms the menu actually has.
+
+Companions now stand in open space rather than on artwork. One had been sitting across a third
+of a menu card and hiding the end of its label, which is the one thing a category card exists
+to show.
+
+### Copy lives in the database, not in these defaults
+
+`getPageCopy` reads `page_sections` and only falls back to `src/content/pages.ts` when there is
+no row. Production has rows, so editing a default here does NOT change the live site — that is
+why "Margaritas by the tower." survived a commit that had already replaced it. Either edit the
+section in Admin → Website → Homepage, or refresh every seeded row from the repository with:
+
+    npm run content:migrate -- --write
+
+That command overwrites live copy with the repository's values, including any wording changed
+in the admin, so the dry run (without `--write`) is the default for a reason. It never deletes,
+so the retired `home:bar` and `home:after-dark` rows will still be listed in the admin even
+though nothing renders them; hide or archive them there.

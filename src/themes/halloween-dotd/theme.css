@@ -1382,21 +1382,26 @@
   --f-delay: -2.5s;
 }
 
-/* Lifted clear of a caption line.
+/* Standing in open space, never on the artwork.
    
-   In a grid of tiles the bottom of the composition is the last caption, not
-   the last photograph, so a guest anchored to the bottom sits straight on the
-   words. Declared last and with two classes on purpose: the base placement and
-   the phone override both set `bottom`, and either would otherwise win. */
-.theme-character.theme-photo-guest-raised {
-  right: -6px;
-  bottom: 4.25rem;
+   A companion parked over a photograph covers the thing the photograph is
+   selling — at one point Hello Kitty sat across a third of a menu card and hid
+   the end of its label. This placement puts her on the baseline of a row that
+   has room to spare (the "see the full menu" line), so she reads as standing
+   next to the button rather than blocking anything. Declared last and with two
+   classes on purpose: the base placement and the phone override both set
+   `bottom` and `right`, and either would otherwise win. */
+.theme-character.theme-photo-guest-beside {
+  right: 0;
+  bottom: -0.75rem;
+  width: clamp(96px, 10vw, 132px);
+  height: auto;
 }
 
 @media (max-width: 639px) {
-  .theme-character.theme-photo-guest-raised {
-    right: -10px;
-    bottom: 3.75rem;
-    width: clamp(88px, 26vw, 112px);
+  .theme-character.theme-photo-guest-beside {
+    right: -6px;
+    bottom: -0.5rem;
+    width: 104px;
   }
 }

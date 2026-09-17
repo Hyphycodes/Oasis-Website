@@ -17,11 +17,9 @@ export const revalidate = 3600;
 /**
  * Three shallow crops instead of one large hero photograph.
  *
- * The point of the strip is range: this page holds a kitchen menu, a bar list
- * and a brunch service, and a single quesabirria still said "birria" and nothing
- * else. There is no approved brunch photograph in the repository, so the strip
- * is the strongest truthful food/food/bar set rather than a stock stand-in —
- * see docs/ASSET-HANDOFF.md for the outstanding brunch shot.
+ * The point of the strip is range: this page holds a kitchen menu and a bar
+ * list, and a single quesabirria still said "birria" and nothing else. Two food
+ * crops and one bar crop is the truthful set.
  */
 const STRIP: AssetId[] = ['consommeDip', 'plateTorta', 'cocktailPour'];
 

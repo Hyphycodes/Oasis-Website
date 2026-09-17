@@ -101,11 +101,9 @@ describe('the migration', () => {
     expect(ribeye!.availability).toBe('unavailable');
   });
 
-  it('keeps brunch empty, with its honest message', async () => {
-    const brunch = await db.get<Row>('menus', 'brunch');
-    const categories = await db.list<Row>('menu_categories', { where: { menu_slug: 'brunch' } });
-    expect(categories).toHaveLength(0);
-    expect(String(brunch!.empty_state)).toMatch(/finali/i);
+  it('seeds no brunch menu, because there is no brunch service', async () => {
+    expect(await db.get<Row>('menus', 'brunch')).toBeNull();
+    expect(await db.list<Row>('menu_categories', { where: { menu_slug: 'brunch' } })).toHaveLength(0);
   });
 
   it('carries both event series with their music, times and age rules', async () => {

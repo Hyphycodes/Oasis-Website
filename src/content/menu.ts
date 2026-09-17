@@ -931,28 +931,9 @@ export const cocktailMenu: Menu = {
   ],
 };
 
-/* ========================================================================== */
-/* BRUNCH                                                                     */
-/* ========================================================================== */
+export const menus = { food: foodMenu, cocktails: cocktailMenu } as const;
 
-/**
- * The live site publishes a brunch tab with a service window and a "Brunch Plates"
- * heading — and zero items behind it. Nothing is invented here. The page states the
- * service window and says the menu is being finalized.
- * See docs/CONTENT-QUESTIONS.md §6.
- */
-export const brunchMenu: Menu = {
-  slug: 'brunch',
-  title: 'Brunch',
-  note: 'Served Saturday and Sunday, 10am to 3pm.',
-  emptyState:
-    'The full brunch menu is being finalized with the kitchen. Brunch is served every Saturday and Sunday from 10am to 3pm — call us or come in and ask what the kitchen is running this weekend.',
-  categories: [],
-};
-
-export const menus = { food: foodMenu, cocktails: cocktailMenu, brunch: brunchMenu } as const;
-
-export const allMenus: Menu[] = [foodMenu, cocktailMenu, brunchMenu];
+export const allMenus: Menu[] = [foodMenu, cocktailMenu];
 
 /** Featured items for the homepage signature preview. Real items only. */
 export const signatureItemIds = ['quesabirrias', 'bizza', 'birria-ramen'] as const;

@@ -15,7 +15,6 @@ export const dynamic = 'force-dynamic';
 const TAB_LABEL: Record<string, string> = {
   food: 'Food',
   cocktails: 'Cocktails & Bar',
-  brunch: 'Brunch',
 };
 
 /**

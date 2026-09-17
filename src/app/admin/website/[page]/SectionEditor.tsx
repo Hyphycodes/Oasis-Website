@@ -121,8 +121,6 @@ const TITLES: Record<string, string> = {
   hero: 'The big opening panel',
   opener: 'The heading at the top of the page',
   breadth: 'What we serve',
-  bar: 'Bar and brunch',
-  'after-dark': 'Oasis After Dark',
   'two-paths': 'Catering and celebrations',
 };
 

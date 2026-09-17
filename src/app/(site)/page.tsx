@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Celebrations } from '@/components/home/Celebrations';
-import { AfterDark } from '@/components/home/AfterDark';
 import { FindUs } from '@/components/home/FindUs';
-import { NextUp } from '@/components/home/NextUp';
 import { ActionRail, Hero } from '@/components/home/Hero';
 import { FeaturedEvents } from '@/components/home/FeaturedEvents';
 import { Offerings } from '@/components/home/Offerings';
@@ -12,7 +10,6 @@ import { getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
 import { getPageCopy } from '@/server/content/pages';
 import { selectHomepageEvents } from '@/lib/event-feature';
-import { nextPerSeries } from '@/lib/events';
 import { getOpenState } from '@/lib/hours';
 import { buildMetadata } from '@/lib/seo';
 
@@ -30,42 +27,41 @@ export const metadata: Metadata = buildMetadata({ ...seo.home!, path: '/' });
 export const dynamic = 'force-dynamic';
 
 /**
- * Homepage — five movements, no more.
+ * Homepage — four movements, and a short one.
  *
- *   1. Hero              one dominant visual
- *   2. On next           the soonest event, named and dated
- *   3. Action rail       open state, directions, phone
- *   4. What's on         the next night, then the weekly two
- *   5. The kitchen and the bar   four doors into the menu
- *   6. Oasis After Dark  preview only; the schedule lives on /events
- *   7. Celebrations      birthdays and quinceañeras
- *   8. Find us           address, hours, catering
+ *   1. Hero          one dominant visual, one primary action
+ *   2. Action rail   open state, directions, phone
+ *   3. What's on     the next night, then the two weekly ones
+ *   4. Food & bar    two doors into the menu
+ *   5. Celebrations  birthdays and quinceañeras
+ *   6. Find us       address, hours, catering
  *
- * EVENTS COME FIRST, on purpose. People already know how to have dinner at a
- * restaurant; the reason to pick a particular night at Oasis is what is on that
- * night, and the calendar used to be three sections down. The "on next" strip
- * puts the soonest one directly under the hero with one way in.
+ * EVENTS ARE THE POINT. People already know how to have dinner somewhere; what
+ * makes a given night worth choosing here is what is on, so the calendar is the
+ * first content section and everything else follows it.
  *
- * The social gallery that used to sit near the bottom is gone. It sold nothing
- * and the footer already carries the accounts as logos; celebrations — a whole
- * room booked weeks ahead — took the slot instead.
+ * Two things were removed rather than restyled, both because they said
+ * something the page already said:
  *
- * Nothing here stores its own copy of a menu item, an event date, or a business
- * fact: menu features reference menu records, event cards derive from the same
- * selector /events uses, and hours and address come from site settings.
+ *   - An "on next" strip named the soonest event, dated it and offered tickets
+ *     — directly above a What's on section that leads with the same event, the
+ *     same date and the same ticket button. Two of everything inside one
+ *     screen is what made the top of the page feel like a wall of buttons.
+ *   - An "Oasis After Dark" band previewed Fridays and Latin Saturdays, which
+ *     are already the two supporting cards in What's on. It also promised the
+ *     room "changes after ten", which is not true of a calendar whose paint
+ *     nights start at seven.
  */
+
 export default async function HomePage() {
   const now = new Date();
-  const [settings, events, breadth, bar, afterDark, twoPaths] = await Promise.all([
+  const [settings, events, breadth, twoPaths] = await Promise.all([
     getSiteSettings(),
     getPublicEvents(),
     getPageCopy('home', 'breadth'),
-    getPageCopy('home', 'bar'),
-    getPageCopy('home', 'after-dark'),
     getPageCopy('home', 'two-paths'),
   ]);
 
-  const nights = nextPerSeries(events, now);
   // One pass decides everything the homepage says about events: what is on
   // next, what leads the featured module, and whether a scheduled takeover is
   // running right now.
@@ -82,8 +78,6 @@ export default async function HomePage() {
       {/* The soonest night of any series, not the first series' next night —
           "what's on" means tonight's Saturday, not next week's Friday. */}
       <Hero takeover={homepageEvents.takeover} />
-      {/* Nothing between the hero and the next night on sale. */}
-      <NextUp event={homepageEvents.next} />
       <ActionRail openLabel={openState.label} isOpen={openState.open} />
       {/* Events sit high: the second thing a visitor learns about Oasis is that
           there is always something on. */}
@@ -91,8 +85,7 @@ export default async function HomePage() {
       {/* Seasonal scenes share the room with the content. */}
       <ThemeWorld scene="paint" />
       {/* The kitchen and the bar, formerly two bands. */}
-      <Offerings section={breadth} bar={bar} />
-      <AfterDark section={afterDark} events={nights} />
+      <Offerings section={breadth} />
       <ThemeWorld scene="music" />
       <Celebrations />
       <FindUs section={twoPaths} />

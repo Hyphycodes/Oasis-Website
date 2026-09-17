@@ -317,7 +317,7 @@ const categorySchema = z.object({
 
 export async function addCategory(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return run('content.publish', async ({ db }) => {
-    const parsed = categorySchema.extend({ menuSlug: z.enum(['food', 'cocktails', 'brunch']) }).safeParse(Object.fromEntries(formData));
+    const parsed = categorySchema.extend({ menuSlug: z.enum(['food', 'cocktails']) }).safeParse(Object.fromEntries(formData));
     if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Check the category.' };
     const { name, menuSlug } = parsed.data;
     if (!await db.get('menus', menuSlug)) return { ok: false, message: 'That menu no longer exists.' };

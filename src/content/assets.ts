@@ -213,7 +213,7 @@ export const assets = {
     ratio: '1:1',
     focal: '50% 40%',
     status: 'temp-wix',
-    usage: ['Homepage bar & brunch section'],
+    usage: ['Homepage food & bar section'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',
@@ -296,7 +296,7 @@ export const assets = {
     ratio: '4:5',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage bar & brunch section', '/menu#cocktails'],
+    usage: ['Homepage food & bar section', '/menu#cocktails'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',
