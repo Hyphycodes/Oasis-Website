@@ -374,3 +374,31 @@ Rather than delete real client photography to quiet the checker, `margaritaTajin
 homepage's Cocktails & bar door (swapped in for `cocktailPour`, which stays in use on `/menu`),
 and `bartender` sits as a second photograph inset into the Celebrations section's room shot —
 tucked into the opposite corner from the seasonal companion so neither covers the other.
+
+## The bunting over-corrected, and a second, different hard edge was still there
+
+**The bunting, again.** The fix above traded one problem for another: pushing the mask's solid
+color stop in to 38% and its radius down to 42% killed the vertical hard edge, but also faded
+out most of the banner itself — it read as "almost gone" rather than softly bounded. The radius
+still needs to stay under 50% (that part of the earlier fix was correct), but the solid stop was
+the wrong lever to move that far. It now sits at 62%, with the radius nudged back up to 48%, so
+the banner is fully opaque across nearly its whole width and only a narrow rim near the true
+edge actually fades.
+
+**A second, unrelated hard edge.** Screenshots of the "paint" scene (Chucky-the-painter and
+Scream, sitting between the Events and Offerings sections) and the "music" scene (Selena and
+Junior H, in Celebrations) both showed a sharp rectangular wash behind the characters — not the
+bunting cutoff from above, a different bug in a different system. Every `.o-band` section
+dissolves its own background into a soft pool via a radial-gradient `::after`, and every one of
+those pools was written to fade all the way to `transparent` at its own edge. Two adjacent bands
+both hitting literal zero at the seam between them let the page's always-on, fixed ambient glow
+show through undimmed right at that seam — visually a brighter patch sandwiched between two
+darker interiors, which reads as a box even though nothing is actually drawing one. Any
+`ThemeWorld` scene or other content sitting at a band boundary sat inside that bright patch.
+
+Fixed by giving all five pool gradients (base, ivory-deep, espresso, teal, sand) a low residual
+opacity at their outer rim instead of true zero — each keeps roughly a fifth to a quarter of its
+center strength at 100%, so the page's brightness floor stays continuous across band seams
+instead of alternating between "inside a pool" and "in raw glow." Verified at both flagged
+locations (paint scene, music scene), on `/private-events` and `/events` where the same scenes
+recur, and at both desktop and mobile widths.

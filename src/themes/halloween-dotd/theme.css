@@ -334,29 +334,37 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* Every pool's vertical radius is exactly half the band and every pool is
-     fully transparent at its rim, so it can never reach the band's top or
-     bottom edge. Centres sit off to one side so consecutive sections do not
-     stack their bright spots in a column. */
-  background: radial-gradient(72% 50% at 42% 50%, rgb(70 32 60 / 0.34), transparent 100%);
+  /* Every pool's vertical radius is exactly half the band, so its outer rim
+     lands exactly on the band's own top and bottom edge — which used to mean
+     the pool reached true zero exactly there. Two bands stacked on top of
+     each other both do that at the SAME physical line, so the seam between
+     them was a brief return to raw, undarkened candle-glow sandwiched
+     between two darkened interiors — its own kind of hard edge, just made of
+     brightness rather than a paint stop. The rim now settles on a low, shared
+     residual instead of nothing: about a fifth of the centre's strength,
+     little enough that no single band reads as boxed, but present on both
+     sides of every seam so the page never jumps from "in a pool" straight to
+     "in the raw glow" and back again. Centres sit off to one side so
+     consecutive sections do not stack their bright spots in a column. */
+  background: radial-gradient(72% 50% at 42% 50%, rgb(70 32 60 / 0.34), rgb(70 32 60 / 0.07) 100%);
 }
 
 [data-theme='halloween-dotd'] .o-band.bg-ivory-deep::after {
-  background: radial-gradient(74% 50% at 60% 50%, rgb(78 34 62 / 0.36), transparent 100%);
+  background: radial-gradient(74% 50% at 60% 50%, rgb(78 34 62 / 0.36), rgb(78 34 62 / 0.08) 100%);
 }
 
 /* Deeper night for the evening programme. */
 [data-theme='halloween-dotd'] .o-band.bg-espresso::after {
-  background: radial-gradient(78% 50% at 50% 50%, rgb(6 3 9 / 0.62), transparent 100%);
+  background: radial-gradient(78% 50% at 50% 50%, rgb(6 3 9 / 0.62), rgb(6 3 9 / 0.14) 100%);
 }
 
 [data-theme='halloween-dotd'] .o-band.bg-teal::after {
-  background: radial-gradient(82% 50% at 52% 50%, rgb(4 2 9 / 0.66), transparent 100%);
+  background: radial-gradient(82% 50% at 52% 50%, rgb(4 2 9 / 0.66), rgb(4 2 9 / 0.15) 100%);
 }
 
 /* Burgundy, kept, but as a warm pool rather than a slab. */
 [data-theme='halloween-dotd'] .o-band.bg-sand::after {
-  background: radial-gradient(72% 50% at 40% 50%, rgb(82 24 48 / 0.7), transparent 100%);
+  background: radial-gradient(72% 50% at 40% 50%, rgb(82 24 48 / 0.7), rgb(82 24 48 / 0.16) 100%);
 }
 
 /* The paper grain is drawn for a solid sand field; with the field gone it is
@@ -605,9 +613,17 @@
      whatever the excuse. The ellipse fades it out before it gets there, the
      same way it already faded the bottom — one shape doing both jobs, so
      there is no second mask layer for `mask-composite` to botch (see the
-     hero reel below for what happens when there is). */
-  -webkit-mask-image: radial-gradient(42% 82% at 50% 8%, #000 38%, rgb(0 0 0 / 0.5) 68%, transparent 96%);
-  mask-image: radial-gradient(42% 82% at 50% 8%, #000 38%, rgb(0 0 0 / 0.5) 68%, transparent 96%);
+     hero reel below for what happens when there is).
+     The first version of this radius (58%) still had real opacity left at
+     the true edge, because the solid stop and the box edge were the same
+     distance from centre — softening the edge softened the WHOLE shape.
+     The fix is not just a smaller radius, it is a solid stop pushed much
+     further OUT: full strength for the middle ~60% of the string on each
+     side of centre, and all of the actual fading saved for a narrow band
+     right at the edge, where the radius (48%, just inside 50%) guarantees
+     it reaches true transparent before the element's own boundary. */
+  -webkit-mask-image: radial-gradient(48% 88% at 50% 8%, #000 62%, rgb(0 0 0 / 0.55) 88%, transparent 99%);
+  mask-image: radial-gradient(48% 88% at 50% 8%, #000 62%, rgb(0 0 0 / 0.55) 88%, transparent 99%);
   animation: theme-drape 9s ease-in-out infinite alternate;
 }
 
