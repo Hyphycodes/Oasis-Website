@@ -68,7 +68,7 @@ caption entirely.
 | Slot | Ratio | Min size | Focal | Safe area | Text | Notes |
 |---|---|---|---|---|---|---|
 | `privateEvents` | 3:2 | 1800 × 1200 | 50% 42% | table + guests | `none` | Homepage catering promo. |
-| `birthdayCelebration` | 4:5 | 1200 × 1500 | 50% 40% | **faces + dessert** | `none` | `/private-events`. Focal above centre — this shot will have people in it. |
+| `birthdayCelebration` | 4:5 | 960 × 1200 | 50% 38% | crowd + food | `none` | `/private-events`. Real photo from the restaurant's own live site (a server carrying tacos through the dining room, the OASIS sign behind), not a posed dessert shot — that one does not exist on their own site either, and a fabricated one would be exactly the kind of invented photograph this manifest exists to keep off the site. |
 
 ## Careers
 

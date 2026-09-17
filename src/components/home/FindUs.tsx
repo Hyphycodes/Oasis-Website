@@ -76,21 +76,26 @@ export function FindUs({ section }: { section: PageSection }) {
           </div>
         </Reveal>
 
-        {/* One line, not two. Celebrations now have a section of their own
-            further up the page, so repeating them here would be the third time
-            the homepage points at the same form. Catering is the one that is
-            still only reachable from the nav. */}
+        {/* One line, not two. Celebrations have a section of their own further
+            up the page — its own eyebrow, its own heading, its own button —
+            so repeating the word here would be the third time the homepage
+            says it. This is catering only, the one part of the old "take it
+            with you, or take over the room" pairing that doesn't have a
+            section of its own, and both fields the admin can edit actually
+            render: the heading used to be typed here and silently dropped,
+            which is worse than not having the control at all. */}
         {section.visible ? (
           <Reveal delay={60}>
-            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-brown/15 pt-6">
-              {section.eyebrow ? (
-                <span className="eyebrow text-clay">{section.eyebrow}</span>
-              ) : null}
+            <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-brown/15 pt-6">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                {section.eyebrow ? <Eyebrow tone="orange">{section.eyebrow}</Eyebrow> : null}
+                <p className="display text-[1.125rem] text-brown">{section.heading}</p>
+              </div>
               <Link
                 href="/catering"
-                className="inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-brown underline underline-offset-4 hover:text-coral hover:underline-offset-[6px]"
+                className="ml-auto inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-brown underline underline-offset-4 hover:text-coral hover:underline-offset-[6px]"
               >
-                Feed the party — catering packages
+                Catering packages
               </Link>
             </div>
           </Reveal>

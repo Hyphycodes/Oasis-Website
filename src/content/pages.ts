@@ -24,9 +24,17 @@ export const homeSections: PageSection[] = [
     variant: 'stagger',
   },
   {
+    // Was "Catering & celebrations" — "Take it with you, or take over the
+    // room." — written when this was a full band covering both. Celebrations
+    // has its own section now, further up the page, with its own eyebrow
+    // ("Birthdays & celebrations") and its own plan-a-celebration button. This
+    // block is one link, to the one part of "take it with you, take over the
+    // room" that doesn't have a section of its own — catering — and its copy
+    // says exactly that, so the word does not show up a third time in one
+    // page.
     key: 'two-paths',
-    eyebrow: 'Catering & celebrations',
-    heading: 'Take it with you, or take over the room.',
+    eyebrow: 'Catering',
+    heading: 'Trays and packages for the whole crew.',
     body: null,
     visible: true,
     variant: 'stagger',

@@ -326,3 +326,51 @@ The page's opener copy lost its "— dinner first, music after" tail for the sam
 homepage headline did: it sells a running order the calendar does not keep, on a page whose
 paint nights start at seven. "Brunches" stays: those are the ticketed Paint & Brunch and Sunday
 events, which are real and on sale. It is the kitchen's brunch SERVICE that does not exist.
+
+## "Celebrations" was saying itself twice, and the bunting had hard edges
+
+**The repeat.** The homepage's closing block still carried its original eyebrow, "Catering &
+celebrations," pointing at a single leftover link — "Feed the party — catering packages" —
+because when the Celebrations section was split out into its own place on the page earlier,
+this one word never got cleaned out of the block it left behind. A visitor scrolling past the
+real "Birthdays & celebrations" section higher up would hit the word again at the very bottom,
+attached to nothing celebratory. The default copy is now "Catering" / "Trays and packages for
+the whole crew.", and — since the mismatch happened because `FindUs` had stopped rendering the
+section's `heading` field at all while still typing the eyebrow — both fields now actually
+render. A control an editor can type into and never see is worse than no control.
+
+**The bunting.** `.theme-hero-top`'s mask only ever faded vertically; at any width ≥1100px
+(`width: max(100%, 1100px)`, so effectively every desktop width) the string's own printed edges
+landed exactly at the hero's left and right edges, showing a hard vertical cut where a finite
+image stops. A real banner would still be hanging past the frame there; a finite image stopping
+at a hard edge is a hard edge regardless of the excuse. It is one radial ellipse now — the same
+fix as the hero reel and the events-opener photo before it — fading the string out before it
+reaches either side, tuned so the ellipse's radius is under 50% of the element's own width (the
+first attempt used 58%, which left the true edge only ~75% faded rather than gone).
+
+## Real photography, not a fabricated one
+
+`birthdayCelebration` was a placeholder — a plain branded box where the private-events page's
+birthday photo should be. It now shows a real photograph: a server carrying two boards of tacos
+through the dining room on a busy night, the OASIS greenery-wall sign and real guests behind
+her. Sourced from the restaurant's own live site at oasismexicankitchenbar.com — downloaded and
+hosted locally, never linked, since a Wix/Parastorage URL reaching production is what
+`npm run assets:check` already refuses to ship — the same way every other real photograph on
+this site was sourced.
+
+Two AI-generated alternatives were tried first and both were rejected, for different reasons
+worth recording. A festive dessert-and-confetti mood shot was honest (it made no claim about
+being a specific real moment) but was dropped anyway once real photography turned up, since a
+real photo of the actual place beats a generic one every time. A "private celebration table"
+interior shot was rejected outright, before real photography was found: it invented wall murals
+and signage that do not exist at Oasis, which is a materially different problem — not
+atmosphere, but a false depiction of the specific venue, exactly what this project has been
+careful never to publish.
+
+Fixing the placeholder surfaced two real photographs — `bartender` and `margaritaTajin`, both
+genuine frames from the Oasis brand reel — that `npm run assets:check` flagged as registered but
+no longer rendered anywhere, left over from sections simplified away earlier in this project.
+Rather than delete real client photography to quiet the checker, `margaritaTajin` now leads the
+homepage's Cocktails & bar door (swapped in for `cocktailPour`, which stays in use on `/menu`),
+and `bartender` sits as a second photograph inset into the Celebrations section's room shot —
+tucked into the opposite corner from the seasonal companion so neither covers the other.

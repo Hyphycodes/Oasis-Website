@@ -41,7 +41,7 @@ const DOORS: Door[] = [
     label: 'Cocktails & bar',
     note: 'Margaritas, towers, pitchers, beer and wine',
     href: '/menu#cocktails',
-    assetId: 'cocktailPour',
+    assetId: 'margaritaTajin',
   },
 ];
 

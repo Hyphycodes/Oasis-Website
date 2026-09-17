@@ -257,7 +257,7 @@ export const assets = {
     ratio: '4:5',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage bar section', '/menu#cocktails'],
+    usage: ['/menu#cocktails strip'],
     source: { url: 'Frame from the Oasis brand reel (see heroVideo)', retrieved: '2026-08-14' },
     maxBytes: 220_000,
   },
@@ -270,7 +270,7 @@ export const assets = {
     ratio: '1:1',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage bar section'],
+    usage: ['Homepage food & bar door'],
     source: { url: 'Frame from the Oasis brand reel (see heroVideo)', retrieved: '2026-08-14' },
     maxBytes: 200_000,
   },
@@ -355,17 +355,31 @@ export const assets = {
     usage: ['/private-events hero', 'Homepage catering promo'],
     maxBytes: 480_000,
   },
+  // Was a placeholder — no photograph, a branded grey box where the birthday
+  // block's picture should be. This is a real shot from the restaurant's own
+  // live site (oasismexicankitchenbar.com, downloaded and hosted here rather
+  // than linked, per the standing rule against a Wix/Parastorage URL reaching
+  // production): a server carrying two full boards of tacos through the dining
+  // room on a busy night, the OASIS greenery-wall sign and real guests behind
+  // her. Not a posed dessert shot — the restaurant's own site does not have
+  // one either — but it is the actual room, the actual crowd and the actual
+  // food, which is the thing a fabricated "customer" photo can never honestly
+  // be. See docs/ASSET-HANDOFF.md.
   birthdayCelebration: {
-    path: null,
+    path: '/media/private-events/birthday-celebration.jpg',
     kind: 'image',
-    alt: 'The Oasis team bringing out a birthday dessert',
-    width: 1200,
-    height: 1500,
+    alt: 'A server carrying two boards of tacos through a crowded dining room at Oasis',
+    width: 960,
+    height: 1200,
     ratio: '4:5',
-    focal: '50% 40%',
-    status: 'placeholder',
+    focal: '50% 38%',
+    status: 'final',
     usage: ['/private-events birthday block'],
     maxBytes: 420_000,
+    source: {
+      url: 'https://www.oasismexicankitchenbar.com',
+      retrieved: '2026-09-17',
+    },
   },
 
   /* --------------------------------------------------- careers & visit */

@@ -46,7 +46,7 @@ against the actual files by `npm run assets:check`, so the two cannot silently d
 | `flyerFridays` | `events/oasis-fridays-flyer.jpg` | image | 1080 × 1080 | 1:1 | `final` |
 | `flyerLatinSaturdays` | `events/oasis-latin-saturdays-flyer.jpg` | image | 1080 × 1080 | 1:1 | `final` |
 | `privateEvents` | — | image | 1800 × 1200 | 3:2 | `placeholder` |
-| `birthdayCelebration` | — | image | 1200 × 1500 | 4:5 | `placeholder` |
+| `birthdayCelebration` | `private-events/birthday-celebration.jpg` | image | 960 × 1200 | 4:5 | `final` |
 | `teamEnergy` | `careers/team-energy.jpg` | image | 720 × 480 | 3:2 | `temp-wix` |
 
 **Totals:** 21 registered — 1 `brand`, 3 `final`, 15 `temp-wix`, 2 `placeholder`.
