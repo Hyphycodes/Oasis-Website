@@ -2,8 +2,9 @@ import type { CSSProperties } from 'react';
 import type { ResolvedTheme } from '@/themes/types';
 
 /**
- * The site-wide seasonal environment: candle glow behind the content, texture
- * and vignette in front of it, and petals drifting down the viewport.
+ * The site-wide seasonal environment: candle glow and far stars behind the
+ * content, texture and vignette in front of it, and petals drifting down the
+ * viewport.
  *
  * Everything here is fixed, `aria-hidden`, and `pointer-events: none`, and none
  * of it is a client component — the petals are plain spans whose positions are
@@ -25,6 +26,11 @@ export function ThemeAtmosphere({ theme }: { theme: ResolvedTheme }) {
           <div className="theme-layer theme-layer-haze" />
         </>
       ) : null}
+      {/* Far stars, behind everything, so the page reads as one open night
+          rather than a stack of coloured bands. Two layers twinkle out of
+          phase; both are plain gradients, nothing to download. */}
+      <div className="theme-layer theme-layer-stars" />
+      <div className="theme-layer theme-layer-stars theme-layer-stars-2" />
       {options.texture ? <div className="theme-layer theme-layer-texture" /> : null}
       <div className="theme-layer theme-layer-vignette" />
       {petals.length > 0 ? (

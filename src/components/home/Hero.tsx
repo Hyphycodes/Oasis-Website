@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AssetVideo } from '@/components/media/AssetVideo';
 import { AssetView } from '@/components/media/Asset';
 import { ThemeHeroBackground, ThemeHeroLayer } from '@/components/theme/ThemeHeroLayer';
+import { ThemeRailGuest } from '@/components/theme/ThemeWorld';
 import { getPublicAsset } from '@/content/media';
 import { ExternalTextLink } from '@/components/primitives/Button';
 import { pageCopy } from '@/content/pages';
@@ -195,7 +196,10 @@ export async function Hero({
 export async function ActionRail({ openLabel, isOpen }: { openLabel: string; isOpen: boolean }) {
   const site = await getSiteSettings();
   return (
-    <div className="border-b border-brown/12 bg-ivory-deep">
+    <div className="relative border-b border-brown/12 bg-ivory-deep">
+      {/* Seasonal only; nothing in the default look. Reserves no space, so the
+          rail is exactly its usual height without a theme. */}
+      <ThemeRailGuest />
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-7 gap-y-1 px-5 py-2 text-[0.9375rem] sm:px-8 lg:px-12">
         <span className="inline-flex items-center gap-2 font-semibold">
           <span

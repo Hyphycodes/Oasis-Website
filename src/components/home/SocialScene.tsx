@@ -1,6 +1,7 @@
 import { Asset } from '@/components/media/Asset';
 import { Frame } from '@/components/primitives/Band';
 import { getSiteSettings } from '@/content/resolve';
+import { ThemePhotoGuest } from '@/components/theme/ThemeWorld';
 
 /** Real venue photography and verified accounts; no simulated social feed. */
 export async function SocialScene() {
@@ -11,7 +12,8 @@ export async function SocialScene() {
         <div><p className="eyebrow text-amber">Your local escape</p><h2 id="social-scene-heading" className="display mt-3 text-[clamp(2rem,5vw,3.75rem)] leading-none">Good food. Better company.</h2></div>
         <p className="max-w-xs text-[0.9375rem] leading-relaxed text-night-soft">The pours, the people, the nights you had to be there for. Find us on social.</p>
       </div>
-      <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="relative mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <ThemePhotoGuest name="scream" />
         <Asset id="bartender" className="aspect-[4/5] w-full" sizes="(min-width: 640px) 24vw, 46vw" rounded={false} />
         <Asset id="dishQuesabirria" className="aspect-[4/5] w-full sm:mt-8" sizes="(min-width: 640px) 24vw, 46vw" rounded={false} />
         <Asset id="roomCrowd" className="aspect-[4/5] w-full" sizes="(min-width: 640px) 24vw, 46vw" rounded={false} />

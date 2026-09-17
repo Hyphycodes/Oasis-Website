@@ -127,9 +127,9 @@ export function getThemeDefinition(slug: ThemeSlug): ThemeDefinition | null {
  * scale the base opacities set in the theme's CSS.
  */
 export const PRESETS: Record<ThemeIntensity, ThemePreset> = {
-  subtle: { petals: { desktop: 7, mobile: 3 }, glow: 0.6, texture: 0.55, vignette: 0.6, edges: 0.85 },
-  standard: { petals: { desktop: 14, mobile: 6 }, glow: 1, texture: 1, vignette: 1, edges: 1 },
-  full: { petals: { desktop: 22, mobile: 8 }, glow: 1.3, texture: 1.25, vignette: 1.15, edges: 1.1 },
+  subtle: { petals: { desktop: 7, mobile: 4 }, glow: 0.6, texture: 0.55, vignette: 0.6, edges: 0.85 },
+  standard: { petals: { desktop: 14, mobile: 9 }, glow: 1, texture: 1, vignette: 1, edges: 1 },
+  full: { petals: { desktop: 22, mobile: 12 }, glow: 1.3, texture: 1.25, vignette: 1.15, edges: 1.1 },
 };
 
 export const INTENSITY_LABEL: Record<ThemeIntensity, { name: string; hint: string }> = {

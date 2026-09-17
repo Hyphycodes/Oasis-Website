@@ -89,3 +89,28 @@ preauthorized staff now receive an admin invitation; confirmed staff receive a n
 The activation page removes URL fragments immediately, establishes the provider session and
 requires a server-verified email plus an active staff profile before continuing. Public signup
 stays disabled, and no identity is manually marked verified.
+
+## One continuous night
+
+The October look no longer stacks coloured bands. Inside the theme, section surfaces
+(ivory, cream, espresso, teal, sand-as-band) are nearly transparent, so the fixed candle
+glow and a faint star field show through everywhere; each band keeps its tone as a
+feathered elliptical pool that reaches full transparency inside the band, so two sections
+never draw a line between them. The hero reel and the events opener photo are masked to
+soft ellipses, the papel picado hangs in a darkened top zone and fades along its lower edge,
+the marigolds sit a step back in brightness, and the After Dark rule, action rail and menu
+tab edge are threads that fade at both ends. Characters bob on a slow `translate` loop that
+respects reduced motion and the admin motion switch. Forms, the phone drawer, the sticky
+menu nav and cards keep solid surfaces. Locally, `OASIS_THEME_FORCE=halloween-dotd` in
+`.env.local` previews the theme without touching the admin schedule.
+
+### Phones carry more of the cast
+
+Below 1024px the hero has no room for a companion, so Snoopy leans up out of the action
+rail instead (`ThemeRailGuest`, a child of the rail so the hero's clip never cuts him; the
+rail's text ends before he starts at 375px). The between-section scenes are taller on
+phones with near full-size guests, a wider orbit and bigger stars; a third scene
+("celebration": Hello Kitty and the pumpkin) sits before the catering movement on every
+width, Scream joins the social collage's corner, the footer trio grows, and the phone petal
+field is denser (9 at standard, 12 at full). Nothing reserves layout space when the theme
+is off.

@@ -83,6 +83,7 @@ export default async function HomePage() {
       <AfterDark section={afterDark} events={nights} />
       <ThemeWorld scene="music" />
       <SocialScene />
+      <ThemeWorld scene="celebration" />
       <CateringAndVisit section={twoPaths} packages={packages} />
     </>
   );

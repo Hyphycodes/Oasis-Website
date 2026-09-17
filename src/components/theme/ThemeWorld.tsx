@@ -29,6 +29,17 @@ export function ThemeWorldEdges() {
   </div>;
 }
 
+/**
+ * Snoopy leans up out of the action rail on phones and tablets, where the
+ * hero has no room for him. From 1024px the hero companion takes over and
+ * this renders nothing (see theme.css).
+ */
+export async function ThemeRailGuest() {
+  const theme = await getActiveTheme();
+  if (!theme.definition || !theme.config.options.edges) return null;
+  return <ThemeCharacter name="snoopy" className="theme-rail-guest" />;
+}
+
 /** Place inside a relative photo composition, away from words and controls. */
 export async function ThemePhotoGuest({ name }: { name: ThemeCharacterName }) {
   const theme = await getActiveTheme();
