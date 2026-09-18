@@ -13,7 +13,7 @@ import { verifyPreviewToken } from '@/lib/ticketing/tokens';
 import { resolveEventArtwork, resolveManyEventArtwork } from '@/server/content/event-art';
 import { getTicketOffer, offersFor } from '@/server/ticketing/offer';
 import { addToCalendarUrl, findStandaloneEvent, getSeriesOccurrences, getUpcomingEvents, nextEvent, standaloneEvents, STATUS_LABEL } from '@/lib/events';
-import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
+import { formatEventDate, formatEventDateLong, formatPrice, formatTimeRange, formatTimeRangeCompact } from '@/lib/format';
 import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
 // Bounded staleness, for the same reason as /events: a cached page must never be
@@ -128,151 +128,157 @@ export default async function EventDetailPage({
 
   return (
     <>
-      <Band surface={tone} size="sm" topRule>
+      {/* The whole series on one screen: who it is and when it runs on the left,
+          the artwork and every upcoming date on the right. Nothing a guest needs
+          in order to decide is held back behind a scroll. */}
+      <Band surface={tone} size="flush" topRule className="event-section">
         <Frame wide>
-          <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
-            <div className="lg:col-span-7">
-              <Eyebrow tone="night">Oasis After Dark</Eyebrow>
-              <Display as="h1" size="lg" className="mt-4 text-night-text">
-                {series.title}
-              </Display>
-              <p className="measure mt-6 text-[length:var(--text-body-lg)] leading-relaxed text-night-soft">
-                {series.description}
-              </p>
+          <div className="event-grid">
+            {/* The words: what the night is, when the next one is, and how to get in. */}
+            <div className="event-col-main">
+              <div className="event-slot-head">
+                <Eyebrow tone="night">Oasis After Dark</Eyebrow>
+                <Display as="h1" size="lg" className="mt-3 text-night-text">
+                  {series.title}
+                </Display>
+                <p className="measure mt-4 text-[length:var(--text-body-lg)] leading-relaxed text-night-soft">
+                  {series.description}
+                </p>
 
-              <dl className="mt-8 grid gap-x-8 gap-y-4 border-t border-night-text/15 pt-6 sm:grid-cols-2">
-                <div>
-                  <dt className="eyebrow text-night-text/50">Next date</dt>
-                  <dd className="tabular mt-1.5 text-night-text">
-                    {next ? formatEventDateLong(next.startsAt) : 'To be announced'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="eyebrow text-night-text/50">Time</dt>
-                  <dd className="tabular mt-1.5 text-night-text">
-                    {next ? formatTimeRange(next.startsAt, next.endsAt) : '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="eyebrow text-night-text/50">Age</dt>
-                  <dd className="mt-1.5 text-night-text">
-                    {series.ageMin ? `${series.ageMin}+` : 'All ages'}
-                    {series.ageNote ? (
-                      <span className="block text-[0.875rem] text-night-soft">{series.ageNote}</span>
-                    ) : null}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="eyebrow text-night-text/50">Entry</dt>
-                  {/* Base entry only. Any service fee is whatever the ticket page
-                      charges on the day — quoting it here would go stale. */}
-                  <dd className="tabular mt-1.5 text-night-text">
-                    {series.ticketPolicy === 'free' ? 'Free entry · No tickets needed' : next?.priceCents != null ? formatPrice(next.priceCents) : 'Ask at the door'}
-                  </dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="eyebrow text-night-text/50">Music</dt>
-                  <dd className="mt-1.5 text-night-text">{series.musicFormats.join(' · ')}</dd>
-                </div>
-              </dl>
+                <dl className="mt-6 grid gap-x-8 gap-y-4 border-t border-night-text/15 pt-5 sm:grid-cols-2">
+                  <div>
+                    <dt className="eyebrow text-night-text/50">Next date</dt>
+                    <dd className="tabular mt-1.5 text-night-text">
+                      {next ? formatEventDateLong(next.startsAt) : 'To be announced'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="eyebrow text-night-text/50">Time</dt>
+                    <dd className="tabular mt-1.5 text-night-text">
+                      {next ? formatTimeRange(next.startsAt, next.endsAt) : '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="eyebrow text-night-text/50">Age</dt>
+                    <dd className="mt-1.5 text-night-text">
+                      {series.ageMin ? `${series.ageMin}+` : 'All ages'}
+                      {series.ageNote ? (
+                        <span className="block text-[0.875rem] text-night-soft">{series.ageNote}</span>
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="eyebrow text-night-text/50">Entry</dt>
+                    {/* Base entry only. Any service fee is whatever the ticket page
+                        charges on the day — quoting it here would go stale. */}
+                    <dd className="tabular mt-1.5 text-night-text">
+                      {series.ticketPolicy === 'free' ? 'Free entry · No tickets needed' : next?.priceCents != null ? formatPrice(next.priceCents) : 'Ask at the door'}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="eyebrow text-night-text/50">Music</dt>
+                    <dd className="mt-1.5 text-night-text">{series.musicFormats.join(' · ')}</dd>
+                  </div>
+                </dl>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                {/* The NEXT night's own ticket page, not a series-level link —
-                    a date-less slug resolves to the wrong event entirely. */}
-                {next?.ticketUrl && next.status !== 'sold-out' ? (
-                  <ExternalButtonLink
-                    href={next.ticketUrl}
-                    destination={`${series.title} tickets`}
-                    size="lg"
-                  >
-                    Tickets — {formatEventDateLong(next.startsAt)}
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  {/* The NEXT night's own ticket page, not a series-level link —
+                      a date-less slug resolves to the wrong event entirely. */}
+                  {next?.ticketUrl && next.status !== 'sold-out' ? (
+                    <ExternalButtonLink
+                      href={next.ticketUrl}
+                      destination={`${series.title} tickets`}
+                      size="lg"
+                    >
+                      Tickets — {formatEventDateLong(next.startsAt)}
+                    </ExternalButtonLink>
+                  ) : (
+                    <p className="rounded-(--radius-md) border border-danger px-4 py-3 text-[0.9375rem] font-semibold text-danger">
+                      {STATUS_LABEL[next?.status ?? 'scheduled'] || 'Tickets at the door'}
+                    </p>
+                  )}
+                  {next ? (
+                    <ExternalTextLink
+                      href={addToCalendarUrl(next, address)}
+                      destination="Google Calendar"
+                      className="text-night-text"
+                    >
+                      Add to calendar
+                    </ExternalTextLink>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="event-slot-here border-t border-night-text/15 pt-5">
+                <h2 className="eyebrow text-night-text/50">Getting here</h2>
+                <p className="mt-3 text-[1rem] leading-relaxed text-night-text">
+                  {series.venueName}
+                  <span className="block text-night-soft">{address}</span>
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <ExternalButtonLink href={settings.reservationUrl} destination="Toast reservations" variant="secondary">
+                    Reserve a table first
                   </ExternalButtonLink>
-                ) : (
-                  <p className="rounded-(--radius-md) border border-danger px-4 py-3 text-[0.9375rem] font-semibold text-danger">
-                    {STATUS_LABEL[next?.status ?? 'scheduled'] || 'Tickets at the door'}
-                  </p>
-                )}
-                {next ? (
-                  <ExternalTextLink
-                    href={addToCalendarUrl(next, address)}
-                    destination="Google Calendar"
-                    className="text-night-text"
-                  >
-                    Add to calendar
-                  </ExternalTextLink>
-                ) : null}
+                  <ButtonLink href="/events" variant="secondary">
+                    All events
+                  </ButtonLink>
+                </div>
               </div>
             </div>
 
-            <div className="lg:col-span-4 lg:col-start-9">
-              <Flyer
-                assetId={next?.flyerAssetId ?? series.flyerAssetId}
-                printedDate={next?.flyerPrintedDate ?? series.flyerPrintedDate}
-                eventName={series.title.replace('Oasis ', '')}
-                tone={tone}
-                priority
-                sizes="(min-width: 1024px) 32vw, 90vw"
-              />
-              <p className="mt-3 text-[0.8125rem] text-night-soft">
-                {series.venueName}, {address}
-              </p>
+            {/* Artwork, then the dates it runs. */}
+            <div className="event-col-side">
+              <div className="event-slot-art">
+                <Flyer
+                  assetId={next?.flyerAssetId ?? series.flyerAssetId}
+                  printedDate={next?.flyerPrintedDate ?? series.flyerPrintedDate}
+                  eventName={series.title.replace('Oasis ', '')}
+                  tone={tone}
+                  priority
+                  sizes="(min-width: 1024px) 32vw, 90vw"
+                />
+              </div>
+
+              {/* This series only. Fridays and Latin Saturdays are never merged
+                  into one schedule — that was the list nobody could read. Dates
+                  come from generated occurrences, so this cannot go stale. */}
+              <div className="event-slot-buy">
+                <h2 className="eyebrow text-night-text/50">
+                  All upcoming {series.title.replace('Oasis ', '')}
+                </h2>
+                <ul className="series-dates mt-3 border-t border-night-text/15">
+                  {occurrences.map((occurrence) => {
+                    const statusLabel = STATUS_LABEL[occurrence.status] ?? '';
+                    return (
+                      <li key={occurrence.id} className="border-b border-night-text/15 py-2.5">
+                        <p className="tabular font-medium text-night-text">
+                          {formatEventDate(occurrence.startsAt)}
+                        </p>
+                        <p className="tabular text-[0.9375rem] text-night-soft">
+                          {formatTimeRangeCompact(occurrence.startsAt, occurrence.endsAt)}
+                        </p>
+                        {/* No price per row. Entry is the same every week and is
+                            stated once beside it. */}
+                        {statusLabel ? (
+                          <p className="text-[0.875rem] font-semibold text-danger">{statusLabel}</p>
+                        ) : occurrence.ticketUrl ? (
+                          <ExternalTextLink
+                            href={occurrence.ticketUrl}
+                            destination={`${series.title} tickets`}
+                            className="text-amber"
+                          >
+                            Tickets
+                          </ExternalTextLink>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-3 text-[0.8125rem] leading-relaxed text-night-soft">
+                  {series.title} runs every week. Dates further out are added as they are confirmed.
+                </p>
+              </div>
             </div>
-          </div>
-        </Frame>
-      </Band>
-
-      <Band surface="cream">
-        <Frame>
-          {/* This series only. Fridays and Latin Saturdays are never merged into
-              one schedule — that was the list nobody could read. */}
-          <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
-            All upcoming {series.title.replace('Oasis ', '')}
-          </h2>
-          {/* Dates come from generated occurrences. Nothing here is read from the
-              flyer artwork, which is why this list cannot go stale. */}
-          <ul className="mt-8 border-t border-brown/15">
-            {occurrences.map((occurrence) => {
-              const statusLabel = STATUS_LABEL[occurrence.status] ?? '';
-              return (
-                <li
-                  key={occurrence.id}
-                  className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-brown/15 py-4"
-                >
-                  <p className="tabular font-medium text-brown">
-                    {formatEventDateLong(occurrence.startsAt)}
-                  </p>
-                  <p className="tabular text-[0.9375rem] text-brown-soft">
-                    {formatTimeRange(occurrence.startsAt, occurrence.endsAt)}
-                  </p>
-                  {/* No price per row. Entry is the same every week and is stated
-                      once above; ten copies of it are ten things to keep right. */}
-                  {statusLabel ? (
-                    <p className="text-[0.875rem] font-semibold text-danger">{statusLabel}</p>
-                  ) : occurrence.ticketUrl ? (
-                    <ExternalTextLink
-                      href={occurrence.ticketUrl}
-                      destination={`${series.title} tickets`}
-                      className="text-clay"
-                    >
-                      Tickets
-                    </ExternalTextLink>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-
-          <p className="measure mt-5 text-[0.875rem] leading-relaxed text-brown-soft">
-            {series.title} runs every week. Dates further out are added as they are confirmed.
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            <ButtonLink href="/events" variant="secondary">
-              All events
-            </ButtonLink>
-            <ExternalButtonLink href={settings.reservationUrl} destination="Toast reservations">
-              Reserve a table first
-            </ExternalButtonLink>
           </div>
         </Frame>
       </Band>

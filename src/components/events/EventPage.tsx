@@ -17,16 +17,21 @@ import { hexToRgb } from '@/lib/appearance/contrast';
 import type { EventArtwork } from '@/components/events/EventArt';
 
 /**
- * One special event, as one section.
+ * One special event, on one screen.
  *
- * Everything a guest needs to decide and buy is in the first block: the name,
- * when, the flyer they already saw on Instagram, and the price with a way to
- * pay. Every fact has exactly one home — the facts row carries the date, the
+ * Everything a guest needs to decide and buy lives in a single band: the name,
+ * when, the flyer they already saw on Instagram, the price with a way to pay,
+ * what to expect, and how to get here. Nothing is held back behind a scroll —
+ * a night out is one decision, so it is one block of page.
+ *
+ * The two columns are independent (see `.event-grid` in event-page.css):
+ * neither waits on the other's height, so a short description can never open a
+ * hole under the title. On a phone the same five blocks stack in the order a
+ * guest reads them — flyer, name and date, tickets, the detail, the address.
+ *
+ * Every fact still has exactly one home. The facts line carries the date, the
  * time and the town; the ticket box carries the price and the sale state; the
- * prose below carries anything that needs a sentence.
- *
- * The section is sized by its content. With no flyer the layout collapses to
- * one wide column and the title carries the page.
+ * prose carries anything that needs a sentence.
  */
 export async function EventPage({
   event,
@@ -74,6 +79,10 @@ export async function EventPage({
           ? ({ kind: 'scroll', label: 'Get tickets' } as const)
           : null;
 
+  // Is there anything to say beyond the lead? If not, the detail block is left
+  // out entirely rather than padded with a stock sentence.
+  const hasDetail = Boolean(richHtml) || prose.length > 0 || sentences.length > 1 || Boolean(event.ageNote);
+
   return (
     <>
       {off ? (
@@ -97,113 +106,110 @@ export async function EventPage({
       >
         <EventDecor category={category} />
         <Frame wide className="z-10">
-          <div className={`grid gap-8 lg:gap-x-12 lg:gap-y-6 ${flyer ? 'lg:grid-cols-12' : ''}`}>
-            {/* 1. The flyer — first on a phone, top of the right column on a desktop. */}
-            {flyer?.path ? (
-              <figure className="lg:col-span-5 lg:col-start-8 lg:row-start-1">
-                <div
-                  className="overflow-hidden rounded-(--radius-lg) p-2.5 ring-1 ring-inset ring-night-text/12 sm:p-3"
-                  style={{ background: 'var(--flyer-tint)' }}
+          <div className={`event-grid ${flyer ? '' : 'event-grid-noart'}`}>
+            {/* The main column: the words. */}
+            <div className="event-col-main">
+              <div className="event-slot-head">
+                {category ? (
+                  <p className="text-[0.875rem] font-semibold text-[color:var(--e-accent)]">
+                    {CATEGORY_LABEL[category]}
+                  </p>
+                ) : null}
+                <h1
+                  id="event-title"
+                  className="display mt-2 max-w-[14ch] text-[clamp(2.25rem,5.4vw,3.75rem)] leading-[0.92] text-night-text"
                 >
-                  <Image
-                    src={flyer.path}
-                    alt={flyer.alt ?? `Official flyer for ${event.title}`}
-                    width={flyer.width || 1080}
-                    height={flyer.height || 1080}
-                    sizes="(min-width: 1024px) 38vw, 92vw"
-                    priority
-                    className="h-auto w-full rounded-(--radius-md) object-contain lg:max-h-[min(56vh,640px)]"
-                  />
+                  {event.title}
+                </h1>
+
+                <ul className="event-facts tabular mt-4 text-[1.0625rem] font-medium text-night-text">
+                  <li>{formatEventDateCompact(event.startsAt)}</li>
+                  <li>{formatTimeRangeCompact(event.startsAt, event.endsAt)}</li>
+                  <li>{settings.locality}</li>
+                </ul>
+
+                {lead ? (
+                  <p className="measure mt-5 text-[length:var(--text-body-lg)] leading-relaxed text-night-soft">
+                    {lead}
+                  </p>
+                ) : null}
+
+                <ul className="event-facts mt-4 text-[0.9375rem] text-night-soft">
+                  <li>{event.ticketing.agePolicy === '18+' ? '18+' : event.ticketing.agePolicy === '21+' ? '21+' : ageLine}</li>
+                  {event.details.includedText?.trim() ? <li>{event.details.includedText.trim()}</li> : null}
+                  {event.musicFormats.length > 0 ? <li>{event.musicFormats.join(', ')}</li> : null}
+                  {event.venueName !== settings.name ? <li>{event.venueName}</li> : null}
+                </ul>
+              </div>
+
+              {hasDetail ? (
+                <div className="event-slot-body border-t border-night-text/12 pt-6">
+                  <h2 className="eyebrow text-night-text/50">What to expect</h2>
+                  <div className="measure event-prose mt-3 space-y-4 text-[1rem] leading-relaxed text-night-soft">
+                    {richHtml ? (
+                      // Sanitised on the server when saved; bold, italic, links and lists only.
+                      <div dangerouslySetInnerHTML={{ __html: richHtml }} />
+                    ) : (
+                      prose.map((paragraph) => <p key={paragraph.slice(0, 40)}>{paragraph}</p>)
+                    )}
+                    {sentences.slice(1).map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                    {event.ageNote ? <p>{event.ageNote}</p> : null}
+                  </div>
                 </div>
-              </figure>
-            ) : null}
-
-            {/* 2. The words. */}
-            <div className={flyer ? 'lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1' : ''}>
-              {category ? (
-                <p className="text-[0.875rem] font-semibold text-[color:var(--e-accent)]">
-                  {CATEGORY_LABEL[category]}
-                </p>
               ) : null}
-              <h1
-                id="event-title"
-                className="display mt-2 max-w-[14ch] text-[clamp(2.25rem,6vw,4.25rem)] leading-[0.92] text-night-text"
-              >
-                {event.title}
-              </h1>
-
-              <ul className="event-facts tabular mt-5 text-[1.0625rem] font-medium text-night-text">
-                <li>{formatEventDateCompact(event.startsAt)}</li>
-                <li>{formatTimeRangeCompact(event.startsAt, event.endsAt)}</li>
-                <li>{settings.locality}</li>
-              </ul>
-
-              {lead ? (
-                <p className="measure mt-6 text-[length:var(--text-body-lg)] leading-relaxed text-night-soft">
-                  {lead}
+              <div className="event-slot-here border-t border-night-text/12 pt-6">
+                <h2 className="eyebrow text-night-text/50">Getting here</h2>
+                <p className="mt-3 text-[1rem] leading-relaxed text-night-text">
+                  {event.venueName}
+                  <span className="block text-night-soft">{address}</span>
                 </p>
-              ) : null}
-
-              <ul className="event-facts mt-6 text-[0.9375rem] text-night-soft">
-                <li>{event.ticketing.agePolicy === '18+' ? '18+' : event.ticketing.agePolicy === '21+' ? '21+' : ageLine}</li>
-                {event.details.includedText?.trim() ? <li>{event.details.includedText.trim()}</li> : null}
-                {event.musicFormats.length > 0 ? <li>{event.musicFormats.join(', ')}</li> : null}
-                {event.venueName !== settings.name ? <li>{event.venueName}</li> : null}
-              </ul>
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1">
+                  <ExternalTextLink href={settings.directionsUrl} destination="Google Maps" className="text-amber">
+                    Directions
+                  </ExternalTextLink>
+                  {!off ? (
+                    <ExternalTextLink href={addToCalendarUrl(event, address)} destination="Google Calendar" className="text-amber">
+                      Add to calendar
+                    </ExternalTextLink>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
-            {/* 3. The ticket box. Commercially clean: nothing decorative lands here. */}
-            {!off ? (
-              <div className={`relative z-10 ${flyer ? 'lg:col-span-5 lg:col-start-8 lg:row-start-2' : 'max-w-xl'}`}>
-                <TicketBox offer={offer} eventId={event.overrideId ?? event.id} eventSlug={event.slug ?? ''} eventTitle={event.title} />
-              </div>
-            ) : null}
+            {/* The side column: the flyer and the ticket box. On a phone these
+                two unstack into positions 1 and 3 of a single column. */}
+            <div className="event-col-side">
+              {flyer?.path ? (
+                <figure className="event-slot-art">
+                  <div
+                    className="overflow-hidden rounded-(--radius-lg) p-2.5 ring-1 ring-inset ring-night-text/12 sm:p-3"
+                    style={{ background: 'var(--flyer-tint)' }}
+                  >
+                    <Image
+                      src={flyer.path}
+                      alt={flyer.alt ?? `Official flyer for ${event.title}`}
+                      width={flyer.width || 1080}
+                      height={flyer.height || 1080}
+                      sizes="(min-width: 1024px) 38vw, 92vw"
+                      priority
+                      className="h-auto w-full rounded-(--radius-md) object-contain lg:max-h-[min(52vh,580px)]"
+                    />
+                  </div>
+                </figure>
+              ) : null}
+
+              {/* The one bold element besides the title. Nothing decorative lands here. */}
+              {!off ? (
+                <div className="event-slot-buy relative z-10">
+                  <TicketBox offer={offer} eventId={event.overrideId ?? event.id} eventSlug={event.slug ?? ''} eventTitle={event.title} />
+                </div>
+              ) : null}
+            </div>
           </div>
         </Frame>
       </section>
-
-      {/* What to expect: everything that needs a sentence rather than a chip. */}
-      <Band surface="ivory" size="sm">
-        <Frame>
-          <div className="grid gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">What to expect</h2>
-              <div className="measure event-prose mt-5 space-y-4 text-[1rem] leading-relaxed text-brown">
-                {richHtml ? (
-                  // Sanitised on the server when saved; bold, italic, links and lists only.
-                  <div dangerouslySetInnerHTML={{ __html: richHtml }} />
-                ) : (
-                  prose.map((paragraph) => <p key={paragraph.slice(0, 40)}>{paragraph}</p>)
-                )}
-                {sentences.slice(1).map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
-                {event.ageNote ? <p>{event.ageNote}</p> : null}
-                {!richHtml && prose.length === 0 && sentences.length < 2 && !event.ageNote ? (
-                  <p>Come as you are. The kitchen and the bar are open the whole time.</p>
-                ) : null}
-              </div>
-            </div>
-            <div className="lg:col-span-4 lg:col-start-9">
-              <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">Getting here</h2>
-              <p className="mt-5 text-[1rem] leading-relaxed text-brown">
-                {event.venueName}
-                <span className="block text-brown-soft">{address}</span>
-              </p>
-              <div className="mt-3 flex flex-wrap gap-x-6">
-                <ExternalTextLink href={settings.directionsUrl} destination="Google Maps" className="text-clay">
-                  Directions
-                </ExternalTextLink>
-                {!off ? (
-                  <ExternalTextLink href={addToCalendarUrl(event, address)} destination="Google Calendar" className="text-clay">
-                    Add to calendar
-                  </ExternalTextLink>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </Frame>
-      </Band>
 
       {upcoming.length > 0 ? (
         <Band surface="ivory-deep" size="sm">

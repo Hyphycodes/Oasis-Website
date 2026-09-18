@@ -239,19 +239,33 @@ works, it simply cannot be dressed up. The local development database applies it
 
 ## The event page (September 2026 rebuild)
 
-`/events/<slug>` for a standalone event is **one section**: name, when, the flyer, and the price
-with a way to pay, all above the fold. Every fact has exactly one home:
+`/events/<slug>` is **one band** — for a standalone event and for a weekly series alike. Everything
+a guest needs in order to decide is inside it: name, when, the flyer, the price with a way to pay,
+what to expect, and how to get here. Nothing is held back behind a scroll. Every fact still has
+exactly one home:
 
 | Fact | Home |
 |---|---|
 | Date, time, town | The facts row under the title, separated by thin rules |
 | Price and sale state | The ticket box (and, on a phone, the sticky bar) |
 | Age, music | The small row under the short description |
-| Address, directions, calendar | "Getting here", below |
-| Anything that needs a sentence | "What to expect", below |
+| Anything that needs a sentence | "What to expect", under the same title |
+| Address, directions, calendar | "Getting here", at the foot of the words |
 
 The old hero, the `DATE / TIME / ENTRY / AGE / WHERE` grid and the repeated title are gone, not
-restyled. The section is content-sized. With no flyer it collapses to one wide column.
+restyled — and so are the separate "What to expect" and "Getting here" bands that used to sit a
+screen further down.
+
+**The layout** is five blocks in two columns (`.event-grid` in `event-page.css`). The columns are
+independent: each is sized by its own content, so a short description cannot open a hole under the
+title and a long one cannot push the ticket box down the page. On a phone the two column wrappers
+dissolve (`display: contents`) and the same five blocks stack in the order a guest reads them —
+flyer, name and date, tickets, the detail, the address. With no flyer the words take a narrower
+measure and the ticket box keeps its own column.
+
+A series page uses the same grid: the artwork and every upcoming date on one side, what the night
+is and when the next one runs on the other. Six weeks of dates sit in two columns on a desktop, so
+the schedule is as tall as the flyer beside it rather than a screen of its own.
 
 **The offer.** `src/server/ticketing/offer.ts` turns an event into a `TicketOffer`
 (`src/lib/ticketing/offer.ts`): `external` (Tickeri), `free`, `door`, or — once in-house
