@@ -25,6 +25,14 @@ export interface OfferTier {
   onSale: boolean;
 }
 
+/** How a face-value total becomes what the guest actually pays. Mirrors the server's `price_order`. */
+export interface FeeConfig {
+  display: 'inclusive' | 'itemized';
+  taxRateBps: number;
+  serviceFeeBps: number;
+  serviceFeeFlatCents: number;
+}
+
 export type TicketOffer =
   /** Sold on this website. */
   | {
@@ -34,6 +42,7 @@ export type TicketOffer =
       /** Event-level seats remaining, or null when uncapped. */
       remaining: number | null;
       capacity: number | null;
+      fees: FeeConfig;
     }
   /** Sold somewhere else (Tickeri). */
   | { kind: 'external'; url: string; label: string | null; priceCents: number | null; priceText: string | null; soldOut: boolean }
@@ -113,6 +122,19 @@ export function scarcityLine(offer: TicketOffer): string | null {
 /** Face-value subtotal for an optimistic display. The server recomputes it. */
 export function faceTotalCents(tiers: OfferTier[], quantities: Record<string, number>): number {
   return tiers.reduce((sum, tier) => sum + tier.priceCents * (quantities[tier.id] ?? 0), 0);
+}
+
+/**
+ * What the guest will actually pay, before any promo code — same formula as
+ * `price_order` in the database, so this preview never disagrees with the
+ * real charge. `inclusive` fees are already baked into the sticker price, so
+ * there is nothing to add; `itemized` fees are shown as their own line.
+ */
+export function estimateTotalCents(faceCents: number, fees: FeeConfig): { feeCents: number; totalCents: number } {
+  if (fees.display !== 'itemized') return { feeCents: 0, totalCents: faceCents };
+  const service = Math.round((faceCents * fees.serviceFeeBps) / 10000) + fees.serviceFeeFlatCents;
+  const tax = Math.round(((faceCents + service) * fees.taxRateBps) / 10000);
+  return { feeCents: service + tax, totalCents: faceCents + service + tax };
 }
 
 /** The most of one tier a guest may add right now. */

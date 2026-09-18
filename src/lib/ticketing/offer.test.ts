@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { faceTotalCents, fromCents, isSoldOut, maxAddable, priceHeadline, scarcityLine, type OfferTier, type TicketOffer } from './offer';
+import { estimateTotalCents, faceTotalCents, fromCents, isSoldOut, maxAddable, priceHeadline, scarcityLine, type OfferTier, type TicketOffer } from './offer';
 
 const adult: OfferTier = { id: 'a', name: 'Adult', description: null, priceCents: 1000, seatsPerTicket: 1, minPerOrder: 0, maxPerOrder: 10, available: 30, onSale: true };
 const kid: OfferTier = { id: 'k', name: 'Kid', description: null, priceCents: 600, seatsPerTicket: 1, minPerOrder: 0, maxPerOrder: 10, available: 30, onSale: true };
 
+const noFees = { display: 'inclusive' as const, taxRateBps: 0, serviceFeeBps: 0, serviceFeeFlatCents: 0 };
+
 function tiers(overrides: Partial<Extract<TicketOffer, { kind: 'tiers' }>> = {}): TicketOffer {
-  return { kind: 'tiers', eventId: 'e', tiers: [adult, kid], remaining: 40, capacity: 40, ...overrides };
+  return { kind: 'tiers', eventId: 'e', tiers: [adult, kid], remaining: 40, capacity: 40, fees: noFees, ...overrides };
 }
 
 describe('priceHeadline', () => {
@@ -51,6 +53,28 @@ describe('isSoldOut', () => {
   });
   it('a pending offer is never sold out', () => {
     expect(isSoldOut({ kind: 'pending' })).toBe(false);
+  });
+});
+
+describe('estimateTotalCents', () => {
+  it('adds nothing when fees are inclusive, whatever they are set to', () => {
+    expect(estimateTotalCents(1000, { display: 'inclusive', taxRateBps: 825, serviceFeeBps: 0, serviceFeeFlatCents: 100 })).toEqual({
+      feeCents: 0,
+      totalCents: 1000,
+    });
+  });
+  it('adds a flat service fee on top, itemized', () => {
+    expect(estimateTotalCents(1000, { display: 'itemized', taxRateBps: 0, serviceFeeBps: 0, serviceFeeFlatCents: 100 })).toEqual({
+      feeCents: 100,
+      totalCents: 1100,
+    });
+  });
+  it('matches the server formula: percentage fee, then tax on fee-inclusive subtotal', () => {
+    // face 1000, service 5% -> 50, tax 10% of (1000+50)=1050 -> 105, total 1155
+    expect(estimateTotalCents(1000, { display: 'itemized', taxRateBps: 1000, serviceFeeBps: 500, serviceFeeFlatCents: 0 })).toEqual({
+      feeCents: 155,
+      totalCents: 1155,
+    });
   });
 });
 

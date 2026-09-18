@@ -52,6 +52,12 @@ export async function getTicketOffer(event: ResolvedEvent): Promise<TicketOffer>
           tiers: availability.tiers.map(({ capacity: _capacity, taken: _taken, ...tier }) => tier),
           remaining: availability.available,
           capacity: availability.capacity,
+          fees: {
+            display: event.ticketing.feeDisplay,
+            taxRateBps: event.ticketing.taxRateBps,
+            serviceFeeBps: event.ticketing.serviceFeeBps,
+            serviceFeeFlatCents: event.ticketing.serviceFeeFlatCents,
+          },
         };
       }
     }

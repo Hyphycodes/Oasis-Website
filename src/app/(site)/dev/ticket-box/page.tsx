@@ -17,6 +17,7 @@ const TIERS: Extract<TicketOffer, { kind: 'tiers' }> = {
   eventId: 'dev',
   remaining: 9,
   capacity: 40,
+  fees: { display: 'itemized', taxRateBps: 0, serviceFeeBps: 0, serviceFeeFlatCents: 100 },
   tiers: [
     { id: 'a', name: 'Adult', description: 'Canvas, paints and an apron.', priceCents: 1000, seatsPerTicket: 1, minPerOrder: 0, maxPerOrder: 8, available: 9, onSale: true },
     { id: 'k', name: 'Kid (12 and under)', description: 'A smaller canvas and a juice.', priceCents: 600, seatsPerTicket: 1, minPerOrder: 0, maxPerOrder: 6, available: 9, onSale: true },

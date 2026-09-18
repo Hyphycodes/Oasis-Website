@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, type FormEvent } from 'react';
 import { formatPrice } from '@/lib/format';
 import {
+  estimateTotalCents,
   faceTotalCents,
   isSoldOut,
   maxAddable,
@@ -113,7 +114,8 @@ function TierPicker({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const total = useMemo(() => faceTotalCents(offer.tiers, quantities), [offer.tiers, quantities]);
+  const face = useMemo(() => faceTotalCents(offer.tiers, quantities), [offer.tiers, quantities]);
+  const { feeCents, totalCents: total } = useMemo(() => estimateTotalCents(face, offer.fees), [face, offer.fees]);
   const count = Object.values(quantities).reduce((sum, n) => sum + n, 0);
 
   // Seats already chosen across every tier count against the event cap.
@@ -210,7 +212,9 @@ function TierPicker({
       <button type="submit" className={`${BUTTON} mt-4`} disabled={count === 0 || busy}>
         {busy ? 'One moment…' : 'Get tickets'}
       </button>
-      <p className="mt-3 text-[0.875rem] leading-relaxed text-night-soft">Nothing added at checkout.</p>
+      <p className="mt-3 text-[0.875rem] leading-relaxed text-night-soft">
+        {feeCents > 0 ? `Includes a ${formatPrice(feeCents)} service fee. That total is exactly what you'll pay.` : 'Nothing added at checkout.'}
+      </p>
       {error ? (
         <p role="alert" className="mt-3 rounded-(--radius-sm) border border-amber/40 bg-amber/10 px-3 py-2 text-[0.875rem] text-night-text">
           {error}
