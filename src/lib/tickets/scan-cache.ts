@@ -92,6 +92,26 @@ export async function dequeue(key: string): Promise<void> {
   await run('queue', 'readwrite', (s) => s.delete(key));
 }
 
+/**
+ * End of shift: take this event's ticket list off the phone.
+ *
+ * Queued check-ins are flushed by the caller first — this only removes what is
+ * safe to lose. A staff phone that goes home with a manifest on it is a copy of
+ * the door list nobody is guarding.
+ */
+export async function clearEvent(eventId: string): Promise<void> {
+  try {
+    await run('manifests', 'readwrite', (s) => s.delete(eventId));
+    const items = await queued();
+    for (const item of items) {
+      if (item.eventId === eventId) await dequeue(item.key);
+    }
+  } catch {
+    // Nothing cached, or storage is unavailable. Either way there is nothing
+    // left to clear.
+  }
+}
+
 export async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest('SHA-256', bytes);

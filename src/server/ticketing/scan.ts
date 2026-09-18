@@ -53,6 +53,12 @@ export interface ScanInput {
   eventId: string;
   token?: string;
   code?: string;
+  /**
+   * A check-in staff performed from search rather than from a camera — the
+   * dead-phone case. Only ever set by a manager: the route gates it, because
+   * a ticket id is not evidence of holding the ticket.
+   */
+  ticketId?: string;
   /** Let them in anyway on a duplicate. */
   override?: boolean;
   deviceLabel?: string;
@@ -141,6 +147,9 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
     }
     const { data } = await client.from('tickets').select('*').eq('id', verified.tid).maybeSingle();
     ticketRow = (data as Row | null) ?? null;
+  } else if (input.ticketId) {
+    const { data } = await client.from('tickets').select('*').eq('id', input.ticketId).maybeSingle();
+    ticketRow = (data as Row | null) ?? null;
   } else if (input.code) {
     const clean = normalizeCode(input.code);
     if (clean.length !== 8) {
@@ -195,8 +204,24 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
 
   if (!updated || updated.length === 0) {
     const { data: fresh } = await client.from('tickets').select('*').eq('id', ticketId).maybeSingle();
+    const row = (fresh as Row | null) ?? ticketRow;
+
+    // Two doors, both offline, the same ticket. Whoever scanned it FIRST is the
+    // truth, even if their phone synced second — otherwise the recorded time of
+    // arrival depends on which staff member found signal first.
+    const existing = row.checked_in_at ? Date.parse(String(row.checked_in_at)) : null;
+    const incoming = input.scannedAt && Number.isFinite(Date.parse(input.scannedAt)) ? Date.parse(input.scannedAt) : null;
+    if (existing !== null && incoming !== null && incoming < existing) {
+      await client
+        .from('tickets')
+        .update({ checked_in_at: new Date(incoming).toISOString(), checked_in_by: input.scannedBy })
+        .eq('id', ticketId);
+      row.checked_in_at = new Date(incoming).toISOString();
+      row.checked_in_by = input.scannedBy;
+    }
+
     await record(input, 'duplicate', ticketId);
-    return { result: 'duplicate', reason: 'Already scanned.', ticket: await describe((fresh as Row) ?? ticketRow), counts: await eventCounts(input.eventId) };
+    return { result: 'duplicate', reason: 'Already scanned.', ticket: await describe(row), counts: await eventCounts(input.eventId) };
   }
 
   await record(input, 'ok', ticketId);
@@ -244,4 +269,59 @@ export async function scanManifest(eventId: string) {
     }),
   };
   return { manifest, counts: await eventCounts(eventId) };
+}
+
+/* --------------------------------------------------------------- search -- */
+
+export interface AttendeeMatch {
+  ticketId: string;
+  code: string;
+  name: string | null;
+  email: string | null;
+  tierName: string;
+  orderNumber: string;
+  status: string;
+  checkedInAt: string | null;
+  seats: number;
+}
+
+/**
+ * Somebody at the door whose phone is dead, or who cannot find the email.
+ *
+ * Name, email or order number. `withEmail` is false for door staff: they can
+ * find a guest and let them in without being handed the customer list.
+ */
+export async function searchAttendees(
+  eventId: string,
+  query: string,
+  { withEmail = false, limit = 20 }: { withEmail?: boolean; limit?: number } = {},
+): Promise<AttendeeMatch[]> {
+  const client = getTicketingClient();
+  const term = query.trim();
+  if (!client || term.length < 2) return [];
+
+  const like = `%${term.replace(/[%_]/g, (match) => `\\${match}`)}%`;
+  const fields = ['order_number.ilike.' + like, 'attendee_name.ilike.' + like, 'customer_name.ilike.' + like, 'code.ilike.' + like];
+  if (withEmail) fields.push('customer_email.ilike.' + like);
+
+  const { data } = await client
+    .from('event_attendees')
+    .select('ticket_id, code, attendee_name, customer_name, customer_email, tier_name, order_number, ticket_status, checked_in_at, seats, order_status')
+    .eq('event_id', eventId)
+    .or(fields.join(','))
+    .limit(limit);
+
+  return (data ?? [])
+    .filter((row) => row.order_status !== 'canceled' && row.order_status !== 'failed')
+    .map((row) => ({
+      ticketId: String(row.ticket_id),
+      code: String(row.code),
+      name: (row.attendee_name as string | null) ?? (row.customer_name as string | null) ?? null,
+      email: withEmail ? ((row.customer_email as string | null) ?? null) : null,
+      tierName: String(row.tier_name ?? 'Ticket'),
+      orderNumber: String(row.order_number ?? ''),
+      status: String(row.ticket_status),
+      checkedInAt: (row.checked_in_at as string | null) ?? null,
+      seats: Number(row.seats ?? 1),
+    }));
 }

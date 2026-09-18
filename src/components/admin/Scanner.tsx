@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { DoorSearch, type SearchMatch } from '@/components/admin/DoorSearch';
 import { normalizeCode } from '@/lib/ticketing/codes';
 import { tokenFromScan } from '@/lib/tickets/link';
 import {
@@ -8,6 +9,7 @@ import {
   enqueue,
   loadManifest,
   queued,
+  clearEvent,
   saveManifest,
   sha256Hex,
   type CachedManifest,
@@ -57,9 +59,22 @@ function timeOf(iso: string | null): string {
   return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }).format(new Date(iso)).toLowerCase();
 }
 
-export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string; eventTitle: string; deviceLabel: string }) {
+export function Scanner({
+  eventId,
+  eventTitle,
+  deviceLabel: fallbackLabel,
+  canOverride,
+}: {
+  eventId: string;
+  eventTitle: string;
+  deviceLabel: string;
+  /** Managers only: overrides and checking somebody in from search. */
+  canOverride: boolean;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const stopRef = useRef<(() => void) | null>(null);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
+  const wakeRef = useRef<{ release: () => Promise<void> } | null>(null);
   const lastSeen = useRef<{ value: string; at: number }>({ value: '', at: 0 });
   const busy = useRef(false);
 
@@ -71,8 +86,34 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
   const [pending, setPending] = useState(0);
   const [muted, setMuted] = useState(false);
   const [manual, setManual] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [torch, setTorch] = useState<'off' | 'on' | 'unsupported'>('unsupported');
+  // "Main door — Carlos's phone". Set once per device, kept locally, attached to
+  // every check-in so a disputed scan can be traced to a phone.
+  const [device, setDevice] = useState(fallbackLabel);
   const mutedRef = useRef(false);
   mutedRef.current = muted;
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('oasis-door-device');
+      if (saved) setDevice(saved);
+    } catch {
+      // Private mode, or storage blocked. The staff name is a fine fallback.
+    }
+  }, []);
+
+  const nameThisDevice = useCallback(() => {
+    const answer = window.prompt('What should this phone be called at the door?', device);
+    const next = answer?.trim();
+    if (!next) return;
+    setDevice(next);
+    try {
+      window.localStorage.setItem('oasis-door-device', next);
+    } catch {
+      // Not fatal: the label just will not survive a reload.
+    }
+  }, [device]);
 
   /* ------------------------------------------------------------ cache -- */
 
@@ -188,12 +229,12 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
       ...(isToken ? { token: scanned } : { code: normalizeCode(raw) }),
       ticketId: ticket.id,
       scannedAt: new Date().toISOString(),
-      deviceLabel,
+      deviceLabel: device,
     });
     setPending((n) => n + 1);
     setCounts((current) => (current ? { ...current, checkedIn: current.checkedIn + 1 } : current));
     return { kind: 'green', title: 'Welcome in', detail: `${ticket.tierName}${ticket.seats > 1 ? ` · ${ticket.seats} seats` : ''} · ${ticket.orderSize > 1 ? `1 of ${ticket.orderSize} in this order` : ticket.attendeeName ?? ticket.orderNumber}`, offline: true };
-  }, [manifest, eventId, deviceLabel]);
+  }, [manifest, eventId, device]);
 
   const handle = useCallback(async (raw: string, override = false, ticketId: string | null = null) => {
     const value = raw.trim();
@@ -209,8 +250,8 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
       // decided to hand it back.
       const token = tokenFromScan(value);
       const body = override && ticketId
-        ? { eventId, override: true, deviceLabel, ...(token ? { token } : { code: value }) }
-        : { eventId, deviceLabel, ...(token ? { token } : { code: value }) };
+        ? { eventId, override: true, deviceLabel: device, ...(token ? { token } : { code: value }) }
+        : { eventId, deviceLabel: device, ...(token ? { token } : { code: value }) };
       let reply: ScanReply | null = null;
       try {
         const response = await fetch('/api/scan', {
@@ -242,7 +283,9 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
           show({ kind: 'amber', title: `Already scanned${ticket?.checkedInAt ? ` at ${timeOf(ticket.checkedInAt)}` : ''}`, detail: `${ticket?.checkedInBy ? `by ${ticket.checkedInBy} · ` : ''}${ticket?.tierName ?? ''}${ticket?.attendeeName ? ` · ${ticket.attendeeName}` : ''}`, ticketId: ticket?.id ?? null });
           break;
         case 'wrong_event':
-          show({ kind: 'red', title: 'Not valid here', detail: 'This ticket is for a different event.' });
+          // Amber, not red: this is a real ticket and a real guest, on the
+          // wrong night. Nobody should be turned away like a forgery.
+          show({ kind: 'amber', title: 'Wrong event', detail: 'A real ticket, for a different night.', ticketId: null });
           break;
         case 'void':
           show({ kind: 'red', title: 'Not valid here', detail: reply.reason });
@@ -259,13 +302,75 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
     } finally {
       busy.current = false;
     }
-  }, [eventId, deviceLabel, show, decideOffline]);
+  }, [eventId, device, show, decideOffline]);
+
+  const checkInById = useCallback(async (match: SearchMatch) => {
+    try {
+      const response = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ eventId, ticketId: match.ticketId, deviceLabel: device }),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      const reply = (await response.json()) as ScanReply;
+      if (!response.ok) {
+        show({ kind: 'red', title: 'Not allowed', detail: 'A manager has to let someone in by hand.' });
+        return;
+      }
+      if (reply.counts) setCounts(reply.counts);
+      setSearching(false);
+      show(
+        reply.result === 'ok'
+          ? { kind: 'green', title: 'Welcome in', detail: `${match.name ?? match.orderNumber} · ${match.tierName}` }
+          : reply.result === 'duplicate'
+            ? { kind: 'amber', title: 'Already scanned', detail: match.name ?? match.orderNumber, ticketId: null }
+            : { kind: 'red', title: 'Not valid here', detail: reply.reason },
+      );
+    } catch {
+      show({ kind: 'red', title: 'No connection', detail: 'Checking someone in by hand needs signal. Scan their code instead.' });
+    }
+  }, [eventId, device, show]);
+
+  const endShift = useCallback(async () => {
+    if (!window.confirm('Clear this event\u2019s ticket list from this phone? Anything not yet synced is sent first.')) return;
+    await flush();
+    await clearEvent(eventId);
+    window.location.href = '/admin/door';
+  }, [eventId, flush]);
 
   /* ----------------------------------------------------------- camera -- */
+
+  const holdWakeLock = useCallback(async () => {
+    try {
+      const wakeLock = (navigator as Navigator & {
+        wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> };
+      }).wakeLock;
+      if (!wakeLock || wakeRef.current) return;
+      wakeRef.current = await wakeLock.request('screen');
+    } catch {
+      // Unsupported or refused. The scanner works; the screen just sleeps.
+    }
+  }, []);
+
+  const toggleTorch = useCallback(async () => {
+    const track = trackRef.current;
+    if (!track) return;
+    const next = torch === 'on' ? false : true;
+    try {
+      // `torch` is real on Android Chrome and absent from the DOM types.
+      await track.applyConstraints({ advanced: [{ torch: next }] } as unknown as MediaTrackConstraints);
+      setTorch(next ? 'on' : 'off');
+    } catch {
+      setTorch('unsupported');
+    }
+  }, [torch]);
 
   const stop = useCallback(() => {
     stopRef.current?.();
     stopRef.current = null;
+    trackRef.current = null;
+    void wakeRef.current?.release().catch(() => {});
+    wakeRef.current = null;
     const stream = video.current?.srcObject as MediaStream | null;
     stream?.getTracks().forEach((track) => track.stop());
     if (video.current) video.current.srcObject = null;
@@ -276,6 +381,11 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
       const element = video.current!;
+      // A doorway is dark and a phone sleeps in the middle of a queue.
+      trackRef.current = stream.getVideoTracks()[0] ?? null;
+      const capabilities = trackRef.current?.getCapabilities?.() as { torch?: boolean } | undefined;
+      setTorch(capabilities?.torch ? 'off' : 'unsupported');
+      void holdWakeLock();
       element.srcObject = stream;
       await element.play();
 
@@ -311,7 +421,7 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
       stop();
       setPhase('failed');
     }
-  }, [handle, stop]);
+  }, [handle, stop, holdWakeLock]);
 
   useEffect(() => () => stop(), [stop]);
 
@@ -342,6 +452,13 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
         </div>
         <button
           type="button"
+          onClick={() => setSearching(true)}
+          className="inline-flex min-h-11 items-center rounded-full border border-night-text/25 px-3 text-[0.8125rem] font-semibold"
+        >
+          Search
+        </button>
+        <button
+          type="button"
           onClick={() => setMuted((m) => !m)}
           aria-pressed={muted}
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-night-text/25 text-[0.8125rem] font-semibold"
@@ -360,8 +477,12 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
         ) : (
           <div className="absolute inset-0 grid place-items-center px-6 text-center">
             <div className="grid gap-4">
-              <p className="text-[1.0625rem] text-night-soft">
-                {phase === 'failed' ? 'The camera could not start. Check the browser has permission, or type codes below.' : 'Point the camera at a ticket.'}
+              <p className="text-[1.0625rem] leading-relaxed text-night-soft">
+                {phase === 'failed'
+                  ? // The usual cause is a permission tapped away once. Say where
+                    // it lives rather than leaving a dead screen.
+                    'The camera could not start. On an iPhone: Settings → Safari → Camera → Allow, then try again. You can also type codes below, or use Search.'
+                  : 'Point the camera at a ticket.'}
               </p>
               <button
                 type="button"
@@ -371,9 +492,42 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
               >
                 {phase === 'starting' ? 'Starting…' : phase === 'failed' ? 'Try the camera again' : 'Start scanning'}
               </button>
+
+              {/* Shift controls: only ever touched before or after a rush, so
+                  they sit on the idle screen rather than over the camera. */}
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[0.875rem]">
+                <button type="button" onClick={nameThisDevice} className="min-h-11 text-night-soft underline underline-offset-4">
+                  This phone: {device}
+                </button>
+                <button type="button" onClick={() => void endShift()} className="min-h-11 text-night-soft underline underline-offset-4">
+                  End shift
+                </button>
+              </div>
             </div>
           </div>
         )}
+
+        {searching ? (
+          <DoorSearch
+            eventId={eventId}
+            manifest={manifest}
+            canCheckIn={canOverride}
+            onCheckIn={checkInById}
+            onClose={() => setSearching(false)}
+          />
+        ) : null}
+
+        {/* Torch, where the phone has one: a doorway is darker than any test. */}
+        {phase === 'scanning' && torch !== 'unsupported' ? (
+          <button
+            type="button"
+            onClick={() => void toggleTorch()}
+            aria-pressed={torch === 'on'}
+            className="absolute bottom-4 right-4 inline-flex min-h-12 items-center rounded-full border border-white/40 bg-black/50 px-4 text-[0.9375rem] font-semibold text-white"
+          >
+            {torch === 'on' ? 'Light on' : 'Light'}
+          </button>
+        ) : null}
 
         {/* The verdict is the whole screen. Nothing to dismiss. */}
         {verdict ? (
@@ -382,7 +536,7 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
               <p className="display text-[clamp(2.5rem,12vw,4.5rem)] leading-none">{verdict.title}</p>
               <p className="text-[1.125rem] leading-snug">{verdict.detail}</p>
               {verdict.offline ? <p className="text-[0.875rem] opacity-80">offline · will sync</p> : null}
-              {verdict.kind === 'amber' && verdict.ticketId && !verdict.offline ? (
+              {verdict.kind === 'amber' && verdict.ticketId && !verdict.offline && canOverride ? (
                 <button
                   type="button"
                   onClick={() => void handle(lastSeen.current.value, true, verdict.ticketId)}

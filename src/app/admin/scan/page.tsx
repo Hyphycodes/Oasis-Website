@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { Scanner } from '@/components/admin/Scanner';
 import { getReadDb } from '@/lib/db';
 import { getUpcomingEvents, venueIsoDate } from '@/lib/events';
-import { getStaff } from '@/server/auth';
+import { getStaff, staffCan } from '@/server/auth';
 import { getEditableEvents } from '@/server/content/events';
 
 export const dynamic = 'force-dynamic';
@@ -27,5 +27,12 @@ export default async function ScanPage({ searchParams }: { searchParams: Promise
   const chosen = ticketed.find((event) => event.overrideId === requested) ?? ticketed.find((event) => venueIsoDate(event.startsAt) === venueIsoDate(now.toISOString())) ?? ticketed[0] ?? null;
   if (!chosen) redirect('/admin/door');
 
-  return <Scanner eventId={chosen.overrideId!} eventTitle={chosen.title} deviceLabel={staff.name || staff.email || 'door'} />;
+  return (
+    <Scanner
+      eventId={chosen.overrideId!}
+      eventTitle={chosen.title}
+      deviceLabel={staff.name || staff.email || 'door'}
+      canOverride={staffCan(staff, 'content.publish')}
+    />
+  );
 }
