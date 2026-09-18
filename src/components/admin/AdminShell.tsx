@@ -31,6 +31,7 @@ const NAV: {
   { href: '/admin', label: 'Home', icon: 'home' },
   { href: '/admin/menu', label: 'Menu', icon: 'menu', section: 'menu' },
   { href: '/admin/events', label: 'Events', icon: 'events', section: 'events' },
+  { href: '/admin/door', label: 'Door', icon: 'door', section: 'events' },
   { href: '/admin/website', label: 'Pages', icon: 'pages', section: 'website' },
   { href: '/admin/theme', label: 'Seasonal look', icon: 'season', section: 'website' },
   { href: '/admin/media', label: 'Photos & videos', icon: 'photos', section: 'media' },

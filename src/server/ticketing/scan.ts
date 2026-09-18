@@ -1,0 +1,212 @@
+import 'server-only';
+
+import { createHash } from 'node:crypto';
+import { normalizeCode } from '@/lib/ticketing/codes';
+import { signTicketToken, verifyTicketToken } from '@/lib/ticketing/tokens';
+import { getTicketingClient } from './db';
+
+/**
+ * The door, server side.
+ *
+ * Order of checks is the point: the signature first (a forged QR never
+ * touches the database), then the event, then the ticket's state, then one
+ * atomic UPDATE that only succeeds if nobody else got there first. Every
+ * outcome is written to `scans`, including the invalid ones.
+ */
+
+export type ScanResult = 'ok' | 'duplicate' | 'invalid' | 'wrong_event' | 'void' | 'override';
+
+export interface ScanTicket {
+  id: string;
+  code: string;
+  tierName: string;
+  seats: number;
+  attendeeName: string | null;
+  orderNumber: string;
+  orderTickets: { id: string; code: string; status: string }[];
+  checkedInAt: string | null;
+  checkedInBy: string | null;
+}
+
+export interface ScanResponse {
+  result: ScanResult;
+  reason: string;
+  ticket: ScanTicket | null;
+  counts: { checkedIn: number; total: number };
+}
+
+export interface ScanInput {
+  eventId: string;
+  token?: string;
+  code?: string;
+  /** Let them in anyway on a duplicate. */
+  override?: boolean;
+  deviceLabel?: string;
+  scannedBy: string;
+  /** When the scan actually happened, for queued offline scans. */
+  scannedAt?: string;
+}
+
+type Row = Record<string, unknown>;
+
+export async function eventCounts(eventId: string): Promise<{ checkedIn: number; total: number }> {
+  const client = getTicketingClient();
+  if (!client) return { checkedIn: 0, total: 0 };
+  const [total, checkedIn] = await Promise.all([
+    client.from('tickets').select('id', { count: 'exact', head: true }).eq('event_id', eventId).in('status', ['valid', 'checked_in']),
+    client.from('tickets').select('id', { count: 'exact', head: true }).eq('event_id', eventId).eq('status', 'checked_in'),
+  ]);
+  return { checkedIn: checkedIn.count ?? 0, total: total.count ?? 0 };
+}
+
+async function describe(ticket: Row): Promise<ScanTicket> {
+  const client = getTicketingClient()!;
+  const [order, item, siblings] = await Promise.all([
+    client.from('orders').select('order_number, customer_name').eq('id', ticket.order_id as string).maybeSingle(),
+    client.from('order_items').select('tier_name').eq('id', ticket.order_item_id as string).maybeSingle(),
+    client.from('tickets').select('id, code, status').eq('order_id', ticket.order_id as string).order('created_at').order('seq'),
+  ]);
+  return {
+    id: String(ticket.id),
+    code: String(ticket.code),
+    tierName: String(item.data?.tier_name ?? 'Ticket'),
+    seats: Number(ticket.seats ?? 1),
+    attendeeName: (ticket.attendee_name as string | null) ?? (order.data?.customer_name as string | null) ?? null,
+    orderNumber: String(order.data?.order_number ?? ''),
+    orderTickets: (siblings.data ?? []).map((row) => ({ id: String(row.id), code: String(row.code), status: String(row.status) })),
+    checkedInAt: (ticket.checked_in_at as string | null) ?? null,
+    checkedInBy: (ticket.checked_in_by as string | null) ?? null,
+  };
+}
+
+async function record(input: ScanInput, result: ScanResult, ticketId: string | null): Promise<void> {
+  const client = getTicketingClient();
+  if (!client) return;
+  await client.from('scans').insert({
+    ticket_id: ticketId,
+    event_id: input.eventId,
+    raw_code: (input.token ?? input.code ?? '').slice(0, 400),
+    result,
+    device_label: input.deviceLabel?.slice(0, 80) ?? null,
+    scanned_by: input.scannedBy.slice(0, 120),
+    scanned_at: input.scannedAt && Number.isFinite(Date.parse(input.scannedAt)) ? input.scannedAt : new Date().toISOString(),
+  });
+}
+
+export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
+  const client = getTicketingClient();
+  if (!client) return { result: 'invalid', reason: 'Ticketing is not connected.', ticket: null, counts: { checkedIn: 0, total: 0 } };
+
+  // 1. The signature, before anything else. No database for a forgery.
+  let ticketRow: Row | null = null;
+  if (input.token) {
+    const verified = verifyTicketToken(input.token);
+    if (!verified) {
+      await record(input, 'invalid', null);
+      return { result: 'invalid', reason: 'Not a real ticket code.', ticket: null, counts: await eventCounts(input.eventId) };
+    }
+    if (verified.eid !== input.eventId) {
+      await record(input, 'wrong_event', verified.tid);
+      return { result: 'wrong_event', reason: 'This ticket is for a different event.', ticket: null, counts: await eventCounts(input.eventId) };
+    }
+    const { data } = await client.from('tickets').select('*').eq('id', verified.tid).maybeSingle();
+    ticketRow = (data as Row | null) ?? null;
+  } else if (input.code) {
+    const clean = normalizeCode(input.code);
+    if (clean.length !== 8) {
+      await record(input, 'invalid', null);
+      return { result: 'invalid', reason: 'A ticket code is eight characters.', ticket: null, counts: await eventCounts(input.eventId) };
+    }
+    const { data } = await client.from('tickets').select('*').eq('code', `${clean.slice(0, 4)}-${clean.slice(4)}`).maybeSingle();
+    ticketRow = (data as Row | null) ?? null;
+  }
+
+  if (!ticketRow) {
+    await record(input, 'invalid', null);
+    return { result: 'invalid', reason: 'No ticket with that code.', ticket: null, counts: await eventCounts(input.eventId) };
+  }
+  const ticketId = String(ticketRow.id);
+
+  // 2. The event, then the state.
+  if (ticketRow.event_id !== input.eventId) {
+    await record(input, 'wrong_event', ticketId);
+    return { result: 'wrong_event', reason: 'This ticket is for a different event.', ticket: await describe(ticketRow), counts: await eventCounts(input.eventId) };
+  }
+  if (ticketRow.status === 'void' || ticketRow.status === 'refunded') {
+    const { data: order } = await client.from('orders').select('status').eq('id', ticketRow.order_id as string).maybeSingle();
+    const reason =
+      order?.status === 'disputed' ? 'The payment on this order was disputed.'
+        : ticketRow.status === 'refunded' || order?.status === 'refunded' ? 'This ticket was refunded.'
+          : 'This ticket was cancelled.';
+    await record(input, 'void', ticketId);
+    return { result: 'void', reason, ticket: await describe(ticketRow), counts: await eventCounts(input.eventId) };
+  }
+
+  // 3. Let them in anyway: an explicit judgement call on a duplicate.
+  if (input.override) {
+    await client.from('tickets').update({ checked_in_override: true }).eq('id', ticketId);
+    await record(input, 'override', ticketId);
+    return { result: 'override', reason: 'Let in on a second scan.', ticket: await describe(ticketRow), counts: await eventCounts(input.eventId) };
+  }
+
+  // 4. Atomic check-in. Zero rows means somebody else scanned it first.
+  const now = new Date().toISOString();
+  const { data: updated } = await client
+    .from('tickets')
+    .update({ status: 'checked_in', checked_in_at: input.scannedAt && Number.isFinite(Date.parse(input.scannedAt)) ? input.scannedAt : now, checked_in_by: input.scannedBy })
+    .eq('id', ticketId)
+    .is('checked_in_at', null)
+    .select('*');
+
+  if (!updated || updated.length === 0) {
+    const { data: fresh } = await client.from('tickets').select('*').eq('id', ticketId).maybeSingle();
+    await record(input, 'duplicate', ticketId);
+    return { result: 'duplicate', reason: 'Already scanned.', ticket: await describe((fresh as Row) ?? ticketRow), counts: await eventCounts(input.eventId) };
+  }
+
+  await record(input, 'ok', ticketId);
+  return { result: 'ok', reason: 'Welcome in.', ticket: await describe(updated[0] as Row), counts: await eventCounts(input.eventId) };
+}
+
+/** Everything the scanner needs to work with the wifi down. */
+export async function scanManifest(eventId: string) {
+  const client = getTicketingClient();
+  if (!client) return null;
+  const [event, tickets, orders] = await Promise.all([
+    client.from('event_occurrences').select('id, title, starts_at').eq('id', eventId).maybeSingle(),
+    client.from('tickets').select('id, code, status, seats, attendee_name, order_id, order_item_id').eq('event_id', eventId),
+    client.from('orders').select('id, order_number, customer_name, status').eq('event_id', eventId),
+  ]);
+  if (!event.data) return null;
+  const orderById = new Map((orders.data ?? []).map((row) => [String(row.id), row]));
+  const itemIds = [...new Set((tickets.data ?? []).map((row) => String(row.order_item_id)))];
+  const tierByItem = new Map<string, string>();
+  if (itemIds.length) {
+    const { data } = await client.from('order_items').select('id, tier_name').in('id', itemIds);
+    for (const row of data ?? []) tierByItem.set(String(row.id), String(row.tier_name));
+  }
+  const sizeByOrder = new Map<string, number>();
+  for (const row of tickets.data ?? []) sizeByOrder.set(String(row.order_id), (sizeByOrder.get(String(row.order_id)) ?? 0) + 1);
+
+  const manifest = {
+    eventId: String(event.data.id),
+    eventTitle: String(event.data.title),
+    fetchedAt: new Date().toISOString(),
+    tickets: (tickets.data ?? []).map((row) => {
+      const order = orderById.get(String(row.order_id));
+      const disputed = order?.status === 'disputed' || order?.status === 'refunded';
+      return {
+        id: String(row.id),
+        tokenHash: createHash('sha256').update(signTicketToken(String(row.id), eventId)).digest('hex'),
+        codeHash: createHash('sha256').update(normalizeCode(String(row.code))).digest('hex'),
+        tierName: tierByItem.get(String(row.order_item_id)) ?? 'Ticket',
+        status: (disputed && row.status !== 'checked_in' ? 'void' : String(row.status)) as 'valid' | 'checked_in' | 'void' | 'refunded',
+        seats: Number(row.seats ?? 1),
+        orderNumber: String(order?.order_number ?? ''),
+        orderSize: sizeByOrder.get(String(row.order_id)) ?? 1,
+        attendeeName: (row.attendee_name as string | null) ?? (order?.customer_name as string | null) ?? null,
+      };
+    }),
+  };
+  return { manifest, counts: await eventCounts(eventId) };
+}

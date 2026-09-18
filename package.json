@@ -23,10 +23,13 @@
     "@stripe/stripe-js": "^9.16.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "next": "^15.5.25",
     "qrcode": "^1.5.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "resend": "^6.28.1",
     "stripe": "^22.6.2",
     "zod": "^3.24.1"
   },

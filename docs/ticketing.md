@@ -163,3 +163,40 @@ Stripe webhook ─ POST /api/webhooks/stripe ─▶ processed_stripe_events inse
 - The five-minute cron also cancels the PaymentIntents of expired pending orders, so a stale
   checkout tab cannot charge a card for seats that were given back.
 - Rate limits use `rate_limit_hit` (migration `0008`) and fail open.
+
+---
+
+## Delivery and the door
+
+**Email** (Resend, from the restaurant's own domain — `ORDERS_FROM_EMAIL` on `resend.dev` is
+refused). Sent after the webhook commits; never allowed to fail it. Table layout, inline styles,
+no web fonts. One QR per ticket as an inline `cid:` attachment on a solid white block (dark-mode
+safe); more than four tickets shows the first and links to the rest. Plain-text alternative
+carries the codes and the tickets URL. An `.ics` with the address and a two-hour alarm is
+attached. Every attempt is in `email_log`. Resend: `POST /api/orders/[n]/resend` from the tickets
+page (signed link) or the admin, three per order per ten minutes. Reminder: hourly cron, 23–25
+hours before doors, skipped for refunded or fully checked-in orders, `reminder_sent_at` set first.
+
+**Scanner** — `/admin/scan?event=…`, full screen, staff session required (the existing auth).
+Camera on an explicit tap. `BarcodeDetector` where available, `@zxing/browser` otherwise. The
+verdict is the whole screen in one colour for two seconds: green "Welcome in · Adult · 1 of 2",
+amber "Already scanned at 12:14pm by …" with "Let them in anyway", red "Not valid here" with the
+reason. Chime and haptics on by default, mute in the header. Manual code entry at the bottom.
+
+`POST /api/scan` verifies the HMAC first (a forgery never reaches the database), then the event,
+then the ticket's state, then one atomic `update … where checked_in_at is null returning *` — zero
+rows is a duplicate, which is what makes two phones safe. Every outcome is a `scans` row.
+
+**Offline**: on load the scanner fetches `/api/scan/manifest` — every ticket's id, a sha256 of
+its signed QR payload, a sha256 of its code, tier, status — into IndexedDB. If `/api/scan` fails
+or exceeds 2.5s the scan is validated against that set, shown green with an "offline" mark, and
+queued; the queue flushes on reconnect. Server-side check-in time wins; a duplicate discovered on
+flush is logged, not surfaced.
+
+**Door sales and comps** — `/admin/door`: pick a tier and quantity, cash or card at the register
+or a comp with a reason. Goes through `reserve_order(source='door'|'comp')` and `fulfill_order`
+like a web sale, so capacity stays honest, then checks the tickets in on the spot. Comps carry
+`total_cents = 0` with the discount absorbing the price. Web and door revenue are separate columns
+in `event_sales_summary`.
+
+The `Permissions-Policy` header allows the camera for same-origin pages so `/admin/scan` can use it.

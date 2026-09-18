@@ -97,6 +97,7 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0006_waitlist.sql` | The sold-out waitlist: public insert only, staff read |
    | `0007_ticketing_core.sql` | Tiers, orders, tickets, holds, promo codes, scans; `reserve_order`, `fulfill_order`, `get_event_availability`; the sales views. See `docs/ticketing.md` |
    | `0008_rate_limits.sql` | Shared fixed-window counters for the public checkout routes |
+   | `0009_email_log_and_reminders.sql` | `email_log`, the reminder stamp on orders, the check-in override flag |
 
 3. Load the content that was captured from the live site:
    ```bash

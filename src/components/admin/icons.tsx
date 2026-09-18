@@ -16,7 +16,9 @@ export type NavIconName =
   | 'season'
   | 'photos'
   | 'hours'
-  | 'staff';
+  | 'staff'
+  | 'door'
+  | 'scan';
 
 /**
  * Line drawings at 18px. Deliberately plain: these sit next to their own labels,
@@ -40,6 +42,8 @@ const PATHS: Record<NavIconName, string[]> = {
   ],
   photos: ['M3.5 6h17v12.5h-17z', 'M3.5 14.5 8 11l3.5 2.5L15 10.5l5.5 4.5', 'M8.5 9.5h.01'],
   hours: ['M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z', 'M12 7.5v5l3.2 1.9'],
+  door: ['M5 20.5V4.5h14v16', 'M5 20.5h14', 'M14.5 12.5h.01', 'M9 4.5v16'],
+  scan: ['M4 8V4h4', 'M16 4h4v4', 'M20 16v4h-4', 'M8 20H4v-4', 'M7 12h10'],
   staff: [
     'M9.5 11a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6z',
     'M3.5 20c0-3.2 2.7-5.3 6-5.3s6 2.1 6 5.3',

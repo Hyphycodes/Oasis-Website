@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { TicketStatusPoll } from '@/components/tickets/TicketStatusPoll';
+import { ResendButton } from '@/components/tickets/ResendButton';
 import { UnlockForm } from '@/components/tickets/UnlockForm';
 import { Frame } from '@/components/primitives/Band';
 import { ExternalTextLink } from '@/components/primitives/Button';
@@ -123,6 +124,7 @@ export default async function TicketsPage({
               </div>
             </dl>
             {order.consentText ? <p className="mt-3 text-[0.8125rem] leading-relaxed text-night-soft">{order.consentText}</p> : null}
+            <ResendButton orderNumber={order.orderNumber} token={token!} />
           </div>
         </div>
       ) : null}
