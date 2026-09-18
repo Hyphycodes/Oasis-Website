@@ -2,15 +2,15 @@ import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Flyer } from '@/components/events/Flyer';
+import { EventPage } from '@/components/events/EventPage';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
 import { getSiteSettings } from '@/content/resolve';
 import { getPublicEvents } from '@/server/content/events';
-import type { EventInput } from '@/lib/events';
-import type { ResolvedEvent } from '@/content/types';
-import { EventDetail, eventShareImage } from '@/components/events/EventDetail';
-import { addToCalendarUrl, getSeriesOccurrences, standaloneEvents, nextEvent, STATUS_LABEL } from '@/lib/events';
+import { resolveEventArtwork, resolveManyEventArtwork } from '@/server/content/event-art';
+import { getTicketOffer, offersFor } from '@/server/ticketing/offer';
+import { addToCalendarUrl, findStandaloneEvent, getSeriesOccurrences, getUpcomingEvents, nextEvent, STATUS_LABEL } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
@@ -18,21 +18,11 @@ import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 // able to hold a finished night for long.
 export const dynamic = 'force-dynamic';
 
-
-/**
- * A standalone event by slug — a Paint & Sip, a brunch, a comedy night.
- *
- * Deliberately not filtered through `getUpcomingEvents`: a cancelled event, and
- * one that finished an hour ago, must still resolve here. Someone holding a
- * ticket arrives on this page to find out what happened, and a 404 is the worst
- * possible answer. Drafts and archived events stay unreachable.
- */
-function findStandalone(input: EventInput, slug: string): ResolvedEvent | null {
-  return (
-    standaloneEvents(input.occurrences).find(
-      (event) => event.slug === slug && event.published && !event.archivedAt,
-    ) ?? null
-  );
+/** A flyer near the 1.91:1 social ratio can be the card itself; anything else is composed. */
+function flyerIsShareable(flyer: { width: number; height: number } | null): boolean {
+  if (!flyer || !flyer.width || !flyer.height) return false;
+  const ratio = flyer.width / flyer.height;
+  return ratio >= 1.5 && ratio <= 2.2;
 }
 
 export async function generateMetadata({
@@ -52,38 +42,61 @@ export async function generateMetadata({
     });
   }
 
-  const event = findStandalone(input, slug);
+  const event = findStandaloneEvent(input, slug);
   if (!event) return {};
 
-  // A shared event link should show the event, not the restaurant's house image.
-  const image = await eventShareImage(event);
+  const artwork = await resolveEventArtwork(event);
+  const flyer = artwork.flyer;
   return buildMetadata({
     title: `${event.title} — ${formatEventDateLong(event.startsAt)} at ${settings.name}`,
     description: (event.summary || event.description).slice(0, 300),
     path: `/events/${event.slug}`,
-    // Absolute: a share card is fetched by a crawler with no idea what our
-    // origin is.
-    ...(image ? { images: [absoluteUrl(image)] } : {}),
+    // A landscape flyer is the card. Otherwise the images key is left out so
+    // the composed card in opengraph-image.tsx is used.
+    ...(flyer?.path && flyerIsShareable(flyer) ? { images: [absoluteUrl(flyer.path)] } : {}),
   });
 }
 
 export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
+  const now = new Date();
 
   const series = input.series.find((entry) => entry.slug === slug);
   if (!series) {
-    const event = findStandalone(input, slug);
+    const event = findStandaloneEvent(input, slug);
     if (!event) notFound();
+
+    // One pass for everything the page shows: this event's artwork and offer,
+    // and the next three special events beside it.
+    const others = getUpcomingEvents(input, now)
+      .filter((entry) => entry.seriesSlug === null && entry.id !== event.id)
+      .slice(0, 3);
+    const [artwork, offer, otherArt, otherOffers] = await Promise.all([
+      resolveEventArtwork(event),
+      getTicketOffer(event),
+      resolveManyEventArtwork(others),
+      offersFor(others),
+    ]);
+    const upcoming = others.map((entry) => ({
+      event: entry,
+      flyer: otherArt.get(entry.id)?.flyer ?? null,
+      offer: otherOffers.get(entry.id)!,
+    }));
+
     return (
       <>
-        <EventDetail event={event} settings={settings} />
-        <JsonLd data={eventJsonLd(event, settings)} />
+        <EventPage event={event} settings={settings} offer={offer} artwork={artwork} upcoming={upcoming} />
+        <JsonLd
+          data={eventJsonLd(event, settings, {
+            offer,
+            image: artwork.flyer?.path ? absoluteUrl(artwork.flyer.path) : null,
+          })}
+        />
       </>
     );
   }
 
-  const now = new Date();
   // Six weeks, not a quarter. Occurrences are generated from cadence, so the
   // list could run indefinitely — but publishing months of nights the owner has
   // not looked at turns a schedule into a promise. Six is "the next few weeks".

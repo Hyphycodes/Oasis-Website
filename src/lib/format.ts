@@ -63,3 +63,27 @@ export function formatEventTime(iso: string): string {
 export function formatTimeRange(startIso: string, endIso: string): string {
   return `${formatEventTime(startIso)} – ${formatEventTime(endIso)}`;
 }
+
+/** "Sat Sep 19" — the short form the event page and tiles use. No comma. */
+export function formatEventDateCompact(iso: string): string {
+  return formatEventDate(iso).replace(',', '');
+}
+
+/**
+ * "12–3pm", "7–10pm", "9:30pm–1am".
+ *
+ * The suffix is written once when both ends share it, and ":00" is dropped,
+ * because that is how a person says it. Both ends keep their own suffix when
+ * a night crosses noon or midnight.
+ */
+export function formatTimeRangeCompact(startIso: string, endIso: string): string {
+  const start = formatEventTime(startIso).replace(':00', '');
+  const end = formatEventTime(endIso).replace(':00', '');
+  const suffix = /am|pm/;
+  const startSuffix = start.match(suffix)?.[0];
+  const endSuffix = end.match(suffix)?.[0];
+  if (startSuffix && startSuffix === endSuffix) {
+    return `${start.replace(suffix, '')}–${end}`;
+  }
+  return `${start}–${end}`;
+}

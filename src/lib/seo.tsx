@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { allMenus } from '@/content/menu';
 import { site } from '@/content/site';
 import type { ResolvedEvent, SiteSettings } from '@/content/types';
+import type { TicketOffer } from '@/lib/ticketing/offer';
 import { toSchemaHours } from './hours';
 import { absoluteUrl, SITE_URL } from './site-url';
 
@@ -122,20 +123,75 @@ const EVENT_STATUS: Record<string, string> = {
  * Event structured data.
  *
  * Built from the occurrence's own resolved values, so a night with its own name,
- * artwork or admission is described accurately — and never from artwork.
+ * artwork or admission is described accurately — and never from artwork. The
+ * offer, when supplied, decides the price and availability Google shows; the
+ * image is the flyer, absolute, because a crawler has no idea what our origin is.
  */
-export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site) {
+export function eventJsonLd(
+  event: ResolvedEvent,
+  settings: SiteSettings = site,
+  extras: { offer?: TicketOffer; image?: string | null } = {},
+) {
+  const pageUrl = absoluteUrl(event.slug ? `/events/${event.slug}` : '/events');
+  const upcoming = Date.parse(event.endsAt) > Date.now();
+  const running = !['cancelled', 'postponed'].includes(event.status);
+  const offer = extras.offer;
+
+  let offers: object | object[] | undefined;
+  if (offer && upcoming && running) {
+    if (offer.kind === 'tiers') {
+      offers = offer.tiers.map((tier) => ({
+        '@type': 'Offer',
+        name: tier.name,
+        price: (tier.priceCents / 100).toFixed(2),
+        priceCurrency: 'USD',
+        url: pageUrl,
+        availability:
+          !tier.onSale || (tier.available !== null && tier.available <= 0)
+            ? 'https://schema.org/SoldOut'
+            : 'https://schema.org/InStock',
+        validFrom: new Date().toISOString(),
+      }));
+    } else if (offer.kind === 'free') {
+      offers = { '@type': 'Offer', price: '0.00', priceCurrency: 'USD', url: pageUrl, availability: 'https://schema.org/InStock' };
+    } else {
+      // A price is only stated when one is known. An outside seller's page is
+      // still the offer's home, so the link and availability are always there.
+      offers = {
+        '@type': 'Offer',
+        ...(offer.priceCents !== null
+          ? { price: (offer.priceCents / 100).toFixed(2), priceCurrency: 'USD' }
+          : {}),
+        url: offer.kind === 'external' ? offer.url : pageUrl,
+        availability: offer.soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+        validFrom: new Date().toISOString(),
+      };
+    }
+  } else if (!offer && event.priceCents != null && event.ticketUrl && upcoming && running) {
+    offers = {
+      '@type': 'Offer',
+      price: (event.priceCents / 100).toFixed(2),
+      priceCurrency: 'USD',
+      url: event.ticketUrl,
+      availability: event.status === 'sold-out' ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+      validFrom: new Date().toISOString(),
+    };
+  }
+
+  const free = offer ? offer.kind === 'free' : event.priceCents === 0;
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: event.title,
-    description: event.description,
+    description: event.description || event.summary,
     startDate: event.startsAt,
     endDate: event.endsAt,
-    ...(event.priceCents != null ? { isAccessibleForFree: event.priceCents === 0 } : {}),
+    ...(extras.image ? { image: [extras.image] } : {}),
+    ...(offer || event.priceCents != null ? { isAccessibleForFree: free } : {}),
     eventStatus: EVENT_STATUS[event.status] ?? EVENT_STATUS.scheduled,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    url: absoluteUrl(event.slug ? `/events/${event.slug}` : '/events'),
+    url: pageUrl,
     location: {
       '@type': 'Place',
       name: event.venueName,
@@ -149,21 +205,7 @@ export function eventJsonLd(event: ResolvedEvent, settings: SiteSettings = site)
       },
     },
     organizer: { '@type': 'Organization', name: settings.name, url: SITE_URL },
-    ...(event.priceCents != null && event.ticketUrl && Date.parse(event.endsAt) > Date.now() && !['cancelled', 'postponed'].includes(event.status)
-      ? {
-          offers: {
-            '@type': 'Offer',
-            price: (event.priceCents / 100).toFixed(2),
-            priceCurrency: 'USD',
-            url: event.ticketUrl,
-            availability:
-              event.status === 'sold-out'
-                ? 'https://schema.org/SoldOut'
-                : 'https://schema.org/InStock',
-            validFrom: new Date().toISOString(),
-          },
-        }
-      : {}),
+    ...(offers ? { offers } : {}),
     ...(event.ageMin ? { typicalAgeRange: `${event.ageMin}-` } : {}),
   };
 }

@@ -15,7 +15,8 @@
     "assets:fetch": "tsx scripts/fetch-reference-media.ts",
     "content:seed": "tsx scripts/generate-seed.ts",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run assets:check && npm run build",
-    "content:migrate": "tsx scripts/migrate-content.ts"
+    "content:migrate": "tsx scripts/migrate-content.ts",
+    "seed:events": "tsx scripts/seed-events.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

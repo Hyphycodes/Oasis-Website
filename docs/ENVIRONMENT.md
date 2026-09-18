@@ -87,6 +87,8 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0002_event_flyers.sql` | Series flyers with a declared printed date; drops the ticket fee |
    | `0003_admin_backend.sql` | Drafts, versions, occurrence overrides, media fields, special hours, the publish guard, the storage bucket |
    | `0004_site_themes.sql` | The seasonal look: one row per theme, schedule, creative options and artwork overrides. See `docs/seasonal-theme-admin.md` |
+   | `0005_event_presentation.sql` | Event categories, presets, treatments, artwork slots and the Tickeri import trail |
+   | `0006_waitlist.sql` | The sold-out waitlist: public insert only, staff read |
 
 3. Load the content that was captured from the live site:
    ```bash

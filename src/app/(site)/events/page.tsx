@@ -2,15 +2,15 @@ import { ThemeWorld } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { EventFilters } from '@/components/events/EventFilters';
-import { EventBanner, EventCard, EventRow } from '@/components/events/EventListing';
+import { EventTile } from '@/components/events/EventTile';
 import { Flyer } from '@/components/events/Flyer';
-import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink } from '@/components/primitives/Button';
 import { Eyebrow } from '@/components/primitives/Type';
 import { getPageCopy } from '@/server/content/pages';
 import { getPublicEvents } from '@/server/content/events';
 import { resolveManyEventArtwork } from '@/server/content/event-art';
+import { offersFor } from '@/server/ticketing/offer';
 import { getSiteSettings } from '@/content/resolve';
 import { CATEGORY_FILTERS } from '@/content/event-presentation';
 import { seo } from '@/content/pages';
@@ -18,7 +18,7 @@ import type { ResolvedEvent } from '@/content/types';
 import { buildCalendar, groupMonthRuns, type CategoryFilter } from '@/lib/event-calendar';
 import { STATUS_LABEL } from '@/lib/events';
 import { formatEventDate, formatPrice, formatTimeRange } from '@/lib/format';
-import { buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
+import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = buildMetadata({ ...seo.events!, path: '/events' });
 // Five minutes. Anything that renders a "next date" has to have a small, bounded
@@ -193,91 +193,58 @@ export default async function EventsPage({
       ].map((event) => [event.id, event]),
     ).values(),
   ];
-  const artwork = await resolveManyEventArtwork(listed);
+  const [artwork, offers] = await Promise.all([resolveManyEventArtwork(listed), offersFor(listed)]);
 
   // MONTHS STAY IN ORDER, October included — see `groupMonthRuns`.
   const runs = groupMonthRuns(calendar.months);
 
   return (
     <>
-      {/* 1 — compact, atmosphere-led intro with real photography. */}
-      <section className="o-band relative isolate overflow-hidden bg-teal on-dark">
-        {/* Wrapped, not positioned directly: Asset sets `relative` and an
-            aspect-ratio on its own root, which would otherwise size this
-            background layer to 3:2 of the full page width. */}
-        <div className="absolute inset-0 opacity-35">
-          <Asset id="roomCrowd" className="size-full" sizes="100vw" rounded={false} priority />
-        </div>
-        <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-teal to-teal/70" />
-        <Frame wide>
-          <div className="relative max-w-2xl py-10 lg:py-14">
-            <Eyebrow tone="night">{copy.eyebrow}</Eyebrow>
-            <h1 className="display mt-4 text-[clamp(1.875rem,3.6vw,2.75rem)] leading-[1.08] text-night-text">
-              {copy.heading}
-            </h1>
-            {copy.body ? (
-              <p className="measure mt-4 text-[0.9375rem] leading-relaxed text-teal-soft">
-                {copy.body}
-              </p>
-            ) : null}
-          </div>
-        </Frame>
-      </section>
-
-      {/* 2 and 3 — the filter, then the event we are leading with. */}
+      {/* 1 — the opener is the words and the filter, sized by its content.
+             The photograph that used to sit here was a screen of atmosphere
+             before the first event; the events are the atmosphere. */}
       <Band surface="ivory" size="sm">
         <Frame wide>
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-            <div>
-              <Eyebrow>What&apos;s on</Eyebrow>
-              <h2 className="display mt-3.5 text-[clamp(1.5rem,2.6vw,2rem)] leading-[1.08] text-brown">
-                {calendar.total === 0
-                  ? 'No special events on sale right now'
-                  : calendar.total === 1
-                    ? 'One special event coming up'
-                    : `${calendar.total} special events coming up`}
-              </h2>
-            </div>
+          <Eyebrow>{copy.eyebrow}</Eyebrow>
+          <h1 className="display mt-3.5 max-w-[16ch] text-[clamp(2rem,4.2vw,3.25rem)] leading-[0.95] text-brown">
+            {copy.heading}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+            <p className="measure text-[1rem] leading-relaxed text-brown-soft">
+              {calendar.total === 0
+                ? 'No special events are on sale right now.'
+                : calendar.total === 1
+                  ? 'One special event coming up.'
+                  : `${calendar.total} special events coming up.`}
+              {featured.length > 0 ? (
+                <>
+                  {' '}Plus{' '}
+                  {featured.map((event, index) => (
+                    <span key={event.id}>
+                      {index > 0 ? (index === featured.length - 1 ? ' and ' : ', ') : null}
+                      <Link
+                        href={`/events/${event.seriesSlug}`}
+                        className="font-semibold text-brown underline underline-offset-4"
+                      >
+                        {event.title}
+                      </Link>
+                    </span>
+                  ))}{' '}
+                  every week.
+                </>
+              ) : null}
+            </p>
           </div>
 
           <EventFilters active={filter} counts={calendar.counts} />
 
-          {calendar.lead ? (
-            <div className="mt-7">
-              <EventBanner
-                event={calendar.lead}
-                artwork={artwork.get(calendar.lead.id)!}
-                eyebrow="Next up"
-              />
-            </div>
-          ) : (
-            <p className="measure mt-6 text-[length:var(--text-body-lg)] text-brown-soft">
-              Nothing is on sale for this kind of night at the moment. The weekly nights below are
-              still on, and{' '}
+          {!calendar.lead ? (
+            <p className="measure mt-6 text-[1rem] text-brown-soft">
+              Nothing is on sale for this kind of night at the moment.{' '}
               <Link href="/events" className="underline underline-offset-4">
-                the whole calendar
+                The whole calendar
               </Link>{' '}
               may have something else.
-            </p>
-          )}
-
-          {/* The weekly nights are the reason the calendar above can be short
-              without the page implying the place is dark. */}
-          {featured.length > 0 ? (
-            <p className="mt-6 text-[0.9375rem] text-brown-soft">
-              Plus{' '}
-              {featured.map((event, index) => (
-                <span key={event.id}>
-                  {index > 0 ? (index === featured.length - 1 ? ' and ' : ', ') : null}
-                  <Link
-                    href={`/events/${event.seriesSlug}`}
-                    className="font-semibold text-brown underline underline-offset-4"
-                  >
-                    {event.title}
-                  </Link>
-                </span>
-              ))}{' '}
-              every week.
             </p>
           ) : null}
         </Frame>
@@ -317,7 +284,13 @@ export default async function EventsPage({
                   }`}
                 >
                   {month.events.map((event) => (
-                    <EventCard key={event.id} event={event} artwork={artwork.get(event.id)!} />
+                    <EventTile
+                      key={event.id}
+                      event={event}
+                      flyer={artwork.get(event.id)?.flyer ?? null}
+                      offer={offers.get(event.id)!}
+                      tone="dark"
+                    />
                   ))}
                 </div>
               </Frame>
@@ -338,9 +311,15 @@ export default async function EventsPage({
                   >
                     {month.label}
                   </h2>
-                  <div className="mt-1">
-                    {month.events.map((event) => (
-                      <EventRow key={event.id} event={event} artwork={artwork.get(event.id)!} />
+                  <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {month.events.map((event, index) => (
+                      <EventTile
+                        key={event.id}
+                        event={event}
+                        flyer={artwork.get(event.id)?.flyer ?? null}
+                        offer={offers.get(event.id)!}
+                        priority={index === 0 && month === calendar.months[0]}
+                      />
                     ))}
                   </div>
                 </section>
@@ -393,7 +372,13 @@ export default async function EventsPage({
       </Band>
 
       {listed.map((event) => (
-        <JsonLd key={event.id} data={eventJsonLd(event, settings)} />
+        <JsonLd
+          key={event.id}
+          data={eventJsonLd(event, settings, {
+            offer: offers.get(event.id),
+            image: artwork.get(event.id)?.flyer?.path ? absoluteUrl(artwork.get(event.id)!.flyer!.path!) : null,
+          })}
+        />
       ))}
       <ThemeWorld scene="paint" />
     </>

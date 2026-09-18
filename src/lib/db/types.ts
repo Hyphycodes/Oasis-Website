@@ -66,6 +66,7 @@ export const PRIMARY_KEY: Record<string, string> = {
   site_settings: 'id',
   site_themes: 'slug',
   special_hours: 'id',
+  waitlist: 'id',
 };
 
 export function primaryKey(table: string): string {

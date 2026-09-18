@@ -234,3 +234,44 @@ supabase db push     # or paste supabase/migrations/0005_event_presentation.sql 
 
 Until it is applied, the new columns are absent and every event reads with its defaults — the site
 works, it simply cannot be dressed up. The local development database applies it automatically.
+
+---
+
+## The event page (September 2026 rebuild)
+
+`/events/<slug>` for a standalone event is **one section**: name, when, the flyer, and the price
+with a way to pay, all above the fold. Every fact has exactly one home:
+
+| Fact | Home |
+|---|---|
+| Date, time, town | The facts row under the title, separated by thin rules |
+| Price and sale state | The ticket box (and, on a phone, the sticky bar) |
+| Age, music | The small row under the short description |
+| Address, directions, calendar | "Getting here", below |
+| Anything that needs a sentence | "What to expect", below |
+
+The old hero, the `DATE / TIME / ENTRY / AGE / WHERE` grid and the repeated title are gone, not
+restyled. The section is content-sized. With no flyer it collapses to one wide column.
+
+**The offer.** `src/server/ticketing/offer.ts` turns an event into a `TicketOffer`
+(`src/lib/ticketing/offer.ts`): `external` (Tickeri), `free`, `door`, or — once in-house
+ticketing is on — `tiers` with live availability. The ticket box, the sticky bar, the calendar tiles
+and the JSON-LD all read the offer; none of them computes a price.
+
+**Sold out** replaces the button with a waitlist. `POST /api/waitlist` writes to `waitlist`
+(migration `0006`), public insert only, one row per email per event.
+
+**Past, cancelled, postponed** events keep their page and open with one quiet sentence, then
+what is coming up. There is never a broken buy button.
+
+**Share cards.** A landscape flyer is the card. A square one is composed by
+`app/(site)/events/[slug]/opengraph-image.tsx`: the flyer whole on the right, the name and date
+on the brand surface.
+
+**Sample data.** `npm run seed:events` writes two fake published events — one sold out through an
+outside link, one free — to the local development database (or to Supabase when the service key is
+set), so every state can be seen without touching real events.
+
+**Decorations** on the event page live in one `aria-hidden` layer clipped to the section, at most
+four, pinned to the section's own padding so none can sit under a word or inside the ticket box.
+They stop moving on phones and under reduced motion.

@@ -524,3 +524,19 @@ export function addToCalendarUrl(event: ResolvedEvent, address: string): string 
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
+
+/**
+ * A standalone event by slug, whatever its state.
+ *
+ * Deliberately not filtered through `getUpcomingEvents`: a cancelled event, and
+ * one that finished an hour ago, must still resolve. Someone holding a ticket
+ * arrives on its page to find out what happened, and a 404 is the worst
+ * possible answer. Drafts and archived events stay unreachable.
+ */
+export function findStandaloneEvent(input: EventInput, slug: string): ResolvedEvent | null {
+  return (
+    standaloneEvents(input.occurrences).find(
+      (event) => event.slug === slug && event.published && !event.archivedAt,
+    ) ?? null
+  );
+}
