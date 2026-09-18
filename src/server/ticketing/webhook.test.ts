@@ -92,6 +92,21 @@ describe('handleStripeEvent', () => {
     expect(fx.calls.confirmations).toBe(1);
   });
 
+  it('survives five deliveries of the same event with one order and one email', async () => {
+    // Stripe retries. Five times is not paranoia: a webhook that times out
+    // once is redelivered, and the guard is what stops five tickets.
+    const { store, state } = memoryStore(baseOrder);
+    const fx = effects();
+    const pi = { id: 'pi_1', latest_charge: 'ch_1' };
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const outcome = await handleStripeEvent(event('payment_intent.succeeded', pi), store, fx.effects);
+      expect(outcome).toMatchObject({ handled: true, action: 'paid' });
+    }
+    expect(state.tickets).toBe(2);
+    expect(fx.calls.confirmations).toBe(1);
+    expect(fx.calls.refunds).toEqual([]);
+  });
+
   it('refunds in full when the seats went while the card was being taken', async () => {
     const { store, state } = memoryStore(lapsedOrder, false);
     const fx = effects();

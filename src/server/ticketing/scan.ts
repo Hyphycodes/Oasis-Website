@@ -69,6 +69,23 @@ export interface ScanInput {
 
 type Row = Record<string, unknown>;
 
+/**
+ * Two doors, both offline, the same ticket. Whoever scanned it FIRST is the
+ * truth, even if their phone synced second — otherwise the recorded time of
+ * arrival depends on which staff member found signal first, which is exactly
+ * the fact a dispute turns on.
+ *
+ * Returns the timestamp the check-in should be rewound to, or null to leave it
+ * alone.
+ */
+export function earlierCheckIn(existingIso: string | null, incomingIso: string | null): string | null {
+  if (!existingIso || !incomingIso) return null;
+  const existing = Date.parse(existingIso);
+  const incoming = Date.parse(incomingIso);
+  if (!Number.isFinite(existing) || !Number.isFinite(incoming)) return null;
+  return incoming < existing ? new Date(incoming).toISOString() : null;
+}
+
 export async function eventCounts(eventId: string): Promise<{ checkedIn: number; total: number }> {
   const client = getTicketingClient();
   if (!client) return { checkedIn: 0, total: 0 };
@@ -206,17 +223,10 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
     const { data: fresh } = await client.from('tickets').select('*').eq('id', ticketId).maybeSingle();
     const row = (fresh as Row | null) ?? ticketRow;
 
-    // Two doors, both offline, the same ticket. Whoever scanned it FIRST is the
-    // truth, even if their phone synced second — otherwise the recorded time of
-    // arrival depends on which staff member found signal first.
-    const existing = row.checked_in_at ? Date.parse(String(row.checked_in_at)) : null;
-    const incoming = input.scannedAt && Number.isFinite(Date.parse(input.scannedAt)) ? Date.parse(input.scannedAt) : null;
-    if (existing !== null && incoming !== null && incoming < existing) {
-      await client
-        .from('tickets')
-        .update({ checked_in_at: new Date(incoming).toISOString(), checked_in_by: input.scannedBy })
-        .eq('id', ticketId);
-      row.checked_in_at = new Date(incoming).toISOString();
+    const rewind = earlierCheckIn(row.checked_in_at ? String(row.checked_in_at) : null, input.scannedAt ?? null);
+    if (rewind) {
+      await client.from('tickets').update({ checked_in_at: rewind, checked_in_by: input.scannedBy }).eq('id', ticketId);
+      row.checked_in_at = rewind;
       row.checked_in_by = input.scannedBy;
     }
 
