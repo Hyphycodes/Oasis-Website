@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getTicketingClient } from '@/server/ticketing/db';
-import { sendTicketEmail } from '@/server/ticketing/email/send';
+import { emailService } from '@/server/email/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -102,7 +102,11 @@ export async function GET(request: NextRequest) {
         if (!unused?.length) continue;
       }
 
-      if (await sendTicketEmail(String(order.id), stage.id)) sent += 1;
+      const result =
+        stage.id === 'thanks'
+          ? await emailService.sendThanksForComing(String(order.id))
+          : await emailService.sendEventReminder(String(order.id), stage.id === 'tonight' ? 'tonight' : 'tomorrow');
+      if (result.ok) sent += 1;
     }
     results[stage.id] = sent;
   }

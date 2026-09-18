@@ -135,20 +135,33 @@ export async function readiness(): Promise<ReadinessItem[]> {
     },
     {
       id: 'email',
-      title: 'Ticket email',
-      state: state(['RESEND_API_KEY', 'ORDERS_FROM_EMAIL'], ['OWNER_ALERT_EMAIL']),
+      title: 'Email sending',
+      state: state(['RESEND_API_KEY', 'ORDERS_FROM_EMAIL'], ['OWNER_ALERT_EMAIL', 'RESEND_WEBHOOK_SECRET']),
       consequence:
-        'Tickets are still issued and still scannable from the ticket page; nothing is emailed, and the owner gets no alert about a dispute or a failed refund.',
+        'Tickets are still issued and still scannable from the ticket page; nothing can be emailed — not tickets, not test emails, not staff invitations — and the owner gets no alert about a dispute or a failed refund.',
       vars: [
         { name: 'RESEND_API_KEY', set: has('RESEND_API_KEY') },
         { name: 'ORDERS_FROM_EMAIL', set: has('ORDERS_FROM_EMAIL') },
         { name: 'OWNER_ALERT_EMAIL', set: has('OWNER_ALERT_EMAIL') },
+        { name: 'RESEND_WEBHOOK_SECRET', set: has('RESEND_WEBHOOK_SECRET') },
       ],
       steps: [
         'Create the Resend account and verify a sending subdomain (tickets.oasismexicankitchenbar.com).',
         'Add its SPF, DKIM and DMARC records at the registrar.',
         'Add RESEND_API_KEY, ORDERS_FROM_EMAIL and OWNER_ALERT_EMAIL in Vercel.',
+        'Add a Resend webhook for https://…/api/webhooks/resend and put its signing secret in RESEND_WEBHOOK_SECRET. docs/email-system.md has the full checklist.',
       ],
+    },
+    {
+      id: 'email-delivery',
+      title: 'Emailing guests',
+      state: process.env.EMAIL_DELIVERY_ENABLED?.trim() === 'true' ? 'ready' : 'missing',
+      consequence:
+        process.env.EMAIL_DELIVERY_ENABLED?.trim() === 'true'
+          ? 'Guests are emailed their tickets, reminders, refunds and event changes automatically.'
+          : 'Deliberately off. Every guest email is logged as skipped in Communications instead of being sent; test emails and staff invitations still work. Turn it on only once the sending domain is verified.',
+      vars: [{ name: 'EMAIL_DELIVERY_ENABLED', set: process.env.EMAIL_DELIVERY_ENABLED?.trim() === 'true' }],
+      steps: ['Send yourself a test from Communications and check it lands in the inbox, not spam.', 'Set EMAIL_DELIVERY_ENABLED=true in Vercel and redeploy.'],
     },
     {
       id: 'cron',

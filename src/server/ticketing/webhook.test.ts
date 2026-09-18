@@ -60,12 +60,15 @@ function event(type: string, object: Record<string, unknown>): Stripe.Event {
 }
 
 function effects(refund?: () => Promise<void>) {
-  const calls = { confirmations: 0, alerts: [] as string[], refunds: [] as string[] };
+  const calls = { confirmations: 0, alerts: [] as string[], refunds: [] as string[], refundEmails: [] as { orderId: string; cents: number; full: boolean }[] };
   return {
     calls,
     effects: {
       async sendConfirmation() {
         calls.confirmations += 1;
+      },
+      async sendRefundConfirmation(orderId: string, cents: number, full: boolean) {
+        calls.refundEmails.push({ orderId, cents, full });
       },
       async alertOwner(subject: string) {
         calls.alerts.push(subject);
@@ -157,7 +160,7 @@ describe('handleStripeEvent', () => {
     const outcome = await handleStripeEvent(
       event('payment_intent.succeeded', { id: 'pi_1', latest_charge: 'ch_1' }),
       store,
-      { sendConfirmation: async () => { throw new Error('smtp down'); }, alertOwner: async () => {}, refundInFull: async () => {} },
+      { sendConfirmation: async () => { throw new Error('smtp down'); }, sendRefundConfirmation: async () => {}, alertOwner: async () => {}, refundInFull: async () => {} },
     );
     expect(outcome.handled).toBe(true);
     expect(state.order.status).toBe('paid');
@@ -218,5 +221,40 @@ describe('handleStripeEvent', () => {
     const outcome = await handleStripeEvent(event('customer.created', {}), store, effects().effects);
     expect(outcome.handled).toBe(false);
     expect(state.logs[0]).toContain('ignored customer.created');
+  });
+});
+
+describe('refund emails', () => {
+  it('a full refund tells the guest once, for the money that moved in this event', async () => {
+    const { store, state } = memoryStore({ ...baseOrder, status: 'paid' });
+    const fx = effects();
+    await handleStripeEvent(event('charge.refunded', { payment_intent: 'pi_1', amount_refunded: 2000 }), store, fx.effects);
+    expect(state.order.status).toBe('refunded');
+    expect(state.ticketStatus).toBe('refunded');
+    expect(fx.calls.refundEmails).toEqual([{ orderId: 'order-1', cents: 2000, full: true }]);
+    // The same event again: the refunded total has not changed, so no second email.
+    await handleStripeEvent(event('charge.refunded', { payment_intent: 'pi_1', amount_refunded: 2000 }), store, fx.effects);
+    expect(fx.calls.refundEmails).toHaveLength(1);
+  });
+
+  it('a partial refund announces only the partial amount and leaves tickets valid', async () => {
+    const { store, state } = memoryStore({ ...baseOrder, status: 'paid' });
+    const fx = effects();
+    await handleStripeEvent(event('charge.refunded', { payment_intent: 'pi_1', amount_refunded: 500 }), store, fx.effects);
+    expect(state.order.status).toBe('partially_refunded');
+    expect(state.ticketStatus).toBe('valid');
+    expect(fx.calls.refundEmails).toEqual([{ orderId: 'order-1', cents: 500, full: false }]);
+    expect(fx.calls.alerts.some((line) => line.includes('Partial refund'))).toBe(true);
+  });
+
+  it('a failing refund email never fails the webhook', async () => {
+    const { store, state } = memoryStore({ ...baseOrder, status: 'paid' });
+    const fx = effects();
+    fx.effects.sendRefundConfirmation = async () => {
+      throw new Error('smtp down');
+    };
+    const outcome = await handleStripeEvent(event('charge.refunded', { payment_intent: 'pi_1', amount_refunded: 2000 }), store, fx.effects);
+    expect(outcome.handled).toBe(true);
+    expect(state.logs.some((line) => line.includes('refund email failed'))).toBe(true);
   });
 });

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { getStripe } from '@/lib/stripe';
 import { getStaff, staffCan } from '@/server/auth';
+import { emailService } from '@/server/email/service';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { getOrderById } from '@/server/ticketing/orders';
 
@@ -49,5 +50,7 @@ export async function refundOrder(_prev: RefundState, formData: FormData): Promi
     .eq('id', order.id);
   if (error) return { ok: false, message: 'Could not mark that refunded.' };
   await client.from('tickets').update({ status: 'refunded' }).eq('order_id', order.id);
+  // The guest hears about it the same way a card refund is announced by the webhook.
+  await emailService.sendRefundConfirmation(order.id, { refundCents: order.totalCents - order.refundedCents, status: 'completed', reason: 'Refunded at the register.' });
   return { ok: true, message: `${order.orderNumber} marked refunded. Give the money back at the register.` };
 }

@@ -16,9 +16,13 @@
     "content:seed": "tsx scripts/generate-seed.ts",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run assets:check && npm run build",
     "content:migrate": "tsx scripts/migrate-content.ts",
-    "seed:events": "tsx scripts/seed-events.ts"
+    "seed:events": "tsx scripts/seed-events.ts",
+    "email:dev": "email dev --dir src/emails/previews --port 3030",
+    "email:export": "email export --dir src/emails/previews --outDir .email-previews"
   },
   "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@stripe/react-stripe-js": "^6.10.0",
     "@stripe/stripe-js": "^9.16.0",
     "@supabase/ssr": "^0.5.2",
@@ -36,6 +40,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "^1.63.0",
+    "@react-email/ui": "^6.9.5",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.10.7",
     "@types/qrcode": "^1.5.6",
@@ -43,6 +48,7 @@
     "@types/react-dom": "^19.0.3",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.5.25",
+    "react-email": "^6.9.5",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.19.2",

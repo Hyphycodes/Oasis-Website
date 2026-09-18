@@ -35,6 +35,8 @@ Open <http://localhost:3000>. **No configuration is required** — the site serv
 | `npm run assets:check` | Validate the media registry against the actual files |
 | `npm run content:seed` | Regenerate `supabase/seed.sql` from `src/content/` |
 | `npm run assets:fetch` | Re-pull reference media from the current Wix site |
+| `npm run email:dev` | **Browse every email design** with sample data at <http://localhost:3030> |
+| `npm run email:export` | Write every email preview as static HTML into `.email-previews/` |
 | **`npm run verify`** | **All of the above, in order. Run before every deploy.** |
 
 ---
@@ -57,6 +59,7 @@ src/
 │   ├── primitives/      Band, Frame, Button, Display, Reveal, PageHeader
 │   ├── media/           Asset, AssetVideo, Placeholder — registry-driven
 │   ├── menu/ events/ home/ forms/ admin/
+├── emails/              React Email design system: components, templates, previews, fixtures
 ├── content/             ← THE SOURCE OF TRUTH
 │   ├── site.ts          hours, address, phone, links, socials
 │   ├── menu.ts          83 items across 3 menus
@@ -66,6 +69,7 @@ src/
 │   ├── assets.ts        media registry
 │   └── resolve.ts       Supabase-with-static-fallback resolver
 ├── lib/                 events, hours, format, seo, supabase
+├── server/              server-only: actions, ticketing, email service (src/server/email)
 └── middleware.ts        edge gate for /admin
 ```
 
@@ -116,6 +120,7 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 | [`docs/VISUAL-QA.md`](./docs/VISUAL-QA.md) | The design review and its findings |
 | [`docs/MAINTENANCE.md`](./docs/MAINTENANCE.md) · [`LAUNCH-CHECKLIST.md`](./docs/LAUNCH-CHECKLIST.md) · [`BACKUP-AND-RECOVERY.md`](./docs/BACKUP-AND-RECOVERY.md) | Operations |
 | [`docs/ticketing.md`](./docs/ticketing.md) · [`stripe-setup.md`](./docs/stripe-setup.md) · [`runbook.md`](./docs/runbook.md) · [`roadmap.md`](./docs/roadmap.md) | In-house ticketing: schema, checkout, delivery, the door, the admin, and what comes next |
+| [`docs/email-system.md`](./docs/email-system.md) | **Email and communications**: React Email templates, the service, Resend setup, the delivery switch, the admin Emails screen |
 
 ---
 

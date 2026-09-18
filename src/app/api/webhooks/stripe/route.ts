@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getStripe, getWebhookSecret } from '@/lib/stripe';
 import { getTicketingClient } from '@/server/ticketing/db';
-import { alertOwner, sendOrderConfirmation } from '@/server/ticketing/notify';
+import { alertOwner, sendOrderConfirmation, sendRefundConfirmation } from '@/server/ticketing/notify';
 import { supabaseWebhookStore } from '@/server/ticketing/store';
 import { handleStripeEvent } from '@/server/ticketing/webhook';
 
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
   try {
     const outcome = await handleStripeEvent(event, supabaseWebhookStore(client), {
       sendConfirmation: sendOrderConfirmation,
+      sendRefundConfirmation,
       alertOwner,
       async refundInFull(paymentIntentId, reason) {
         // Idempotent on the payment intent: a retried webhook cannot refund twice.

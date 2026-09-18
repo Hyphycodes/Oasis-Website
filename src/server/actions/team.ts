@@ -6,6 +6,7 @@ import { findAuthUser, normalizeEmail } from '../owner-onboarding';
 import { z } from 'zod';
 import { isLocalDb } from '@/lib/db';
 import { getServiceClient, getSessionClient } from '@/lib/supabase/server';
+import { SITE_URL } from '@/lib/site-url';
 import { signInLocally, signOutLocally, type Role } from '../auth';
 import { run, saved, type ActionState } from './shared';
 
@@ -93,7 +94,7 @@ export async function saveTeamMember(_prev: ActionState, formData: FormData): Pr
 
 /** Owner-only provisioning; recipients prove mailbox ownership through the sign-in link. */
 export async function addTeamMember(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  return run('team.manage', async () => {
+  return run('team.manage', async ({ staff }) => {
     const parsed = z.object({email:z.string().trim().email().max(254),name:z.string().trim().min(1).max(100),role:z.enum(['admin','editor'])}).safeParse(Object.fromEntries(formData));
     if (!parsed.success) return {ok:false,message:'Enter a name, valid email and staff role.'};
     const service = getServiceClient();
@@ -105,7 +106,7 @@ export async function addTeamMember(_prev: ActionState, formData: FormData): Pro
       if (error) throw error;
       if (profile) return {ok:false,message:'This account already exists. Update its permissions in the list below.'};
     } else {
-      const {data,error} = await service.auth.admin.createUser({email,email_confirm:false,user_metadata:{name:parsed.data.name}});
+      const {data,error} = await service.auth.admin.createUser({email,email_confirm:false,user_metadata:{name:parsed.data.name,invited_by:staff.name || staff.email || null}});
       if (error) throw error;
       user = data.user;
     }
@@ -113,6 +114,13 @@ export async function addTeamMember(_prev: ActionState, formData: FormData): Pro
     const {error} = await service.from('profiles').upsert({user_id:user.id,name:parsed.data.name,role:parsed.data.role,active:true,sections:[]},{onConflict:'user_id'});
     if (error) throw error;
     revalidatePath('/admin/team');
-    return saved(`Account created for ${email}. Send them the staff sign-in page; they can request their own link. No email has been sent yet.`);
+    // The invitation goes through Supabase Auth, which is what makes the link
+    // a real credential. With the auth email hook pointed at this site it
+    // arrives as the branded Oasis staff invitation; without it, Supabase's
+    // own template. An already-verified address gets no invite — they sign in.
+    if (user.email_confirmed_at) return saved(`Account created for ${email}. They already have a verified sign-in, so they can use the staff sign-in page straight away.`);
+    const invited = await service.auth.admin.inviteUserByEmail(email, { redirectTo: `${SITE_URL}/auth/activate`, data: { name: parsed.data.name, invited_by: staff.name || staff.email || null } });
+    if (invited.error) return saved(`Account created for ${email}, but the invitation email could not be sent (${invited.error.message}). Send them the staff sign-in page; they can request their own link.`);
+    return saved(`Account created and an invitation emailed to ${email}. The link works once and expires; they can always request a fresh one from the staff sign-in page.`);
   });
 }

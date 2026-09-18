@@ -42,6 +42,8 @@ export interface WebhookStore {
 
 export interface WebhookEffects {
   sendConfirmation(orderId: string): Promise<void>;
+  /** Tell the guest their money is on its way back. `full` when every ticket is now void. */
+  sendRefundConfirmation(orderId: string, refundCents: number, full: boolean): Promise<void>;
   alertOwner(subject: string, body: string): Promise<void>;
   /** Give the whole payment back. Throws if Stripe refuses, so the event retries. */
   refundInFull(paymentIntentId: string, reason: string): Promise<void>;
@@ -146,6 +148,9 @@ export async function handleStripeEvent(
       if (!order) return { handled: false, reason: `no order for ${piId}` };
       const refunded = charge.amount_refunded;
       const full = refunded >= order.totalCents;
+      // Read before the update: what had already been given back decides
+      // how much THIS event is announcing.
+      const previouslyRefunded = order.refundedCents;
       await store.setStatus(order.id, full ? 'refunded' : 'partially_refunded', {
         refunded_cents: refunded,
         ...(full ? {} : { notes: 'Partial refund from Stripe. Tickets left valid; decide which to void.' }),
@@ -154,6 +159,17 @@ export async function handleStripeEvent(
       // the admin decides which — and is flagged.
       if (full) await store.voidTickets(order.id, 'refunded');
       else await effects.alertOwner(`Partial refund on ${order.orderNumber}`, `Stripe refunded ${refunded} cents of ${order.totalCents}. Decide which tickets to void in the admin.`);
+      // After the commit, and never allowed to fail the webhook. Only the
+      // money that moved in THIS event is announced; a replay is a no-op
+      // because the refunded total has not changed.
+      const thisRefund = refunded - previouslyRefunded;
+      if (thisRefund > 0) {
+        try {
+          await effects.sendRefundConfirmation(order.id, thisRefund, full);
+        } catch (error) {
+          store.log(`refund email failed for ${order.orderNumber}: ${String(error)}`);
+        }
+      }
       return { handled: true, action: full ? 'refunded' : 'partially_refunded', orderId: order.id };
     }
 

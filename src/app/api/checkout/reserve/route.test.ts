@@ -17,6 +17,8 @@ const context = vi.hoisted(() => ({
   /** Every `orders` update the route performs, in order. */
   orderUpdates: [] as Record<string, unknown>[],
   intentsCreated: 0,
+  /** Order ids a confirmation email was requested for. */
+  confirmations: [] as string[],
 }));
 
 const chain = (table: string) => ({
@@ -42,6 +44,11 @@ vi.mock('@/server/ticketing/rate-limit', () => ({
   overLimit: async () => false,
 }));
 
+vi.mock('@/server/ticketing/notify', () => ({
+  sendOrderConfirmation: async (orderId: string) => {
+    context.confirmations.push(orderId);
+  },
+}));
 vi.mock('@/server/ticketing/availability', () => ({ getEventAvailability: async () => null }));
 vi.mock('@/lib/ticketing/tokens', () => ({ signOrderToken: () => 'token' }));
 vi.mock('@/lib/site-url', () => ({ absoluteUrl: (path: string) => `https://example.com${path}` }));
@@ -72,6 +79,7 @@ beforeEach(() => {
   context.stripeOn = true;
   context.orderUpdates = [];
   context.intentsCreated = 0;
+  context.confirmations = [];
   context.reserved = {
     order_id: 'ord_1',
     order_number: 'OAS-QA123',
@@ -111,6 +119,18 @@ describe('POST /api/checkout/reserve', () => {
     // the total to read out over the phone.
     expect(context.orderUpdates).toEqual([]);
     expect(context.intentsCreated).toBe(0);
+  });
+
+  it('fulfils a free order on the spot and asks for the ticket email once', async () => {
+    context.reserved = { ...context.reserved, service_fee_cents: 0, discount_cents: 1000, total_cents: 0 };
+    const response = await POST(request());
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, orderNumber: 'OAS-QA123', paid: true });
+    expect(body.ticketsUrl).toContain('/tickets/OAS-QA123?t=');
+    // No card, so no PaymentIntent — and the same confirmation email a paid order gets.
+    expect(context.intentsCreated).toBe(0);
+    expect(context.confirmations).toEqual(['ord_1']);
   });
 
   it('cancels the order when the total is too small for a card', async () => {

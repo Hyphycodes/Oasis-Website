@@ -2,9 +2,12 @@ import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // The email templates are TSX; the project's tsconfig leaves JSX for Next
+  // to compile, so the test runner is told to use the automatic runtime.
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
   resolve: {
     alias: {

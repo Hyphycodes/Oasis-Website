@@ -4,6 +4,12 @@ What a guest receives after paying, where it comes from, and how to set up the
 sending domain. The schema behind it is in `docs/ticketing-schema.md`; the
 payment flow is in `docs/ticketing.md`.
 
+> **The email system itself — templates, the service, the delivery switch,
+> the admin screen, Resend and webhook setup — is documented in
+> [`docs/email-system.md`](./email-system.md).** This file covers the ticket
+> pages, the token model and the lifecycle; the template details below have
+> been superseded by React Email templates in `src/emails/`.
+
 ---
 
 ## The three surfaces
@@ -62,9 +68,10 @@ when a phone has died.
      domain the restaurant does not own.
    - `OWNER_ALERT_EMAIL` — where a dispute, a failed refund or an oversell
      alert goes. This should be a person, not a shared inbox nobody opens.
-4. **Reply-to.** Until one is set, replies go to `ORDERS_FROM_EMAIL`. Point that
-   at an address a human reads, or set a reply-to before the first real event —
-   a confused guest replying to a no-reply address is a guest who does not come.
+   - `EMAIL_REPLY_TO` — an address a human reads. A confused guest replying to
+     a no-reply address is a guest who does not come.
+4. **Switch guests on.** `EMAIL_DELIVERY_ENABLED=true`. Until then every guest
+   email is logged as `skipped`; test emails from the admin still send.
 
 Without these the site still works: tickets are issued, the ticket pages still
 show their QRs, and each attempt is logged as `skipped` with the reason.
@@ -100,17 +107,18 @@ instead of a silence.
 
 ## Previewing a template without sending
 
-The templates are pure functions returning `{subject, html, text}` — no Resend,
-no database:
+`npm run email:dev` opens every template with sample data at
+<http://localhost:3030>; the admin's Events → Emails screen previews against a
+real event and sends a test to one address. Programmatically:
 
 ```ts
-import { renderConfirmation } from '@/server/ticketing/email/templates';
-// feed it an order, an event and some tickets, then write .html to a file
+import { renderEmail } from '@/emails/render';
+const { subject, html, text } = await renderEmail('ticket_confirmation', props);
 ```
 
-Both the HTML and the plain-text alternative are built for every email. The
-first QR is attached and referenced by `cid:`, so it renders when a client
-blocks remote images — and the "Open my tickets" link is always there as the
+Both the HTML and the plain-text alternative are built for every email. Each
+shown QR is attached and referenced by `cid:`, so it renders when a client
+blocks remote images — and the "View tickets" link is always there as the
 path that works regardless.
 
 ## What is not built yet

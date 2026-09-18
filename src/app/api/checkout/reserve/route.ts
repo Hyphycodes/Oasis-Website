@@ -1,3 +1,4 @@
+import { sendOrderConfirmation } from '@/server/ticketing/notify';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -116,6 +117,9 @@ export async function POST(request: NextRequest) {
       console.error('[reserve] free fulfil failed:', fulfilled.error.message);
       return NextResponse.json({ ok: false, message: 'Could not complete that just now. Try again in a moment.' }, { status: 500 });
     }
+    // The same email a card payment gets from the webhook. Never allowed to
+    // fail the order: a mailer problem is a log row, not a lost ticket.
+    await sendOrderConfirmation(reserved.order_id).catch((error) => console.error('[reserve] confirmation email failed:', error));
     return NextResponse.json({
       ok: true,
       orderNumber: reserved.order_number,

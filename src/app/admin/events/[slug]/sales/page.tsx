@@ -10,6 +10,7 @@ import { canOpen } from '@/server/permissions';
 import { isTicketingConfigured } from '@/server/ticketing/db';
 import { getSalesSummaries, listOrders } from '@/server/ticketing/sales';
 import { promoterReport } from '@/server/ticketing/insight';
+import { statusForOrders } from '@/server/email/log';
 import { DisputeEvidence } from './DisputeEvidence';
 import { RefundButton } from './RefundButton';
 import { ResendTickets } from './ResendTickets';
@@ -53,6 +54,8 @@ export default async function SalesPage({
     canRefund ? promoterReport(id) : Promise.resolve([]),
   ]);
   const summary = summaries.get(id) ?? null;
+  // Did the ticket email go? One query for the whole list.
+  const emailStatus = await statusForOrders(orders.map((order) => order.id)).catch(() => new Map());
 
   return (
     <AdminShell
@@ -144,6 +147,7 @@ export default async function SalesPage({
                       {' · '}
                       {order.status === 'refunded' ? 'refunded' : order.status === 'disputed' ? 'disputed' : order.status === 'partially_refunded' ? `partly refunded (${formatPrice(order.refundedCents)})` : checkedIn > 0 ? `${checkedIn} of ${order.tickets.length} in` : 'not in yet'}
                     </p>
+                    <EmailLine status={emailStatus.get(order.id) ?? null} hasEmail={Boolean(order.customerEmail)} />
                   </div>
                   <div className="flex items-center gap-3">
                     {order.status === 'paid' || order.status === 'partially_refunded' ? (
@@ -165,6 +169,22 @@ export default async function SalesPage({
         )}
       </Card>
     </AdminShell>
+  );
+}
+
+/** One line: whether this guest's ticket email went, and if not, why. */
+function EmailLine({ status, hasEmail }: { status: { latest: { status: string; error: string | null; createdAt: string } | null; anySent: boolean; attempts: number } | null; hasEmail: boolean }) {
+  if (!hasEmail) return <p className="text-[0.8125rem] text-brown-soft">No email on the order — tickets are on the ticket page only.</p>;
+  if (!status || !status.latest) return <p className="text-[0.8125rem] text-brown-soft">Ticket email: not attempted yet.</p>;
+  const latest = status.latest;
+  const tone = status.anySent ? 'text-success' : latest.status === 'skipped' ? 'text-brown-soft' : 'text-danger';
+  const word = latest.status === 'sent' ? 'sent' : latest.status === 'delivered' ? 'delivered' : latest.status === 'skipped' ? 'skipped' : latest.status === 'delayed' ? 'delayed' : latest.status;
+  return (
+    <p className={`text-[0.8125rem] ${tone}`}>
+      Ticket email: {word}
+      {latest.error && !status.anySent ? ` — ${latest.error}` : ''}
+      {status.attempts > 1 ? ` · ${status.attempts} attempts` : ''}
+    </p>
   );
 }
 

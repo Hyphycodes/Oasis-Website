@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifyOrderToken } from '@/lib/ticketing/tokens';
 import { getStaff } from '@/server/auth';
-import { sendTicketEmail } from '@/server/ticketing/email/send';
+import { emailService } from '@/server/email/service';
 import { getOrderByNumber, isPaidStatus } from '@/server/ticketing/orders';
 import { overLimit } from '@/server/ticketing/rate-limit';
 
@@ -31,11 +31,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ or
     return NextResponse.json({ ok: false, message: 'Already sent a few times. Check your spam folder, then try again in ten minutes.' }, { status: 429 });
   }
 
-  const sent = await sendTicketEmail(order.id, 'resend');
+  const result = await emailService.sendTicketResend(order.id);
+  // Staff see the real reason; a guest gets one sentence and their tickets are still on the page.
   return NextResponse.json(
-    sent
+    result.ok
       ? { ok: true, message: `Sent to ${order.customerEmail}.` }
-      : { ok: false, message: 'Could not send just now. Your tickets are still on this page.' },
-    { status: sent ? 200 : 502 },
+      : { ok: false, message: staff && result.reason ? `Not sent: ${result.reason}` : 'Could not send just now. Your tickets are still on this page.' },
+    { status: result.ok ? 200 : 502 },
   );
 }

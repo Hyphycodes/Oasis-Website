@@ -22,7 +22,12 @@ on the admin area, stored enquiries, and owner editing.
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | For checkout | No | In the browser bundle by design; it can only render payment forms. |
 | `STRIPE_WEBHOOK_SECRET` | For checkout | **YES** | Verifies every webhook. See `docs/stripe-setup.md`. |
 | `TICKET_SIGNING_SECRET` | For checkout | **YES** | 32+ random characters. Signs QR payloads and the 30-day ticket-page links. Rotating it invalidates every issued QR and link. |
-| `RESEND_API_KEY`, `ORDERS_FROM_EMAIL`, `OWNER_ALERT_EMAIL` | For ticket email | **YES** (key) | The confirmation and reminder emails, and where chargeback alerts go. |
+| `RESEND_API_KEY`, `ORDERS_FROM_EMAIL` | For any email | **YES** (key) | The mailer and the From address. See `docs/email-system.md`. |
+| `EMAIL_DELIVERY_ENABLED` | To email guests | No | **The switch.** Only `true` lets tickets, reminders, refunds and event changes reach guests. Off by default; deploying does not send. |
+| `EMAIL_REPLY_TO`, `EMAIL_FROM_NAME`, `OWNER_ALERT_EMAIL` | Recommended | No | Where replies go (and the footer's support address), the From name, and where alerts go. |
+| `EMAIL_REDIRECT_ALL_TO`, `EMAIL_TICKET_DIRECTION` | Optional | No | Staging redirect for every guest email; which ticket design to send (`pass`, `editorial`, `poster`). |
+| `RESEND_WEBHOOK_SECRET` | Delivery reports | **YES** | Verifies `/api/webhooks/resend`, which records delivered/bounced in `email_log`. |
+| `SUPABASE_AUTH_HOOK_SECRET` | Branded staff emails | **YES** | Verifies `/api/webhooks/supabase-auth`, the Supabase Send Email hook. |
 
 ### How the site URL is resolved
 
@@ -102,6 +107,8 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0011_event_editor_fields.sql` | The event editor's own columns: `description_html`, included/bring/arrival text |
    | `0012_harden_ticketing_functions_and_indexes.sql` | Pins `search_path` on the ticketing functions, indexes the ticketing hot-path foreign keys, fixes one RLS initplan finding |
    | `0013_import_tickeri_ticket_data.sql` | One-time backfill: turns on Oasis ticketing, with real prices and descriptions read from Tickeri, for every event that was still Tickeri-only |
+   | `0014`–`0017` | Fee fix, customers and promoter attribution, trigger-function grants, the two lifecycle email types |
+   | `0018_email_delivery_records.sql` | Widens `email_log` into a delivery record: event, template, subject, test flag, provider status, delivered-at; the new email types and statuses. See `docs/email-system.md` |
 
 3. Load the content that was captured from the live site:
    ```bash

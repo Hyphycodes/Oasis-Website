@@ -10,7 +10,7 @@ import { publishProblems, slugify } from '@/lib/event-editor';
 import { htmlToText, sanitizeHtml } from '@/lib/sanitize-html';
 import { storeMediaFile } from '@/server/media-files';
 import { getTicketingClient } from '@/server/ticketing/db';
-import { sendOwnerAlert } from '@/server/ticketing/email/send';
+import { emailService } from '@/server/email/service';
 import { getSalesSummaries } from '@/server/ticketing/sales';
 import { staffCan } from '../auth';
 import { publishDirect, saveDraft } from '../content/editorial';
@@ -384,10 +384,12 @@ export async function cancelEvent(_prev: ActionState, formData: FormData): Promi
     const client = getTicketingClient();
     let refunded = 0;
     let failed = 0;
+    const affectedOrderIds: string[] = [];
     if (client) {
       const { data: orders } = await client.from('orders').select('id, order_number, stripe_payment_intent_id, total_cents, status').eq('event_id', id).in('status', ['paid', 'partially_refunded']);
       const stripe = getStripe();
       for (const order of orders ?? []) {
+        affectedOrderIds.push(String(order.id));
         if (order.stripe_payment_intent_id && stripe) {
           try {
             await stripe.refunds.create({ payment_intent: String(order.stripe_payment_intent_id) }, { idempotencyKey: `cancel-${order.id}` });
@@ -406,9 +408,16 @@ export async function cancelEvent(_prev: ActionState, formData: FormData): Promi
       await client.from('tickets').update({ status: 'void' }).eq('event_id', id).neq('status', 'checked_in');
     }
     await publishDirect(db, 'event_occurrences', id, { status: 'cancelled' }, staff);
-    await sendOwnerAlert(`${row.title} cancelled`, `${refunded} orders refunded${failed ? `, ${failed} could not be refunded — check Stripe` : ''}. Guests are being emailed.`);
+    // Every ticket holder hears it once, from here. With guest delivery
+    // switched off each attempt is logged as skipped, so the Communications
+    // screen shows exactly who still has to be told.
+    const told = affectedOrderIds.length > 0 ? await emailService.sendEventUpdate(id, { kind: 'cancelled', message: String(formData.get('message') ?? '').trim() || null, onlyOrderIds: affectedOrderIds }) : null;
+    await emailService.sendOwnerAlert(
+      `${row.title} cancelled`,
+      `${refunded} orders refunded${failed ? `, ${failed} could not be refunded — check Stripe` : ''}. Cancellation emails: ${told ? `${told.sent} sent, ${told.skipped} skipped, ${told.failed} failed` : 'none to send'}.`,
+    );
     return done(
-      `Cancelled. ${refunded} ${refunded === 1 ? 'order is' : 'orders are'} being refunded${failed ? `; ${failed} need a look in Stripe` : ''}. The event stays on the website marked cancelled.`,
+      `Cancelled. ${refunded} ${refunded === 1 ? 'order is' : 'orders are'} being refunded${failed ? `; ${failed} need a look in Stripe` : ''}.${told ? ` ${told.sent} ${told.sent === 1 ? 'guest' : 'guests'} emailed${told.skipped ? `, ${told.skipped} skipped (see Communications)` : ''}.` : ''} The event stays on the website marked cancelled.`,
       'events',
     );
   });
