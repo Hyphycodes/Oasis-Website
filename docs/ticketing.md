@@ -157,6 +157,11 @@ Stripe webhook ─ POST /api/webhooks/stripe ─▶ processed_stripe_events inse
   is pure and tested against an in-memory store.
 - A free order (promo to $0) is fulfilled straight from `reserve` through the same
   `fulfill_order`, with no Stripe involved.
+- **With Stripe not configured**, `reserve` still holds the seats and still answers with the order
+  number (`payment: 'unavailable'`, no client secret), so "Get tickets" lands on the checkout page
+  like any other order. That page reads the configuration, not the missing secret: it never renders
+  the payment form, and instead shows the total, the order number and a tap-to-call button. Setting
+  the two Stripe keys turns the same page into the card form with no other change.
 - Tickets pages open with a 30-day HMAC token (`src/lib/ticketing/tokens.ts`) or the email on the
   order. QR PNGs (`/api/tickets/[id]/qr.png`) need the same token and encode a signed
   `t1.<payload>.<sig>` string, so a forged QR fails offline.
