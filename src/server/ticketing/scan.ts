@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createHash } from 'node:crypto';
+import { tokenFromScan } from '@/lib/tickets/link';
 import { normalizeCode } from '@/lib/ticketing/codes';
 import { signTicketToken, verifyTicketToken } from '@/lib/ticketing/tokens';
 import { getTicketingClient } from './db';
@@ -127,7 +128,9 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
   // 1. The signature, before anything else. No database for a forgery.
   let ticketRow: Row | null = null;
   if (input.token) {
-    const verified = verifyTicketToken(input.token);
+    // The QR carries a URL; a scanner app may hand back the URL, the bare
+    // token, or the URL with its own query string bolted on.
+    const verified = verifyTicketToken(tokenFromScan(input.token) ?? input.token);
     if (!verified) {
       await record(input, 'invalid', null);
       return { result: 'invalid', reason: 'Not a real ticket code.', ticket: null, counts: await eventCounts(input.eventId) };

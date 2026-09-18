@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { normalizeCode } from '@/lib/ticketing/codes';
+import { tokenFromScan } from '@/lib/tickets/link';
 import {
   dequeue,
   enqueue,
@@ -172,8 +173,9 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
 
   const decideOffline = useCallback(async (raw: string): Promise<Verdict> => {
     if (!manifest) return { kind: 'red', title: 'Not valid here', detail: 'No connection and no ticket list yet.' };
-    const isToken = raw.startsWith('t1.');
-    const hash = await sha256Hex(isToken ? raw.trim() : normalizeCode(raw));
+    const scanned = tokenFromScan(raw);
+    const isToken = scanned !== null;
+    const hash = await sha256Hex(isToken ? scanned : normalizeCode(raw));
     const ticket: CachedTicket | undefined = manifest.tickets.find((entry) => (isToken ? entry.tokenHash : entry.codeHash) === hash);
     if (!ticket) return { kind: 'red', title: 'Not valid here', detail: 'Unrecognised code.' };
     if (ticket.status === 'void' || ticket.status === 'refunded') return { kind: 'red', title: 'Not valid here', detail: 'This ticket was cancelled or refunded.' };
@@ -183,7 +185,7 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
     await enqueue({
       key: `${eventId}:${ticket.id}:${Date.now()}`,
       eventId,
-      ...(isToken ? { token: raw.trim() } : { code: normalizeCode(raw) }),
+      ...(isToken ? { token: scanned } : { code: normalizeCode(raw) }),
       ticketId: ticket.id,
       scannedAt: new Date().toISOString(),
       deviceLabel,
@@ -202,10 +204,13 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
     if (busy.current) return;
     busy.current = true;
     try {
-      const isToken = value.startsWith('t1.');
+      // A QR carries the ticket's URL; a hand-typed entry is the eight-character
+      // code. Anything that yields a token is a token, however the camera app
+      // decided to hand it back.
+      const token = tokenFromScan(value);
       const body = override && ticketId
-        ? { eventId, override: true, deviceLabel, ...(isToken ? { token: value } : { code: value }) }
-        : { eventId, deviceLabel, ...(isToken ? { token: value } : { code: value }) };
+        ? { eventId, override: true, deviceLabel, ...(token ? { token } : { code: value }) }
+        : { eventId, deviceLabel, ...(token ? { token } : { code: value }) };
       let reply: ScanReply | null = null;
       try {
         const response = await fetch('/api/scan', {

@@ -10,7 +10,8 @@ import { ExternalTextLink } from '@/components/primitives/Button';
 import { getSiteSettings } from '@/content/resolve';
 import { addToCalendarUrl, standaloneEvents } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRangeCompact } from '@/lib/format';
-import { verifyOrderToken } from '@/lib/ticketing/tokens';
+import { ticketPath } from '@/lib/tickets/link';
+import { signTicketToken, verifyOrderToken } from '@/lib/ticketing/tokens';
 import { getPublicEvents } from '@/server/content/events';
 import { resolveEventArtwork } from '@/server/content/event-art';
 import { getOrderByNumber, holdIsLive, isPaidStatus, type OrderRecord, type TicketRecord } from '@/server/ticketing/orders';
@@ -149,6 +150,13 @@ function Shell({ title, orderNumber, children }: { title: string; orderNumber: s
 function Tickets({ order, token }: { order: OrderRecord; token: string }) {
   const tierName = (ticket: TicketRecord) => order.items.find((item) => item.id === ticket.orderItemId)?.tierName ?? 'Ticket';
   return (
+    <>
+    {order.tickets.length > 1 ? (
+      <p className="mb-5 text-[0.9375rem] leading-relaxed text-night-soft">
+        Each ticket has its own page — open one and send that link to whoever is using it. Four
+        friends do not always arrive together.
+      </p>
+    ) : null}
     <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {order.tickets.map((ticket, index) => {
         const dead = ticket.status === 'void' || ticket.status === 'refunded';
@@ -174,10 +182,17 @@ function Tickets({ order, token }: { order: OrderRecord; token: string }) {
               </p>
               {dead ? <p className="mt-2 text-[0.9375rem] font-semibold text-amber">No longer valid</p> : null}
               {ticket.status === 'checked_in' ? <p className="mt-2 text-[0.9375rem] text-night-soft">Already used at the door</p> : null}
+              <Link
+                href={ticketPath(signTicketToken(ticket.id, order.eventId))}
+                className="mt-3 inline-flex min-h-11 items-center text-[0.9375rem] font-semibold text-amber underline underline-offset-4"
+              >
+                {order.tickets.length > 1 ? 'Open this one on its own' : 'Open this ticket on its own'}
+              </Link>
             </div>
           </li>
         );
       })}
     </ul>
+    </>
   );
 }

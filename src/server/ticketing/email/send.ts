@@ -5,12 +5,13 @@ import { getSiteSettings } from '@/content/resolve';
 import { standaloneEvents } from '@/lib/events';
 import { absoluteUrl } from '@/lib/site-url';
 import { buildIcs } from '@/lib/tickets/ics';
+import { ticketLink } from '@/lib/tickets/link';
 import { ticketQrPng } from '@/lib/tickets/qr';
 import { signOrderToken, signTicketToken } from '@/lib/ticketing/tokens';
 import { getPublicEvents } from '@/server/content/events';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { getOrderById, isPaidStatus, type OrderRecord } from '@/server/ticketing/orders';
-import { renderConfirmation, renderReminder, type EmailEvent, type EmailTicket } from './templates';
+import { renderConfirmation, renderReminder, renderThanks, renderTonight, type EmailEvent, type EmailTicket } from './templates';
 
 /**
  * Sending, and the record of having sent.
@@ -20,7 +21,7 @@ import { renderConfirmation, renderReminder, type EmailEvent, type EmailTicket }
  * caller: a failure is logged and reported as `false`.
  */
 
-export type EmailType = 'confirmation' | 'resend' | 'reminder' | 'owner_alert';
+export type EmailType = 'confirmation' | 'resend' | 'reminder' | 'tonight' | 'thanks' | 'owner_alert';
 
 function resend(): Resend | null {
   const key = process.env.RESEND_API_KEY?.trim();
@@ -71,7 +72,7 @@ async function eventFor(order: OrderRecord): Promise<EmailEvent | null> {
 }
 
 /** One order's ticket email, with its QRs inline and the calendar file attached. */
-export async function sendTicketEmail(orderId: string, type: 'confirmation' | 'resend' | 'reminder'): Promise<boolean> {
+export async function sendTicketEmail(orderId: string, type: 'confirmation' | 'resend' | 'reminder' | 'tonight' | 'thanks'): Promise<boolean> {
   const order = await getOrderById(orderId);
   if (!order) return false;
   const to = order.customerEmail;
@@ -106,13 +107,22 @@ export async function sendTicketEmail(orderId: string, type: 'confirmation' | 'r
   const qrs = await Promise.all(
     inline.map(async (entry) => ({
       filename: `${entry.ticket.code}.png`,
-      content: await ticketQrPng(signTicketToken(entry.ticket.id, order.eventId)),
+      content: await ticketQrPng(ticketLink(signTicketToken(entry.ticket.id, order.eventId))),
       contentType: 'image/png',
       contentId: entry.cid,
     })),
   );
 
-  const rendered = (type === 'reminder' ? renderReminder : renderConfirmation)({ order, event, tickets: entries, ticketsUrl, settings });
+  const rendered =
+    type === 'reminder'
+      ? renderReminder({ order, event, tickets: entries, ticketsUrl, settings })
+      : type === 'tonight'
+        ? renderTonight({ order, event, tickets: entries, ticketsUrl, settings })
+        : type === 'thanks'
+          // The review link becomes a site setting when this stage is switched
+          // on; until then the email simply does not ask for one.
+          ? renderThanks({ event, settings, eventsUrl: absoluteUrl('/events'), reviewUrl: null })
+          : renderConfirmation({ order, event, tickets: entries, ticketsUrl, settings });
   const ics = buildIcs({
     uid: `${order.orderNumber}@oasismexicankitchenbar.com`,
     title: event.title,

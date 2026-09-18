@@ -210,3 +210,88 @@ export function renderReminder({
   ].join('\n');
   return { subject, html, text };
 }
+
+/**
+ * Tonight, a few hours before doors. Scaffolding: no stage sends this yet
+ * (see src/app/api/cron/reminders/route.ts). Kept short on purpose — it is
+ * read standing up, on the way out of the house.
+ */
+export function renderTonight({
+  order,
+  event,
+  tickets,
+  ticketsUrl,
+  settings,
+}: {
+  order: OrderRecord;
+  event: EmailEvent;
+  tickets: EmailTicket[];
+  ticketsUrl: string;
+  settings: SiteSettings;
+}): RenderedEmail {
+  const shown = tickets.slice(0, tickets.length > 4 ? 1 : 4);
+  const subject = `Tonight — ${event.title}, doors ${formatTimeRangeCompact(event.startsAt, event.endsAt)}`;
+  const html = shell(
+    [
+      eventHeader(event, 'Tonight.'),
+      row(shown.map((entry, index) => qrBlock(entry, index, tickets.length)).join('')),
+      row(`<div style="font-size:15px;line-height:1.6;color:${TEXT};">${escape(event.arrivalNote ?? 'Turn your screen brightness up before you reach the door — it is the one thing scanners struggle with.')}</div>`),
+      row(button(ticketsUrl, 'Open my tickets')),
+      row(`<div style="font-size:13px;line-height:1.6;color:${MUTED};">Order ${escape(order.orderNumber)} · <a href="${escape(event.directionsUrl)}" style="color:${AMBER};">Directions</a> · ${escape(settings.phone.value)}</div>`, '0 16px 32px'),
+    ].join(''),
+    `${event.title} is tonight.`,
+  );
+  const text = [
+    'Tonight.',
+    '',
+    event.title,
+    `${formatEventDateLong(event.startsAt)} · ${formatTimeRangeCompact(event.startsAt, event.endsAt)}`,
+    `${event.venueName}, ${event.address}`,
+    '',
+    ...tickets.map((entry) => `  ${entry.ticket.code}  (${entry.tierName})`),
+    '',
+    `Open your tickets: ${ticketsUrl}`,
+    `Directions: ${event.directionsUrl} · ${settings.phone.value}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+/**
+ * The morning after. Scaffolding, off by default: no QR, nothing to scan, one
+ * thank you and one thing to do next. A review link is asked for once, here,
+ * and never in the middle of a night out.
+ */
+export function renderThanks({
+  event,
+  settings,
+  eventsUrl,
+  reviewUrl,
+}: {
+  event: EmailEvent;
+  settings: SiteSettings;
+  eventsUrl: string;
+  reviewUrl: string | null;
+}): RenderedEmail {
+  const subject = `Thanks for coming to ${event.title}`;
+  const html = shell(
+    [
+      eventHeader(event, 'Thanks for coming.'),
+      row(`<div style="font-size:15px;line-height:1.6;color:${TEXT};">It was good to have you in. Here is what is on next — and if you had a good night, a review genuinely helps a small restaurant.</div>`),
+      row(button(eventsUrl, "What's on next")),
+      reviewUrl ? row(`<div style="font-size:14px;line-height:1.6;color:${MUTED};"><a href="${escape(reviewUrl)}" style="color:${AMBER};">Leave a review</a></div>`) : '',
+      row(`<div style="font-size:13px;line-height:1.6;color:${MUTED};">${escape(settings.name)} · ${escape(settings.phone.value)}</div>`, '0 16px 32px'),
+    ].join(''),
+    `Thanks for coming to ${event.title}.`,
+  );
+  const text = [
+    'Thanks for coming.',
+    '',
+    `It was good to have you at ${event.title}.`,
+    '',
+    `What's on next: ${eventsUrl}`,
+    ...(reviewUrl ? [`Leave a review: ${reviewUrl}`] : []),
+    '',
+    `${settings.name} · ${settings.phone.value}`,
+  ].join('\n');
+  return { subject, html, text };
+}

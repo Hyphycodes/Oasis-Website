@@ -90,9 +90,10 @@ export function verifyTicketToken(token: string, key?: string): TicketToken | nu
   return data;
 }
 
-export function isTicketToken(input: string): boolean {
-  return /^t1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(input.trim());
-}
+// The shape check lives in `@/lib/tickets/link`, which the browser can import;
+// this module cannot be, because of node:crypto. Re-exported so server callers
+// have one obvious place to look.
+export { isTicketToken } from '@/lib/tickets/link';
 
 /** A one-day link that lets staff open a draft event on the real page. */
 export function signPreviewToken(eventId: string, now = new Date(), key?: string): string {
