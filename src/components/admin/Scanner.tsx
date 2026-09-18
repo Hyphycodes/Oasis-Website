@@ -31,7 +31,7 @@ type Verdict =
 
 interface ScanReply {
   ok: boolean;
-  result: 'ok' | 'duplicate' | 'invalid' | 'wrong_event' | 'void' | 'override';
+  result: 'ok' | 'duplicate' | 'invalid' | 'wrong_event' | 'void' | 'refunded' | 'not_found' | 'override';
   reason: string;
   ticket: {
     id: string;
@@ -241,6 +241,12 @@ export function Scanner({ eventId, eventTitle, deviceLabel }: { eventId: string;
           break;
         case 'void':
           show({ kind: 'red', title: 'Not valid here', detail: reply.reason });
+          break;
+        case 'refunded':
+          show({ kind: 'red', title: 'Refunded', detail: 'This one was paid back. It cannot be used to come in.' });
+          break;
+        case 'not_found':
+          show({ kind: 'red', title: 'No such ticket', detail: 'Nothing matches that code. Try Search if their phone is dead.' });
           break;
         default:
           show({ kind: 'red', title: 'Not valid here', detail: reply.reason || 'Unrecognised code.' });

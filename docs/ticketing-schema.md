@@ -6,7 +6,8 @@ is in `docs/ticketing.md`; the payment flow is in `docs/stripe-setup.md`.
 
 Migrations: `0006_waitlist.sql`, `0007_ticketing_core.sql`,
 `0009_email_log_and_reminders.sql`, `0012_harden_ticketing_functions_and_indexes.sql`,
-`0013_import_tickeri_ticket_data.sql`, `0014_fix_crockford_random_and_add_service_fee.sql`.
+`0013_import_tickeri_ticket_data.sql`, `0014_fix_crockford_random_and_add_service_fee.sql`,
+`0015_customers_and_promoter_attribution.sql`.
 
 ---
 
@@ -18,6 +19,7 @@ erDiagram
     event_occurrences ||--o{ orders        : "takes"
     event_occurrences ||--o{ promo_codes   : "scopes"
     event_occurrences ||--o{ waitlist      : "collects"
+    customers         ||--o{ orders        : "buys"
     ticket_tiers      ||--o{ order_items   : "priced into"
     ticket_tiers      ||--o{ ticket_holds  : "reserved from"
     promo_codes       ||--o{ orders        : "discounts"
@@ -58,14 +60,27 @@ erDiagram
         uuid id PK
         text code
         text event_id FK "null = every event"
-        text kind "percent | amount"
-        int  value
+        text kind "percent | amount | tracking_only"
+        int  value "0 for tracking_only"
+        text promoter_name
         int  max_redemptions
         int  redeemed_count
         bool is_active
     }
+    customers {
+        uuid id PK
+        text email UK "lowercased; the identity"
+        text name
+        text phone
+        bool marketing_opt_in
+        timestamptz opted_in_at
+        timestamptz first_seen_at
+        timestamptz last_seen_at
+        text notes
+    }
     orders {
         uuid id PK
+        uuid customer_id FK
         text order_number UK "OAS-XXXXX"
         text event_id FK
         text status "pending|paid|failed|canceled|refunded|partially_refunded|disputed"
@@ -123,7 +138,7 @@ erDiagram
         uuid ticket_id FK "null when the code matched nothing"
         text event_id FK
         text raw_code
-        text result "ok|duplicate|invalid|wrong_event|void|override"
+        text result "ok|duplicate|invalid|wrong_event|void|refunded|not_found|override"
         text device_label
         text scanned_by
         timestamptz scanned_at
@@ -176,11 +191,29 @@ closing before general admission opens needs no code).
 
 ### `promo_codes` — discounts and attribution
 
-`percent` or `amount`, optionally scoped to one event, optionally capped by
-`max_redemptions`. Unique on `(upper(code), coalesce(event_id, ''))`, so the same
-word can mean different things at two different events but never twice at one.
-`redeemed_count` is incremented inside the reservation transaction, not by the
-browser.
+`percent`, `amount`, or `tracking_only` — a code worth nothing off the price
+whose whole job is to say who brought the room. Optionally scoped to one event,
+optionally capped by `max_redemptions`, and unique on
+`(upper(code), coalesce(event_id, ''))`, so the same word can mean different
+things at two different events but never twice at one.
+
+`redeemed_count` is incremented in `fulfill_order`, which means it counts
+tickets that were actually paid for rather than checkouts somebody started.
+With `promoter_name` and the orders carrying the code, that is a payout report.
+
+### `customers` — the list that is ours
+
+Keyed by lowercased email and persisting across events: the asset Tickeri
+currently owns. A `before insert or update of status` trigger on `orders` links
+one the moment an order is paid, whichever way it was paid — web, door, comp or
+a free order — so nothing has to remember to call anything. Name and phone only
+ever overwrite when the incoming value is non-empty, so a door sale with no name
+cannot blank out what an earlier order knew.
+
+`marketing_opt_in` is false until the guest says otherwise, and `opted_in_at`
+records when. Lifetime tickets and spend are **not** columns here: they are
+computed from orders, for the same reason availability is computed from orders.
+A refund never deletes a customer.
 
 ### `orders` — one purchase
 
@@ -226,7 +259,9 @@ every reservation and again every five minutes from
 Append-only. A scan of something that isn't ours still writes a row with
 `ticket_id null` and the raw code, which is what turns "someone was passing
 screenshots around at 8:47" from a suspicion into a record. `result` is one of
-`ok`, `duplicate`, `invalid`, `wrong_event`, `void`, `override`.
+`ok`, `duplicate`, `invalid` (not one of our codes at all), `not_found` (looks
+like one and matches nothing), `wrong_event`, `void`, `refunded` and `override`
+— each its own message at the door, never a generic "invalid".
 
 ### `email_log` — did her ticket actually arrive?
 
@@ -303,21 +338,24 @@ readable by anyone — it returns counts, never a buyer.
 | `events` | `event_occurrences` (standalone rows) | Events already existed with a page, artwork, a flyer and an admin editor. A parallel table would have split the site in two. |
 | `ticket_types` | `ticket_tiers` | Same thing, built from day one as the brief asks. |
 | `tickets.token` | `tickets.code` + a signed QR payload | The code is what staff read aloud; the QR carries an HMAC-signed payload so a forged QR fails offline. |
-| `check_ins` | `scans` | Append-only log of every attempt, failures included. Result names differ: `duplicate` for `already_checked_in`, `invalid` for `not_found`. |
+| `check_ins` | `scans` | Append-only log of every attempt, failures included. Only the name differs: `duplicate` is the brief's `already_checked_in`. |
 | `holds` | `ticket_holds` | Keyed by order rather than by Stripe session, because the hold is created before Stripe is involved. |
 | `staff` | `profiles` + `roles` (migration `0003`) | Staff, roles and capabilities already existed for the admin area. |
-| `customers` | **not built** — customer details live on `orders` | See the gap below. |
+| `customers` | `customers` | Added in `0015`, linked from `orders.customer_id`. The name, email and phone stay on the order too: the order is the receipt. |
 | `order_number` `OA-#####` | `OAS-XXXXX` | Already minted onto live orders and printed in emails. |
+
+## Fixtures and the walkthrough
+
+| File | What it does |
+|---|---|
+| `supabase/seeds/test-event.sql` | A `Test Event — $1` and a realistic 120-seat Saturday with GA and VIP tiers. Idempotent, and seeded **unpublished** so it is safe to run against the live database — publish the $1 event only for as long as a test takes. |
+| `supabase/tests/ticketing-walkthrough.sql` | One transaction, always rolled back, that asserts the whole chain: four tickets issued, distinct codes, first scan wins, a second scan changes nothing, a replayed fulfilment mints nothing, a customer created once for a returning guest, a tracking-only code that attributes without discounting, and anonymous callers seeing no orders, tickets or customers. |
+| `scripts/hammer-reserve.ts` | Fifty parallel reservations against a ten-seat tier; exactly ten succeed. Run it after any change to `reserve_order`. |
 
 ## Known gaps against the brief
 
-1. **No `customers` table.** Name, email and phone are stored per order, so
-   "everyone who has ever bought" is a `group by lower(customer_email)` rather
-   than a first-class record. Marketing opt-in, consent timestamps and lifetime
-   value have nowhere to live yet.
-2. **`scans.result` has no `refunded` or `not_found` distinction** — a refunded
-   ticket currently scans as `void`, and an unknown code as `invalid`.
-3. **Promoter attribution.** `promo_codes` has no `promoter_name` or
-   `tracking_only` kind, so a code cannot yet become a payout report.
-4. **Guest list without a transaction** — a comp is a zero-total order today,
-   which works, but there is no separate guest-list concept.
+1. **Guest list without a transaction.** A comp is a zero-total order today,
+   which works and reaches the door manifest, but there is no separate
+   guest-list concept (phase 05).
+2. **Consent is collected, opt-in is not.** `customers.marketing_opt_in` exists
+   and nothing sets it yet: the checkout has no opt-in checkbox (phase 02).

@@ -14,7 +14,20 @@ import { getTicketingClient } from './db';
  * outcome is written to `scans`, including the invalid ones.
  */
 
-export type ScanResult = 'ok' | 'duplicate' | 'invalid' | 'wrong_event' | 'void' | 'override';
+/**
+ * `invalid` is "this is not one of our codes at all" — a failed signature or
+ * something that could never be a code. `not_found` is "this looks like ours
+ * and matches nothing", which is a different conversation at a door.
+ */
+export type ScanResult =
+  | 'ok'
+  | 'duplicate'
+  | 'invalid'
+  | 'wrong_event'
+  | 'void'
+  | 'refunded'
+  | 'not_found'
+  | 'override';
 
 export interface ScanTicket {
   id: string;
@@ -122,8 +135,8 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
   }
 
   if (!ticketRow) {
-    await record(input, 'invalid', null);
-    return { result: 'invalid', reason: 'No ticket with that code.', ticket: null, counts: await eventCounts(input.eventId) };
+    await record(input, 'not_found', null);
+    return { result: 'not_found', reason: 'No ticket with that code.', ticket: null, counts: await eventCounts(input.eventId) };
   }
   const ticketId = String(ticketRow.id);
 
@@ -134,12 +147,17 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
   }
   if (ticketRow.status === 'void' || ticketRow.status === 'refunded') {
     const { data: order } = await client.from('orders').select('status').eq('id', ticketRow.order_id as string).maybeSingle();
+    // Money back and cancelled are told apart: one is a guest who asked for a
+    // refund, the other is a ticket staff pulled. They are not the same
+    // conversation at the door, so they are not the same result.
+    const refunded = ticketRow.status === 'refunded' || order?.status === 'refunded' || order?.status === 'partially_refunded';
     const reason =
       order?.status === 'disputed' ? 'The payment on this order was disputed.'
-        : ticketRow.status === 'refunded' || order?.status === 'refunded' ? 'This ticket was refunded.'
+        : refunded ? 'This ticket was refunded.'
           : 'This ticket was cancelled.';
-    await record(input, 'void', ticketId);
-    return { result: 'void', reason, ticket: await describe(ticketRow), counts: await eventCounts(input.eventId) };
+    const result: ScanResult = refunded ? 'refunded' : 'void';
+    await record(input, result, ticketId);
+    return { result, reason, ticket: await describe(ticketRow), counts: await eventCounts(input.eventId) };
   }
 
   // 3. Let them in anyway: an explicit judgement call on a duplicate.
