@@ -76,6 +76,7 @@ export const PRIMARY_KEY: Record<string, string> = {
   scans: 'id',
   processed_stripe_events: 'id',
   email_log: 'id',
+  rate_limits: 'key',
 };
 
 export function primaryKey(table: string): string {

@@ -47,7 +47,7 @@ export function TicketBox({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 id="tickets-heading" className="display text-[clamp(1.75rem,3vw,2.25rem)] leading-none text-night-text">
-          {soldOut && offer.kind !== 'tiers' ? 'Sold out' : headline}
+          {soldOut ? 'Sold out' : headline}
         </h2>
         {scarcity && !soldOut ? (
           <p className="tabular text-[0.9375rem] font-medium text-amber">{scarcity}</p>

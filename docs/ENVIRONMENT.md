@@ -18,6 +18,11 @@ on the admin area, stored enquiries, and owner editing.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | For admin | No | Supabase anon/publishable key. Public by design; it is constrained by Row Level Security, which is where access is actually enforced. |
 | `SUPABASE_SERVICE_ROLE_KEY` | For ticketing | **YES** | Bypasses RLS. Used for server-side reads of published content during SSR and for every ticketing read and write (orders and tickets have no public policies). **Never** prefix this with `NEXT_PUBLIC_`. Without it the content site still works from the anon key; ticket sales do not. |
 | `CRON_SECRET` | For ticketing | **YES** | Vercel sends it with every cron request; `/api/cron/release-holds` refuses without it. |
+| `STRIPE_SECRET_KEY` | For checkout | **YES** | Server-side only. Creates and updates PaymentIntents, cancels abandoned ones. |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | For checkout | No | In the browser bundle by design; it can only render payment forms. |
+| `STRIPE_WEBHOOK_SECRET` | For checkout | **YES** | Verifies every webhook. See `docs/stripe-setup.md`. |
+| `TICKET_SIGNING_SECRET` | For checkout | **YES** | 32+ random characters. Signs QR payloads and the 30-day ticket-page links. Rotating it invalidates every issued QR and link. |
+| `RESEND_API_KEY`, `ORDERS_FROM_EMAIL`, `OWNER_ALERT_EMAIL` | For ticket email | **YES** (key) | The confirmation and reminder emails, and where chargeback alerts go. |
 
 ### How the site URL is resolved
 
@@ -91,6 +96,7 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0005_event_presentation.sql` | Event categories, presets, treatments, artwork slots and the Tickeri import trail |
    | `0006_waitlist.sql` | The sold-out waitlist: public insert only, staff read |
    | `0007_ticketing_core.sql` | Tiers, orders, tickets, holds, promo codes, scans; `reserve_order`, `fulfill_order`, `get_event_availability`; the sales views. See `docs/ticketing.md` |
+   | `0008_rate_limits.sql` | Shared fixed-window counters for the public checkout routes |
 
 3. Load the content that was captured from the live site:
    ```bash

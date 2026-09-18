@@ -131,3 +131,35 @@ Both are `security_invoker`, so they carry the underlying tables' RLS: nothing f
 
 Local development without Supabase has the tables' shapes in the file database but none of the
 functions, so a ticketed event falls back to its outside link there.
+
+---
+
+## Checkout (Stripe)
+
+```
+event page ─ POST /api/checkout/reserve ─▶ reserve_order (12-minute hold)
+                                          ▶ stripe.paymentIntents.create(amount from the DB, idempotencyKey = order id)
+                                          ◀ { orderNumber, clientSecret, summary, expiresAt }
+/events/[slug]/checkout?order=OAS-XXXXX     Express Checkout Element + Payment Element, our own name/email fields,
+                                            consent line persisted to orders.consent_text before confirmPayment
+Stripe webhook ─ POST /api/webhooks/stripe ─▶ processed_stripe_events insert (idempotency) ─▶ fulfill_order ─▶ email
+/tickets/[orderNumber]?t=<signed token>      polls /api/orders/[n]/status until paid, then QR per ticket
+```
+
+- The browser never sends an amount. `reserve` accepts tier ids and quantities and is
+  `strict()`-validated; the total on the PaymentIntent is read back from the reserved order.
+- `/api/webhooks/stripe` is the only place an order becomes paid. The redirect never fulfils.
+  Signature is verified on the raw body; the event id is inserted into `processed_stripe_events`
+  first, so a replay returns 200 before touching an order. Handled: `payment_intent.succeeded`
+  (pay + mint + email), `payment_intent.payment_failed` (fail + release), `payment_intent.canceled`
+  (cancel + release), `charge.refunded` (full → void every ticket; partial → flag the owner),
+  `charge.dispute.created` (disputed, tickets void, owner alerted). `src/server/ticketing/webhook.ts`
+  is pure and tested against an in-memory store.
+- A free order (promo to $0) is fulfilled straight from `reserve` through the same
+  `fulfill_order`, with no Stripe involved.
+- Tickets pages open with a 30-day HMAC token (`src/lib/ticketing/tokens.ts`) or the email on the
+  order. QR PNGs (`/api/tickets/[id]/qr.png`) need the same token and encode a signed
+  `t1.<payload>.<sig>` string, so a forged QR fails offline.
+- The five-minute cron also cancels the PaymentIntents of expired pending orders, so a stale
+  checkout tab cannot charge a card for seats that were given back.
+- Rate limits use `rate_limit_hit` (migration `0008`) and fail open.
