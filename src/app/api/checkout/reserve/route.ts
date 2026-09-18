@@ -126,9 +126,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // Card payments are not switched on yet. The hold still stands and the guest
+  // still goes to the checkout page: the order number and the total are what
+  // they read out over the phone, and that page says plainly that nothing was
+  // charged. Cancelling here instead left them on the event page with an error
+  // message and nowhere to go.
   if (!isStripeConfigured()) {
-    await client.from('orders').update({ status: 'canceled' }).eq('id', reserved.order_id);
-    return NextResponse.json({ ok: false, message: 'Card payments are not switched on yet. Call us and we will hold your seats.' }, { status: 503 });
+    return NextResponse.json({
+      ok: true,
+      orderNumber: reserved.order_number,
+      clientSecret: null,
+      payment: 'unavailable',
+      summary,
+      expiresAt: reserved.expires_at,
+    });
   }
 
   if (reserved.total_cents < 50) {

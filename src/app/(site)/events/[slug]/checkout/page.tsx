@@ -7,7 +7,7 @@ import { Frame } from '@/components/primitives/Band';
 import { getSiteSettings } from '@/content/resolve';
 import { PRESET_STYLE } from '@/content/event-presentation';
 import { findStandaloneEvent } from '@/lib/events';
-import { formatEventDateCompact, formatPrice, formatTimeRangeCompact } from '@/lib/format';
+import { formatEventDateCompact, formatPhoneHref, formatPrice, formatTimeRangeCompact } from '@/lib/format';
 import { absoluteUrl } from '@/lib/site-url';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { isSigningConfigured, signOrderToken } from '@/lib/ticketing/tokens';
@@ -144,7 +144,17 @@ export default async function CheckoutPage({
           {/* How they pay. */}
           <div className="lg:col-span-6 lg:col-start-7">
             <div className="rounded-(--radius-lg) border border-night-text/12 bg-espresso-lift/80 p-5 sm:p-6">
-              {ready ? (
+              {/* Payments off is not an error the guest can do anything about,
+                  so it never reaches the form: the page says so and hands them
+                  the phone. */}
+              {!isStripeConfigured() ? (
+                <PayByPhone
+                  heading="Card payments are not switched on yet."
+                  phone={settings.phone.value}
+                  orderNumber={order.orderNumber}
+                  eventSlug={event.slug ?? slug}
+                />
+              ) : ready ? (
                 <CheckoutForm
                   publishableKey={publishableKey}
                   clientSecret={clientSecret!}
@@ -171,20 +181,57 @@ export default async function CheckoutPage({
                   items={order.items.map((item) => ({ tierId: item.tierId, quantity: item.quantity }))}
                 />
               ) : (
-                <div className="grid gap-3">
-                  <p className="text-[1.125rem] font-semibold text-night-text">Card payments are not switched on yet.</p>
-                  <p className="text-[0.9375rem] leading-relaxed text-night-soft">
-                    Nothing was charged. Call us at {settings.phone.value} and we will hold your seats.
-                  </p>
-                  <Link href={`/events/${event.slug}`} className="inline-flex min-h-11 items-center text-[0.9375rem] text-night-text underline underline-offset-4">
-                    Back to the event
-                  </Link>
-                </div>
+                <PayByPhone
+                  heading="We could not start the payment just now."
+                  phone={settings.phone.value}
+                  orderNumber={order.orderNumber}
+                  eventSlug={event.slug ?? slug}
+                />
               )}
             </div>
           </div>
         </div>
       </Frame>
     </section>
+  );
+}
+
+/**
+ * The way through when a card cannot be taken on this page — payments are not
+ * switched on yet, or the payment could not be started. The seats are held,
+ * the order number is right there on the left, and on a phone the number is
+ * one tap.
+ */
+function PayByPhone({
+  heading,
+  phone,
+  orderNumber,
+  eventSlug,
+}: {
+  heading: string;
+  phone: string;
+  orderNumber: string;
+  eventSlug: string;
+}) {
+  return (
+    <div className="grid gap-3">
+      <p className="text-[1.125rem] font-semibold text-night-text">{heading}</p>
+      <p className="text-[0.9375rem] leading-relaxed text-night-soft">
+        Nothing was charged. Call us and read out order {orderNumber} — we will take the payment and
+        hold your seats.
+      </p>
+      <a
+        href={formatPhoneHref(phone)}
+        className="mt-1 inline-flex min-h-12 w-full items-center justify-center rounded-(--radius-md) bg-amber px-6 text-[1.0625rem] font-semibold text-on-orange transition-colors hover:bg-amber-bright"
+      >
+        Call {phone}
+      </a>
+      <Link
+        href={`/events/${eventSlug}`}
+        className="inline-flex min-h-11 items-center text-[0.9375rem] text-night-text underline underline-offset-4"
+      >
+        Back to the event
+      </Link>
+    </div>
   );
 }
