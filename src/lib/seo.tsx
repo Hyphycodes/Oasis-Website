@@ -154,6 +154,8 @@ export function eventJsonLd(
       }));
     } else if (offer.kind === 'free') {
       offers = { '@type': 'Offer', price: '0.00', priceCurrency: 'USD', url: pageUrl, availability: 'https://schema.org/InStock' };
+    } else if (offer.kind === 'pending') {
+      // Ticketing is on but there is nothing priced yet — no offer to claim.
     } else {
       // A price is only stated when one is known. An outside seller's page is
       // still the offer's home, so the link and availability are always there.

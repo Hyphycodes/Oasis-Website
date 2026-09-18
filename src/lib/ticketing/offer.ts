@@ -40,7 +40,14 @@ export type TicketOffer =
   /** No ticket needed. */
   | { kind: 'free' }
   /** Pay at the door, or not yet on sale. */
-  | { kind: 'door'; priceCents: number | null; priceText: string | null; soldOut: boolean };
+  | { kind: 'door'; priceCents: number | null; priceText: string | null; soldOut: boolean }
+  /**
+   * Oasis ticketing is turned on for this event, but there is nothing to sell
+   * yet — no tiers priced, or availability could not be read. Deliberately
+   * has no price or URL: an event configured for online sale never falls
+   * back to an external link or a door price just because it isn't finished.
+   */
+  | { kind: 'pending' };
 
 /** The lowest on-sale face value, or the lowest at all when nothing is on sale. */
 export function fromCents(offer: TicketOffer): number | null {
@@ -51,6 +58,7 @@ export function fromCents(offer: TicketOffer): number | null {
     return pool.length ? Math.min(...pool) : null;
   }
   if (offer.kind === 'free') return 0;
+  if (offer.kind === 'pending') return null;
   return offer.priceCents;
 }
 
@@ -61,7 +69,7 @@ export function isSoldOut(offer: TicketOffer): boolean {
     if (sellable.length === 0) return false;
     return sellable.every((tier) => tier.available !== null && tier.available <= 0);
   }
-  if (offer.kind === 'free') return false;
+  if (offer.kind === 'free' || offer.kind === 'pending') return false;
   return offer.soldOut;
 }
 
@@ -71,6 +79,7 @@ export function isSoldOut(offer: TicketOffer): boolean {
  */
 export function priceHeadline(offer: TicketOffer): string {
   if (offer.kind === 'free') return 'Free — just show up';
+  if (offer.kind === 'pending') return 'Tickets coming soon';
   if (offer.kind === 'tiers') {
     const low = fromCents(offer);
     if (low === null) return 'Tickets';
@@ -91,6 +100,7 @@ export function priceHeadline(offer: TicketOffer): string {
  * fake one is worse.
  */
 export function scarcityLine(offer: TicketOffer): string | null {
+  if (offer.kind === 'pending') return null;
   if (isSoldOut(offer)) return 'Sold out';
   if (offer.kind !== 'tiers') return null;
   if (offer.remaining === null || offer.capacity === null || offer.capacity <= 0) return null;

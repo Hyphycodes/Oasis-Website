@@ -24,6 +24,19 @@ const TIERS: Extract<TicketOffer, { kind: 'tiers' }> = {
   ],
 };
 
+const OTHER_STATES: { label: string; offer: TicketOffer }[] = [
+  {
+    label: 'external (Tickeri-style)',
+    offer: { kind: 'external', url: 'https://www.tickeri.com/events/example', label: 'Get tickets', priceCents: 1200, priceText: null, soldOut: false },
+  },
+  { label: 'free', offer: { kind: 'free' } },
+  { label: 'door', offer: { kind: 'door', priceCents: 1000, priceText: null, soldOut: false } },
+  {
+    label: 'pending — Oasis ticketing on, nothing priced yet',
+    offer: { kind: 'pending' },
+  },
+];
+
 export default function DevTicketBoxPage() {
   if (process.env.NODE_ENV === 'production') notFound();
   return (
@@ -32,6 +45,12 @@ export default function DevTicketBoxPage() {
         <div className="grid gap-8 lg:grid-cols-2">
           <TicketBox offer={TIERS} eventId="dev" eventSlug="dev" eventTitle="Dev event" />
           <TicketBox offer={{ ...TIERS, remaining: 0 }} eventId="dev" eventSlug="dev" eventTitle="Dev event" />
+          {OTHER_STATES.map(({ label, offer }) => (
+            <div key={label}>
+              <p className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-wide text-night-soft">{label}</p>
+              <TicketBox offer={offer} eventId="dev" eventSlug="dev" eventTitle="Dev event" />
+            </div>
+          ))}
         </div>
       </Frame>
     </Band>

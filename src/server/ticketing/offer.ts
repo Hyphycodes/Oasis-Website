@@ -37,19 +37,25 @@ function fallbackOffer(event: ResolvedEvent): TicketOffer {
 }
 
 export async function getTicketOffer(event: ResolvedEvent): Promise<TicketOffer> {
-  if (event.ticketing.enabled && event.overrideId) {
-    const availability = await getEventAvailability(event.overrideId);
-    if (availability && availability.tiers.length > 0) {
-      return {
-        kind: 'tiers',
-        eventId: availability.eventId,
-        tiers: availability.tiers.map(({ capacity: _capacity, taken: _taken, ...tier }) => tier),
-        remaining: availability.available,
-        capacity: availability.capacity,
-      };
+  if (event.ticketing.enabled) {
+    // Oasis ticketing is the owner's explicit choice for this event. Once it's
+    // on, an external `ticketUrl` never controls the public CTA again — not
+    // even a stale one left over from before the switch, and not even while
+    // availability is briefly unreachable or has no priced tiers yet. The
+    // honest thing to show in that gap is `pending`, never someone else's link.
+    if (event.overrideId) {
+      const availability = await getEventAvailability(event.overrideId);
+      if (availability && availability.tiers.length > 0) {
+        return {
+          kind: 'tiers',
+          eventId: availability.eventId,
+          tiers: availability.tiers.map(({ capacity: _capacity, taken: _taken, ...tier }) => tier),
+          remaining: availability.available,
+          capacity: availability.capacity,
+        };
+      }
     }
-    // Ticketing is on but unreachable or has no tiers yet: an outside link, if
-    // there is one, is still an honest thing to offer.
+    return { kind: 'pending' };
   }
   return fallbackOffer(event);
 }

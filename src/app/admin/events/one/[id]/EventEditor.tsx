@@ -283,8 +283,8 @@ export function EventEditor(props: EditorProps) {
         {/* 4. Tickets */}
         <Section title="Tickets">
           <div className="grid gap-2 sm:grid-cols-2">
-            <Choice checked={fields.ticketingEnabled} onChange={() => update({ ticketingEnabled: true })} title="Sell tickets on the website" hint="Apple Pay, Google Pay, card. You keep the list and the money." />
-            <Choice checked={!fields.ticketingEnabled} onChange={() => update({ ticketingEnabled: false })} title="Just show the event" hint="No sales here. Optionally link out." />
+            <Choice checked={fields.ticketingEnabled} onChange={() => update({ ticketingEnabled: true })} title="Oasis Ticketing" hint="Sell tickets right here — Apple Pay, Google Pay, card. You keep the list and the money." />
+            <Choice checked={!fields.ticketingEnabled} onChange={() => update({ ticketingEnabled: false })} title="External Ticket Link" hint="Guests are sent to another site to buy. No sales tracked here." />
           </div>
 
           {fields.ticketingEnabled ? (
@@ -314,7 +314,7 @@ export function EventEditor(props: EditorProps) {
             </div>
           ) : (
             <div className="mt-5">
-              <Field id="ev-external" label="Ticket link" hint="Optional. Where “Get tickets” goes if tickets are sold somewhere else." problem={problems.externalTicketUrl}>
+              <Field id="ev-external" label="External ticket link" hint="Where “Get tickets” sends guests. Only used while External Ticket Link is selected above." problem={problems.externalTicketUrl}>
                 <input id="ev-external" inputMode="url" className={FIELD} value={fields.externalTicketUrl} onChange={(e) => update({ externalTicketUrl: e.target.value })} placeholder="https://" />
               </Field>
             </div>

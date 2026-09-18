@@ -3,26 +3,35 @@ import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * The ticketing database handle.
+ * The ticketing database handles.
  *
- * Orders, tickets and holds have no public Row Level Security policies at all,
- * so they are reachable only with the service role. Unlike the content reads,
- * this never falls back to the anon key: without the service key there is no
- * ticketing, and every caller handles `null` by saying so rather than by
- * pretending.
+ * Orders, tickets and holds have no public Row Level Security policies at
+ * all, so mutating them is reachable only with the service role —
+ * `getTicketingClient()` never falls back to the anon key, and every caller
+ * handles `null` by saying so rather than by pretending.
+ *
+ * `get_event_availability` is different: it is a plain (non-`SECURITY
+ * DEFINER`) function the schema deliberately grants to `anon` (migration
+ * 0007), because the public event page has to be able to show tiers and a
+ * price to a guest who has never signed in. `getTicketingReadClient()` is
+ * for that one read path — it prefers the service role but falls back to the
+ * anon key, the same pattern `getServiceClient()` already uses for ordinary
+ * content. This is not a privilege escalation: every write-capable RPC
+ * (`reserve_order`, `fulfill_order`, …) stays revoked from `anon` at the
+ * Postgres level regardless of which client object calls it, so a client
+ * built from the anon key can still only do what Postgres already allows
+ * anon to do. Without this fallback, a missing `SUPABASE_SERVICE_ROLE_KEY`
+ * silently turned every Oasis-ticketed event back into whatever its stale
+ * `ticket_url` said — see `src/server/ticketing/offer.ts`.
  */
 
 let client: SupabaseClient | null | undefined;
+let readClient: SupabaseClient | null | undefined;
 
-export function getTicketingClient(): SupabaseClient | null {
-  if (client !== undefined) return client;
+function buildClient(key: string): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!url || !key) {
-    client = null;
-    return client;
-  }
-  client = createClient(url, key, {
+  if (!url) return null;
+  return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       headers: { 'x-oasis-source': 'ticketing' },
@@ -33,7 +42,24 @@ export function getTicketingClient(): SupabaseClient | null {
         }),
     },
   });
+}
+
+/** Service-role only. Every write (reserve, fulfil, refund, scan, admin reads of orders/tickets) goes through this. */
+export function getTicketingClient(): SupabaseClient | null {
+  if (client !== undefined) return client;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  client = key ? buildClient(key) : null;
   return client;
+}
+
+/** Service role if present, otherwise the anon key. Use only for reads Postgres already grants to anon. */
+export function getTicketingReadClient(): SupabaseClient | null {
+  const withService = getTicketingClient();
+  if (withService) return withService;
+  if (readClient !== undefined) return readClient;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  readClient = anon ? buildClient(anon) : null;
+  return readClient;
 }
 
 export function isTicketingConfigured(): boolean {

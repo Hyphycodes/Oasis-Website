@@ -77,6 +77,10 @@ export function TicketBox({
         <p className="mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
           No ticket needed. Come in, grab a table and settle in.
         </p>
+      ) : offer.kind === 'pending' ? (
+        <p className="mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
+          Tickets go on sale here soon. Check back shortly.
+        </p>
       ) : (
         <p className="mt-4 text-[0.9375rem] leading-relaxed text-night-soft">
           Tickets are sold at the door on the night. Arrive early if you want a table.

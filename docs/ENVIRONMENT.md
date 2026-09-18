@@ -101,6 +101,7 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0010_appearance_and_accent_hint.sql` | The one-row `appearance` table (preset, two dials, season); `accent_hint` on events for the flyer's own colour |
    | `0011_event_editor_fields.sql` | The event editor's own columns: `description_html`, included/bring/arrival text |
    | `0012_harden_ticketing_functions_and_indexes.sql` | Pins `search_path` on the ticketing functions, indexes the ticketing hot-path foreign keys, fixes one RLS initplan finding |
+   | `0013_import_tickeri_ticket_data.sql` | One-time backfill: turns on Oasis ticketing, with real prices and descriptions read from Tickeri, for every event that was still Tickeri-only |
 
 3. Load the content that was captured from the live site:
    ```bash

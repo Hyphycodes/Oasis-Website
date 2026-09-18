@@ -2,7 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 import type { OfferTier } from '@/lib/ticketing/offer';
-import { getTicketingClient } from './db';
+import { getTicketingReadClient } from './db';
 
 /**
  * `get_event_availability`, typed. The only availability read in the repo.
@@ -70,7 +70,7 @@ export function fromRaw(raw: Raw): EventAvailability {
 
 /** Availability for one event, or null when ticketing is not reachable. Never throws. */
 export const getEventAvailability = cache(async (eventId: string): Promise<EventAvailability | null> => {
-  const client = getTicketingClient();
+  const client = getTicketingReadClient();
   if (!client) return null;
   try {
     const { data, error } = await client.rpc('get_event_availability', { p_event_id: eventId });

@@ -23,6 +23,9 @@ describe('priceHeadline', () => {
   it('falls back to the restaurant own words', () => {
     expect(priceHeadline({ kind: 'external', url: 'https://x', label: null, priceCents: null, priceText: '$25 · canvas included', soldOut: false })).toBe('$25 · canvas included');
   });
+  it('is honest about a ticketed event with nothing priced yet', () => {
+    expect(priceHeadline({ kind: 'pending' })).toBe('Tickets coming soon');
+  });
 });
 
 describe('scarcityLine', () => {
@@ -45,6 +48,9 @@ describe('isSoldOut', () => {
   it('is sold out when every on-sale tier is empty', () => {
     expect(isSoldOut(tiers({ tiers: [{ ...adult, available: 0 }, { ...kid, available: 0 }], remaining: 10 }))).toBe(true);
     expect(isSoldOut(tiers({ tiers: [{ ...adult, available: 0 }, kid] }))).toBe(false);
+  });
+  it('a pending offer is never sold out', () => {
+    expect(isSoldOut({ kind: 'pending' })).toBe(false);
   });
 });
 
