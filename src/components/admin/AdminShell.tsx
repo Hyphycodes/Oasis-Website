@@ -26,10 +26,11 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
     label: 'Events',
     icon: 'events',
     section: 'events',
-    also: ['/admin/scan'],
+    also: ['/admin/scan', '/admin/customers'],
     screens: [
       { href: '/admin/events', label: 'Events' },
       { href: '/admin/door', label: 'Door' },
+      { href: '/admin/customers', label: 'Customers' },
     ],
   },
   { href: '/admin/menu', label: 'Menu', icon: 'menu', section: 'menu' },

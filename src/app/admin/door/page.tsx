@@ -8,7 +8,8 @@ import { getStaff, staffCan } from '@/server/auth';
 import { getEditableEvents } from '@/server/content/events';
 import { canOpen } from '@/server/permissions';
 import { getEventAvailability } from '@/server/ticketing/availability';
-import { eventCounts } from '@/server/ticketing/scan';
+import { doorSnapshot } from '@/server/ticketing/insight';
+import { DoorLive } from '@/components/admin/DoorLive';
 import { DoorSale } from './DoorSale';
 
 export const dynamic = 'force-dynamic';
@@ -45,10 +46,10 @@ export default async function DoorPage({ searchParams }: { searchParams: Promise
     ticketed[0] ??
     null;
 
-  const [availability, counts] = chosen
-    ? await Promise.all([getEventAvailability(chosen.overrideId!), eventCounts(chosen.overrideId!)])
-    : [null, null];
   const canSell = staffCan(staff, 'content.publish');
+  const [availability, snapshot] = chosen
+    ? await Promise.all([getEventAvailability(chosen.overrideId!), doorSnapshot(chosen.overrideId!, { withMoney: canSell })])
+    : [null, null];
 
   return (
     <AdminShell
@@ -73,12 +74,9 @@ export default async function DoorPage({ searchParams }: { searchParams: Promise
           ) : null}
 
           <Card title="Tonight">
-            <p className="display tabular text-[clamp(2.5rem,6vw,3.5rem)] leading-none text-brown">
-              {counts?.checkedIn ?? 0} <span className="text-brown-soft">/ {counts?.total ?? 0}</span>
-            </p>
-            <p className="mt-1 text-[0.9375rem] text-brown-soft">checked in of tickets issued</p>
+            <DoorLive eventId={chosen.overrideId!} initial={snapshot} />
             {availability ? (
-              <p className="mt-3 text-[0.9375rem] text-brown">
+              <p className="mt-4 border-t border-brown/12 pt-3 text-[0.9375rem] text-brown">
                 {availability.available === null ? 'No seat cap.' : `${availability.available} seats still for sale.`}
               </p>
             ) : (

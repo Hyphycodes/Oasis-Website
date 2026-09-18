@@ -172,6 +172,66 @@ so you can look at it before it goes live.
 
 ---
 
+## Running a ticketed night
+
+### Watch the door fill up
+
+**Events → Door** is the page to hold on a Saturday. It shows how many are in
+against how many tickets exist, a bar so you can see "nearly full" without
+reading, how many have not arrived yet, and the last dozen people through with
+the time and which phone scanned them. It refreshes itself every ten seconds;
+you never need to pull it down.
+
+Underneath: takings so far, what came in at the door versus online, and how many
+were comped. Door staff do not see any of that — the same page on their phone
+shows the count and nothing about money.
+
+**Start scanning** goes to the scanner. `docs/door-scanner.md` is the one-pager
+to print for whoever is on the door.
+
+### Sell or comp at the door
+
+Same page, **Sell at the door**. Take the money at the register as usual; this
+records it so the count on the wall is the real one. A comp is the same thing at
+zero. Both are counted separately from web sales in the event's figures, so
+"what did we actually take online" is still answerable.
+
+### After the night: who came, who paid
+
+**Events → the event → Sales.** Every order with what it was for, whether they
+came in, and a search box. From here you can resend somebody's ticket email or
+refund an order — a refund goes through Stripe and voids the tickets in the same
+action, never one without the other.
+
+**Export CSV** gives the whole night as a spreadsheet.
+
+### Promoters
+
+If a promoter has a code, the Sales page shows a row per code: how many tickets
+it sold, what it grossed, and **how many of those people actually walked in**.
+That last number is the one worth reading before agreeing a payout.
+
+A tracking-only code discounts nothing and exists purely to attribute the sale,
+which is usually what you want for a promoter.
+
+### When somebody disputes a charge
+
+On a disputed order, **Evidence** gathers everything Stripe's dispute form asks
+for — what was bought, when, which tickets were issued, the exact times they
+were scanned at the door, and whether the ticket email was delivered — and copies
+it to the clipboard. A timestamped check-in is the single most persuasive thing
+you can send: it says the person walked in.
+
+### The customer list
+
+**Events → Customers.** Everyone who has ever bought a ticket, what they have
+spent, how many nights they have been to. Search by name, email or phone.
+
+**Export opted-in CSV** gives you only the people who agreed to hear from you.
+That is deliberate: the full list is there so you can look somebody up, not so
+it can be mailed. Emailing or texting people who have not opted in is not
+something this website will help with.
+
 ## Why some things are refused
 
 - **"Your account can save drafts…"** — you are a Contributor. Your work is saved; ask a manager.

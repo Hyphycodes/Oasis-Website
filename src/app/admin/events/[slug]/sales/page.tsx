@@ -9,6 +9,8 @@ import { occurrenceFromRow } from '@/server/content/events';
 import { canOpen } from '@/server/permissions';
 import { isTicketingConfigured } from '@/server/ticketing/db';
 import { getSalesSummaries, listOrders } from '@/server/ticketing/sales';
+import { promoterReport } from '@/server/ticketing/insight';
+import { DisputeEvidence } from './DisputeEvidence';
 import { RefundButton } from './RefundButton';
 import { ResendTickets } from './ResendTickets';
 
@@ -44,9 +46,13 @@ export default async function SalesPage({
   if (!row) notFound();
   const event = occurrenceFromRow(row, 'working');
 
-  const [summaries, orders] = await Promise.all([getSalesSummaries([id]), listOrders(id, q ?? '')]);
-  const summary = summaries.get(id) ?? null;
   const canRefund = staffCan(staff, 'content.publish');
+  const [summaries, orders, promoters] = await Promise.all([
+    getSalesSummaries([id]),
+    listOrders(id, q ?? ''),
+    canRefund ? promoterReport(id) : Promise.resolve([]),
+  ]);
+  const summary = summaries.get(id) ?? null;
 
   return (
     <AdminShell
@@ -76,6 +82,30 @@ export default async function SalesPage({
         {formatPrice(summary?.webCents ?? 0)} online · {formatPrice(summary?.doorCents ?? 0)} at the door
         {summary?.compOrders ? ` · ${summary.compOrders} comped` : ''} · {summary?.checkedIn ?? 0} checked in
       </p>
+
+      {promoters.length > 0 ? (
+        <Card title="Promoters">
+          {/* Sold is one number; showed up is the one that says whether a
+              promoter is real. Both are here so the payout conversation has
+              them side by side. */}
+          <ul className="divide-y divide-brown/10">
+            {promoters.map((promoter) => (
+              <li key={promoter.code} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
+                <div className="min-w-0">
+                  <p className="text-[1rem] font-semibold text-brown">{promoter.promoterName ?? promoter.code}</p>
+                  <p className="tabular text-[0.8125rem] text-brown-soft">
+                    {promoter.code}
+                    {promoter.kind === 'tracking_only' ? ' · tracking only' : ` · ${promoter.kind}`}
+                  </p>
+                </div>
+                <p className="tabular shrink-0 text-[0.9375rem] text-brown">
+                  {promoter.ticketsSold} sold · {promoter.checkedIn} came in · {formatPrice(promoter.grossCents)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <Card
         title={`${orders.length} ${orders.length === 1 ? 'order' : 'orders'}`}
@@ -123,6 +153,11 @@ export default async function SalesPage({
                       <RefundButton orderId={order.id} amount={formatPrice(order.totalCents - order.refundedCents)} />
                     ) : null}
                   </div>
+                  {canRefund && order.status === 'disputed' ? (
+                    <div className="sm:col-span-3">
+                      <DisputeEvidence orderId={order.id} orderNumber={order.orderNumber} />
+                    </div>
+                  ) : null}
                 </li>
               );
             })}
