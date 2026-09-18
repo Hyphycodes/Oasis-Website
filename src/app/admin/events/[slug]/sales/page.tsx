@@ -155,7 +155,7 @@ export default async function SalesPage({
                   </div>
                   {canRefund && order.status === 'disputed' ? (
                     <div className="sm:col-span-3">
-                      <DisputeEvidence orderId={order.id} orderNumber={order.orderNumber} />
+                      <DisputeEvidence orderNumber={order.orderNumber} />
                     </div>
                   ) : null}
                 </li>

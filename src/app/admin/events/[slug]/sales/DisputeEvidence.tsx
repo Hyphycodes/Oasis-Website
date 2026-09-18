@@ -9,14 +9,14 @@ import { useState } from 'react';
  * venue has is a timestamped check-in: this person walked in. Assembling that
  * by hand at 11pm is how disputes get lost by default, so it is one tap.
  */
-export function DisputeEvidence({ orderId, orderNumber }: { orderId: string; orderNumber: string }) {
+export function DisputeEvidence({ orderNumber }: { orderNumber: string }) {
   const [text, setText] = useState<string | null>(null);
   const [state, setState] = useState<'idle' | 'busy' | 'copied' | 'error'>('idle');
 
   async function load() {
     setState('busy');
     try {
-      const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}/evidence`);
+      const response = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}/evidence`);
       const data = (await response.json()) as { evidence?: string };
       if (!response.ok || !data.evidence) throw new Error('no evidence');
       setText(data.evidence);
