@@ -55,7 +55,17 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
       { href: '/admin/inquiries', label: 'Enquiries' },
     ],
   },
-  { href: '/admin/team', label: 'Team', icon: 'team', ownerOnly: true },
+  {
+    href: '/admin/team',
+    label: 'Team',
+    icon: 'team',
+    ownerOnly: true,
+    also: ['/admin/setup'],
+    screens: [
+      { href: '/admin/team', label: 'Team' },
+      { href: '/admin/setup', label: 'Setup' },
+    ],
+  },
 ];
 
 export function AdminShell({

@@ -7,7 +7,10 @@ is in `docs/ticketing.md`; the payment flow is in `docs/stripe-setup.md`.
 Migrations: `0006_waitlist.sql`, `0007_ticketing_core.sql`,
 `0009_email_log_and_reminders.sql`, `0012_harden_ticketing_functions_and_indexes.sql`,
 `0013_import_tickeri_ticket_data.sql`, `0014_fix_crockford_random_and_add_service_fee.sql`,
-`0015_customers_and_promoter_attribution.sql`.
+`0015_customers_and_promoter_attribution.sql`, `0016_revoke_trigger_function_execute.sql`.
+
+**Applied to the live project** (`yrfvnqgybbvbkwonvycw`) on 18 September 2026, and verified
+there by the walkthrough below.
 
 ---
 
@@ -351,6 +354,10 @@ readable by anyone — it returns counts, never a buyer.
 | `supabase/seeds/test-event.sql` | A `Test Event — $1` and a realistic 120-seat Saturday with GA and VIP tiers. Idempotent, and seeded **unpublished** so it is safe to run against the live database — publish the $1 event only for as long as a test takes. |
 | `supabase/tests/ticketing-walkthrough.sql` | One transaction, always rolled back, that asserts the whole chain: four tickets issued, distinct codes, first scan wins, a second scan changes nothing, a replayed fulfilment mints nothing, a customer created once for a returning guest, a tracking-only code that attributes without discounting, and anonymous callers seeing no orders, tickets or customers. |
 | `scripts/hammer-reserve.ts` | Fifty parallel reservations against a ten-seat tier; exactly ten succeed. Run it after any change to `reserve_order`. |
+
+The walkthrough has been run against the live database: every check held, and the
+transaction rolled itself back, leaving no test event, order, ticket, customer,
+scan or promo code behind.
 
 ## Known gaps against the brief
 
