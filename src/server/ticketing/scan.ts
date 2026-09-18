@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import { tokenFromScan } from '@/lib/tickets/link';
 import { normalizeCode } from '@/lib/ticketing/codes';
-import { signTicketToken, verifyTicketToken } from '@/lib/ticketing/tokens';
+import { isSigningConfigured, signTicketToken, verifyTicketToken } from '@/lib/ticketing/tokens';
 import { getTicketingClient } from './db';
 
 /**
@@ -150,6 +150,11 @@ export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
 
   // 1. The signature, before anything else. No database for a forgery.
   let ticketRow: Row | null = null;
+  if (input.token && !isSigningConfigured()) {
+    // Nothing has been signed, so nothing can be checked. Say so plainly
+    // instead of throwing at a door.
+    return { result: 'invalid', reason: 'Ticket signing is not set up yet.', ticket: null, counts: await eventCounts(input.eventId) };
+  }
   if (input.token) {
     // The QR carries a URL; a scanner app may hand back the URL, the bare
     // token, or the URL with its own query string bolted on.

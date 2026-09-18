@@ -9,7 +9,7 @@ import { addToCalendarUrl, standaloneEvents } from '@/lib/events';
 import { formatEventDateLong, formatEventTime, formatTimeRangeCompact } from '@/lib/format';
 import { ticketQrDataUrl } from '@/lib/tickets/qr';
 import { ticketLink } from '@/lib/tickets/link';
-import { verifyTicketToken } from '@/lib/ticketing/tokens';
+import { isSigningConfigured, verifyTicketToken } from '@/lib/ticketing/tokens';
 import { getPublicEvents } from '@/server/content/events';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { getOrderById } from '@/server/ticketing/orders';
@@ -47,6 +47,10 @@ export default async function SingleTicketPage({ params }: { params: Promise<{ t
   const ip = heads.get('x-forwarded-for')?.split(',')[0]?.trim() || heads.get('x-real-ip') || 'local';
   if (await overLimit(`ticket:${ip}`, 60, 60)) notFound();
 
+  // Without the signing secret no token can be verified — and no ticket can
+  // have been issued either, so there is nothing this page could show. Not
+  // found, not a crash.
+  if (!isSigningConfigured()) notFound();
   const verified = verifyTicketToken(token);
   if (!verified) notFound();
 
