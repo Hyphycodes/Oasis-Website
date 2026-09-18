@@ -92,10 +92,16 @@ async function describe(ticket: Row): Promise<ScanTicket> {
   };
 }
 
+/** What a result was called before migration 0015 widened the constraint. */
+const LEGACY_RESULT: Partial<Record<ScanResult, ScanResult>> = {
+  refunded: 'void',
+  not_found: 'invalid',
+};
+
 async function record(input: ScanInput, result: ScanResult, ticketId: string | null): Promise<void> {
   const client = getTicketingClient();
   if (!client) return;
-  await client.from('scans').insert({
+  const row = {
     ticket_id: ticketId,
     event_id: input.eventId,
     raw_code: (input.token ?? input.code ?? '').slice(0, 400),
@@ -103,7 +109,15 @@ async function record(input: ScanInput, result: ScanResult, ticketId: string | n
     device_label: input.deviceLabel?.slice(0, 80) ?? null,
     scanned_by: input.scannedBy.slice(0, 120),
     scanned_at: input.scannedAt && Number.isFinite(Date.parse(input.scannedAt)) ? input.scannedAt : new Date().toISOString(),
-  });
+  };
+  const { error } = await client.from('scans').insert(row);
+  // A database that has not had migration 0015 applied yet still has the older,
+  // narrower check. The door does not care what the log calls a result, so the
+  // scan is recorded under the old name rather than lost. 23514 = check
+  // constraint violation.
+  if (error?.code === '23514' && LEGACY_RESULT[result]) {
+    await client.from('scans').insert({ ...row, result: LEGACY_RESULT[result] });
+  }
 }
 
 export async function scanTicket(input: ScanInput): Promise<ScanResponse> {
