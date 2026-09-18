@@ -207,7 +207,10 @@ function Inner(props: CheckoutFormProps & { onExpired: () => void }) {
         <PaymentElement options={{ layout: 'tabs', fields: { billingDetails: { name: 'never', email: 'never' } } }} />
       </div>
 
-      <p className="text-[0.8125rem] leading-relaxed text-night-soft">{props.consentText}</p>
+      <p className="text-[0.8125rem] leading-relaxed text-night-soft">
+        {props.consentText.replace(/ By paying you agree to our ticket terms\.$/, '')} By paying you agree to our{' '}
+        <a href="/legal/tickets" target="_blank" rel="noopener" className="underline underline-offset-4">ticket terms</a>.
+      </p>
 
       <button type="submit" className={PRIMARY} disabled={busy || !stripe || !elements || !detailsOk}>
         {state.kind === 'saving' ? 'Saving your details…' : state.kind === 'confirming' ? 'Talking to your bank…' : `Pay ${formatPrice(props.totalCents)}`}

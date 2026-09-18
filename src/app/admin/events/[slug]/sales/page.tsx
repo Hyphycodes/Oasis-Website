@@ -10,6 +10,7 @@ import { canOpen } from '@/server/permissions';
 import { isTicketingConfigured } from '@/server/ticketing/db';
 import { getSalesSummaries, listOrders } from '@/server/ticketing/sales';
 import { RefundButton } from './RefundButton';
+import { ResendTickets } from './ResendTickets';
 
 export const dynamic = 'force-dynamic';
 
@@ -115,6 +116,9 @@ export default async function SalesPage({
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
+                    {order.status === 'paid' || order.status === 'partially_refunded' ? (
+                      <ResendTickets orderNumber={order.orderNumber} email={order.customerEmail} />
+                    ) : null}
                     {canRefund && order.status !== 'refunded' && order.status !== 'disputed' ? (
                       <RefundButton orderId={order.id} amount={formatPrice(order.totalCents - order.refundedCents)} />
                     ) : null}

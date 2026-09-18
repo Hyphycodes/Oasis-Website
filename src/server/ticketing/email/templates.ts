@@ -120,6 +120,7 @@ export function renderConfirmation({
 }): RenderedEmail {
   const shown = tickets.slice(0, tickets.length > 4 ? 1 : 4);
   const subject = `You're in — ${event.title}, ${formatEventDateCompact(event.startsAt)}`;
+  const termsUrl = ticketsUrl.replace(/\/tickets\/.*$/, '/legal/tickets');
 
   const html = shell(
     [
@@ -136,7 +137,7 @@ ${event.refundPolicy ? `<br><br>${escape(event.refundPolicy)}` : ''}
 </div>`,
       ),
       row(button(ticketsUrl, 'Open my tickets')),
-      row(`<div style="font-size:13px;line-height:1.6;color:${MUTED};">Show any of these codes at the door, on your phone or printed. <a href="${escape(event.directionsUrl)}" style="color:${AMBER};">Directions</a> · ${escape(settings.phone.value)}</div>`, '0 16px 32px'),
+      row(`<div style="font-size:13px;line-height:1.6;color:${MUTED};">Show any of these codes at the door, on your phone or printed. <a href="${escape(event.directionsUrl)}" style="color:${AMBER};">Directions</a> · <a href="${escape(termsUrl)}" style="color:${AMBER};">Ticket terms</a> · ${escape(settings.phone.value)}</div>`, '0 16px 32px'),
     ].join(''),
     `${event.title} — ${formatEventDateLong(event.startsAt)}. Your tickets are inside.`,
   );
@@ -159,6 +160,7 @@ ${event.refundPolicy ? `<br><br>${escape(event.refundPolicy)}` : ''}
     ...(event.refundPolicy ? ['', event.refundPolicy] : []),
     '',
     `Directions: ${event.directionsUrl}`,
+    `Ticket terms: ${termsUrl}`,
     `Oasis Mexican Kitchen & Bar · ${settings.phone.value}`,
   ].join('\n');
 

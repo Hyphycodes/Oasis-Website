@@ -184,3 +184,89 @@ launch week.
 
 **Bad database migration** — restore a Supabase backup. Export `inquiries` first; you will lose
 anything written since the backup.
+
+
+---
+
+## 9. Ticketing — before the first real ticket sells
+
+### Stripe (account owner; not code)
+
+Work through `docs/stripe-setup.md`. In short:
+
+- [ ] Business verification complete, bank account connected, payouts scheduled
+- [ ] Public business name, support email and phone set — they appear on the receipt
+- [ ] Statement descriptor `OASIS MEXICAN` (the site adds the suffix `OASIS EVENT`)
+- [ ] Payment methods on: card, Apple Pay, Google Pay, Link, Cash App Pay; Klarna/Affirm off
+- [ ] **Payment method domain registered** for the live domain, or Apple Pay will not appear
+- [ ] Webhook endpoint live at `/api/webhooks/stripe`, subscribed to the five events, signing secret in Vercel for Production
+- [ ] Radar default rules on; dispute notification email set
+- [ ] No test-mode key left in the Production environment
+
+### Domain and email
+
+- [ ] Real custom domain on the site. `oasis-website-mu.vercel.app` is fine for a menu; it is not fine for a checkout page — it costs conversions and complicates Apple Pay
+- [ ] Resend sending domain verified (SPF, DKIM, ideally DMARC) on that domain; `ORDERS_FROM_EMAIL` is a real address there
+- [ ] Test confirmation sent to a Gmail, an iCloud and an Outlook address; none in spam; QR scannable in each (`POST /api/orders/<n>/resend` from the admin sales page)
+
+### Environment variables (Production and Preview)
+
+- [ ] `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- [ ] `TICKET_SIGNING_SECRET` (32+ random characters; never reuse across environments)
+- [ ] `CRON_SECRET`
+- [ ] `RESEND_API_KEY`, `ORDERS_FROM_EMAIL`, `OWNER_ALERT_EMAIL`
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` present — orders and tickets are unreadable without it
+
+### Legal and policy
+
+- [ ] Refund policy confirmed by the owner. The default on every new event is "full refund up to 48 hours before, after that we move you to another date"; edit it per event in the editor. It is shown at checkout and kept on every order
+- [ ] Ticket terms page reviewed: `/legal/tickets` (linked from checkout and every ticket email)
+- [ ] Privacy page reviewed: `/legal/privacy` now covers checkout and Stripe
+- [ ] **Accountant confirms** whether these admissions are taxable in Lockport and whether ticket revenue is recorded apart from food and beverage. `tax_rate_bps` stays 0 until then — it is a per-event setting, not a migration
+
+### Money math worth knowing
+
+On Stripe's standard US online rate of 2.9% + 30¢ (the editor shows this live per ticket type):
+
+| All-in ticket | Stripe fee | You keep | Effective rate |
+| --- | --- | --- | --- |
+| $10 | $0.59 | $9.41 | 5.9% |
+| $12 | $0.65 | $11.35 | 5.4% |
+| $15 | $0.74 | $14.26 | 4.9% |
+| $25 | $1.03 | $23.98 | 4.1% |
+| 2 × $10 in one order | $0.88 | $19.12 | 4.4% |
+
+The 30¢ is charged per order, not per ticket, so anything that encourages two tickets in one order
+improves margin more than raising prices does. Disputes cost $15 each regardless of outcome, which
+is why the descriptor and the refund policy matter more than they seem to.
+
+### Operational readiness
+
+- [ ] One staff member has walked the door flow on their own phone, scanning a real ticket, before a live event (`/admin/door` → Start scanning)
+- [ ] Airplane-mode scan tested once: open the scanner online, switch wifi off, scan, switch it on, confirm the check-in synced
+- [ ] Attendee CSV printed the morning of the first ticketed event. Once
+- [ ] Owner knows where to find sales, resend a ticket, refund an order, and comp someone in — `docs/runbook.md`
+- [ ] `npx tsx scripts/hammer-reserve.ts` run against production once with the service key, to prove the 10-seat test passes there too
+
+## 10. Getting off Tickeri without a scary weekend
+
+1. **Pick the smallest upcoming event** as the first in-house sale — the one where 15 tickets is a normal night.
+2. **Run both for that one event.** Keep the Tickeri listing live; turn ticketing on for the same event here and point Instagram at the site link. Compare conversion and support volume.
+3. Build the door list from both sources — the scanner handles website tickets, and the Tickeri list stays on a phone or on paper. This is the only awkward event.
+4. **Then cut over.** New events are website-only. Don't create new Tickeri listings. The Tickeri sync in the admin can stay for the tail.
+5. Let existing Tickeri events run out naturally rather than migrating anyone's ticket. Those events keep their outside link: every event carries a `ticket_url`, and an event with ticketing off and a link simply sends the guest there.
+6. Once the last one clears, replace the Tickeri links in the Instagram bio and Linktree, and archive the account rather than deleting it — the historical sales records are worth keeping.
+
+## After launch, in rough priority order
+
+See `docs/roadmap.md`: wallet passes, Tap to Pay at the door, the post-event email, reserved tables,
+waitlist release, SMS reminders.
+
+## The two things most likely to go wrong
+
+**Emails in spam.** Nothing destroys trust as fast as a paid ticket that never arrives. Verify the
+domain properly, send from a real address at that domain, and the resend button is in front of the
+guest on the confirmation page so they can fix it themselves.
+
+**Doors open and the wifi is down.** Test the offline scan path before the first event, not after
+the first bad night.

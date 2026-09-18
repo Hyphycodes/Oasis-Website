@@ -31,8 +31,10 @@ export default function PrivacyPage() {
               </h2>
               <p className="mt-3">
                 Only what you type into a form on this site — your name, email, phone number, and
-                the details of your catering enquiry, event enquiry, or job application. We do not
-                ask for payment details anywhere on this website.
+                the details of your catering enquiry, event enquiry, or job application. When you
+                buy an event ticket we also keep your name, email, what you bought and when, so we
+                can send your tickets and check you in at the door. Your card details go straight
+                to Stripe, who process the payment; we never see or store a card number.
               </p>
             </section>
 
@@ -62,9 +64,11 @@ export default function PrivacyPage() {
                 Other services
               </h2>
               <p className="mt-3">
-                Reservations, online ordering, and event tickets are handled by companies other than
-                us. When you follow one of those links you leave this website and their own privacy
-                terms apply. We have marked every one of those links so you know before you click.
+                Reservations and online ordering are handled by companies other than us. When you
+                follow one of those links you leave this website and their own privacy terms apply.
+                We have marked every one of those links so you know before you click. Ticket
+                payments on this website are processed by Stripe under their own privacy terms; some
+                older events still link out to Tickeri.
               </p>
             </section>
 

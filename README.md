@@ -115,6 +115,7 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 | [`docs/ENVIRONMENT.md`](./docs/ENVIRONMENT.md) | Environment variables, Supabase setup |
 | [`docs/VISUAL-QA.md`](./docs/VISUAL-QA.md) | The design review and its findings |
 | [`docs/MAINTENANCE.md`](./docs/MAINTENANCE.md) · [`LAUNCH-CHECKLIST.md`](./docs/LAUNCH-CHECKLIST.md) · [`BACKUP-AND-RECOVERY.md`](./docs/BACKUP-AND-RECOVERY.md) | Operations |
+| [`docs/ticketing.md`](./docs/ticketing.md) · [`stripe-setup.md`](./docs/stripe-setup.md) · [`runbook.md`](./docs/runbook.md) · [`roadmap.md`](./docs/roadmap.md) | In-house ticketing: schema, checkout, delivery, the door, the admin, and what comes next |
 
 ---
 
