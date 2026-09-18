@@ -178,6 +178,39 @@ export interface EventPresentation {
   takeoverEndAt: string | null;
 }
 
+/**
+ * In-house ticketing settings for a standalone event.
+ *
+ * `enabled` is the switch. The rest describe how a price is presented and
+ * what the guest agrees to; the tiers themselves live in `ticket_tiers` and
+ * are read through `get_event_availability`, never stored on the event.
+ */
+export interface EventTicketing {
+  enabled: boolean;
+  capacity: number | null;
+  agePolicy: 'all_ages' | '18+' | '21+' | null;
+  refundPolicy: string | null;
+  venueAddress: string | null;
+  doorsOpenAt: string | null;
+  feeDisplay: 'inclusive' | 'itemized';
+  taxRateBps: number;
+  serviceFeeBps: number;
+  serviceFeeFlatCents: number;
+}
+
+export const DEFAULT_TICKETING: EventTicketing = {
+  enabled: false,
+  capacity: null,
+  agePolicy: null,
+  refundPolicy: null,
+  venueAddress: null,
+  doorsOpenAt: null,
+  feeDisplay: 'inclusive',
+  taxRateBps: 0,
+  serviceFeeBps: 0,
+  serviceFeeFlatCents: 0,
+};
+
 /** Where a record came from. Tickeri rows are matched on re-import, not copied. */
 export interface EventProvenance {
   source: 'manual' | 'tickeri';
@@ -281,6 +314,7 @@ export interface ResolvedEvent {
   overriddenFields: string[];
   presentation: EventPresentation;
   provenance: EventProvenance;
+  ticketing: EventTicketing;
 }
 
 /** The defaults an event takes when it has expressed no preference. */

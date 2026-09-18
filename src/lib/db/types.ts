@@ -67,6 +67,15 @@ export const PRIMARY_KEY: Record<string, string> = {
   site_themes: 'slug',
   special_hours: 'id',
   waitlist: 'id',
+  ticket_tiers: 'id',
+  promo_codes: 'id',
+  orders: 'id',
+  order_items: 'id',
+  tickets: 'id',
+  ticket_holds: 'id',
+  scans: 'id',
+  processed_stripe_events: 'id',
+  email_log: 'id',
 };
 
 export function primaryKey(table: string): string {

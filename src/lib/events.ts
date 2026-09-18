@@ -1,7 +1,9 @@
 import {
   DEFAULT_PRESENTATION,
   DEFAULT_PROVENANCE,
+  DEFAULT_TICKETING,
   type EventPresentation,
+  type EventTicketing,
   type EventProvenance,
   type EventSeries,
   type EventStatus,
@@ -66,6 +68,7 @@ export interface OccurrenceRecord {
   /** Sparse presentation override. A null field inherits from the series. */
   presentation?: Partial<EventPresentation> | null;
   provenance?: EventProvenance | null;
+  ticketing?: EventTicketing | null;
 }
 
 export interface EventInput {
@@ -256,6 +259,9 @@ function resolve(
     // restating everything else that night inherits.
     presentation: { ...mergePresentation(series?.presentation, occurrence?.presentation), ...(freeEntry ? { priceText: 'Free entry · No tickets needed' } : {}) },
     provenance: occurrence?.provenance ?? DEFAULT_PROVENANCE,
+    // Only a standalone event can sell tickets here; a series night inherits
+    // nothing, because weekly nights are free at the door.
+    ticketing: (!seriesSlug && occurrence?.ticketing) || DEFAULT_TICKETING,
   };
 }
 

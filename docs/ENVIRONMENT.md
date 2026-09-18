@@ -16,7 +16,8 @@ on the admin area, stored enquiries, and owner editing.
 | `NEXT_PUBLIC_SITE_URL` | Recommended | No | The canonical origin, e.g. `https://www.oasismexicankitchenbar.com`. Used for canonical URLs, the sitemap, and Open Graph URLs. See the resolution order below. |
 | `NEXT_PUBLIC_SUPABASE_URL` | For admin | No | Supabase project URL, e.g. `https://abcdefgh.supabase.co`. Public by design — it is in the browser bundle. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | For admin | No | Supabase anon/publishable key. Public by design; it is constrained by Row Level Security, which is where access is actually enforced. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Optional | **YES** | Bypasses RLS. Used only for server-side reads of published content during SSR. **Never** prefix this with `NEXT_PUBLIC_`. If omitted, the anon key is used instead and everything still works, because published content is readable by `anon` under RLS. |
+| `SUPABASE_SERVICE_ROLE_KEY` | For ticketing | **YES** | Bypasses RLS. Used for server-side reads of published content during SSR and for every ticketing read and write (orders and tickets have no public policies). **Never** prefix this with `NEXT_PUBLIC_`. Without it the content site still works from the anon key; ticket sales do not. |
+| `CRON_SECRET` | For ticketing | **YES** | Vercel sends it with every cron request; `/api/cron/release-holds` refuses without it. |
 
 ### How the site URL is resolved
 
@@ -89,6 +90,7 @@ Then fill in the values from the Supabase dashboard: **Project Settings → API*
    | `0004_site_themes.sql` | The seasonal look: one row per theme, schedule, creative options and artwork overrides. See `docs/seasonal-theme-admin.md` |
    | `0005_event_presentation.sql` | Event categories, presets, treatments, artwork slots and the Tickeri import trail |
    | `0006_waitlist.sql` | The sold-out waitlist: public insert only, staff read |
+   | `0007_ticketing_core.sql` | Tiers, orders, tickets, holds, promo codes, scans; `reserve_order`, `fulfill_order`, `get_event_availability`; the sales views. See `docs/ticketing.md` |
 
 3. Load the content that was captured from the live site:
    ```bash

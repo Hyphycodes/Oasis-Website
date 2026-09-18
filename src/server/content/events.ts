@@ -13,7 +13,7 @@ import {
   isEventTreatment,
   isVisualPreset,
 } from '@/content/event-presentation';
-import type { EventPresentation, EventProvenance } from '@/content/types';
+import { DEFAULT_TICKETING, type EventPresentation, type EventProvenance, type EventTicketing } from '@/content/types';
 import { liveValues, workingValues, type EditorialRow } from './editorial';
 
 /**
@@ -37,6 +37,22 @@ function presentationFromRow(source: Row): EventPresentation {
     treatment: isEventTreatment(source.treatment) ? source.treatment : 'standard',
     takeoverStartAt: (source.takeover_start_at as string | null) ?? null,
     takeoverEndAt: (source.takeover_end_at as string | null) ?? null,
+  };
+}
+
+function ticketingFromRow(source: Row): EventTicketing {
+  const agePolicy = source.age_policy;
+  return {
+    enabled: Boolean(source.ticketing_enabled),
+    capacity: typeof source.capacity === 'number' ? source.capacity : null,
+    agePolicy: agePolicy === 'all_ages' || agePolicy === '18+' || agePolicy === '21+' ? agePolicy : null,
+    refundPolicy: (source.refund_policy as string | null) ?? null,
+    venueAddress: (source.venue_address as string | null) ?? null,
+    doorsOpenAt: (source.doors_open_at as string | null) ?? null,
+    feeDisplay: source.fee_display === 'itemized' ? 'itemized' : 'inclusive',
+    taxRateBps: Number(source.tax_rate_bps ?? DEFAULT_TICKETING.taxRateBps) || 0,
+    serviceFeeBps: Number(source.service_fee_bps ?? 0) || 0,
+    serviceFeeFlatCents: Number(source.service_fee_flat_cents ?? 0) || 0,
   };
 }
 
@@ -119,6 +135,7 @@ function occurrenceFromRow(row: Row, mode: Mode): OccurrenceRecord {
     note: (source.note as string | null) ?? null,
     presentation: presentationFromRow(source),
     provenance: provenanceFromRow(source),
+    ticketing: ticketingFromRow(source),
   };
 }
 
