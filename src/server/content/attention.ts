@@ -18,6 +18,12 @@ import { formatVenueMoment, themeStatusAt } from '@/themes/schedule';
  * worse than no dashboard, because it trains people to ignore it.
  */
 
+/** A one-tap fix the tidy page can offer instead of a link. */
+export type AttentionFix =
+  | { kind: 'unpublish-occurrence'; id: string }
+  | { kind: 'menu-available'; id: string }
+  | { kind: 'publish-menu-row'; table: 'menu_items' | 'menu_categories' | 'menus'; id: string };
+
 export interface Attention {
   id: string;
   severity: 'blocking' | 'warning' | 'info';
@@ -25,6 +31,10 @@ export interface Attention {
   /** Where to go to fix it. */
   href: string;
   actionLabel: string;
+  /** Housekeeping the tidy page can do in one tap. */
+  fix?: AttentionFix;
+  /** What kind of thing it is, for the one-sentence summary on the home screen. */
+  kind: 'past-event' | 'draft' | 'sold-out-dish' | 'unpriced-dish' | 'artwork' | 'alt-text' | 'theme' | 'hours' | 'tickets' | 'other';
 }
 
 export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
@@ -50,6 +60,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (future.length === 0 && !series.paused) {
       items.push({
         id: `series-empty-${series.slug}`,
+        kind: 'other',
         severity: 'blocking',
         message: `${series.title} has no dates coming up. Guests see nothing for it.`,
         href: `/admin/events/${series.slug}`,
@@ -60,6 +71,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (series.ticketPolicy === 'required' && !series.flyerAssetId) {
       items.push({
         id: `series-artwork-${series.slug}`,
+        kind: 'artwork',
         severity: 'warning',
         message: `${series.title} has no flyer, so the events page shows a placeholder.`,
         href: `/admin/events/${series.slug}`,
@@ -78,10 +90,12 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (isPast && row.published !== false && row.status !== 'cancelled') {
       items.push({
         id: `stale-occurrence-${row.id}`,
-        severity: 'warning',
-        message: `${row.title ?? 'A night'} on ${date} has passed but is still published. It is hidden from guests automatically — tidy it up when you get a moment.`,
-        href: '/admin/events',
-        actionLabel: 'Review',
+        kind: 'past-event',
+        severity: 'info',
+        message: `${row.title ?? 'A night'} on ${date} has passed and is still on the calendar. Guests cannot see it.`,
+        href: `/admin/events/one/${encodeURIComponent(String(row.id))}`,
+        actionLabel: 'Take it off',
+        fix: { kind: 'unpublish-occurrence', id: String(row.id) },
       });
     }
   }
@@ -90,6 +104,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (!event.ticketUrl && event.series?.ticketPolicy === 'required') {
       items.push({
         id: `no-tickets-${event.id}`,
+        kind: 'tickets',
         severity: 'blocking',
         message: `${event.title} on ${venueIsoDate(event.startsAt)} has no ticket link.`,
         href: `/admin/events/${event.seriesSlug ?? ''}`,
@@ -100,6 +115,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (reason === 'Draft — not on the website yet') {
       items.push({
         id: `draft-event-${event.id}`,
+        kind: 'draft',
         severity: 'info',
         message: `${event.title} on ${venueIsoDate(event.startsAt)} is still a draft.`,
         href: '/admin/events',
@@ -118,24 +134,23 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
   if (waiting.length > 0) {
     items.push({
       id: 'menu-drafts',
-      severity: 'warning',
+      kind: 'draft',
+      severity: 'info',
       message: `${waiting.length} menu ${waiting.length === 1 ? 'change is' : 'changes are'} saved but not published yet.`,
       href: '/admin/menu',
       actionLabel: 'Review and publish',
     });
   }
 
-  const soldOut = allItems.filter(({ item }) => item.availability === 'unavailable');
-  if (soldOut.length > 0) {
+  for (const { item } of allItems.filter(({ item }) => item.availability === 'unavailable')) {
     items.push({
-      id: 'menu-sold-out',
+      id: `menu-sold-out-${item.id}`,
+      kind: 'sold-out-dish',
       severity: 'info',
-      message: `${soldOut.length} ${soldOut.length === 1 ? 'dish is' : 'dishes are'} marked sold out: ${soldOut
-        .slice(0, 3)
-        .map(({ item }) => item.name)
-        .join(', ')}. Guests still see ${soldOut.length === 1 ? 'it' : 'them'}, greyed out.`,
-      href: '/admin/menu',
-      actionLabel: 'Put them back',
+      message: `${item.name} is marked sold out. Guests see it greyed out.`,
+      href: `/admin/menu/${item.id}`,
+      actionLabel: 'Put it back',
+      fix: { kind: 'menu-available', id: item.id },
     });
   }
 
@@ -145,6 +160,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
   if (unpriced.length > 0) {
     items.push({
       id: 'menu-unpriced',
+      kind: 'unpriced-dish',
       severity: 'info',
       message: `${unpriced.length} ${unpriced.length === 1 ? 'item shows' : 'items show'} “Ask your server” instead of a price.`,
       href: '/admin/menu',
@@ -159,7 +175,8 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (!asset.decorative && !asset.alt?.trim()) {
       items.push({
         id: `alt-${asset.assetId}`,
-        severity: 'blocking',
+        kind: 'alt-text',
+        severity: 'warning',
         message: `“${asset.title}” has no description, so screen readers cannot describe it.`,
         href: `/admin/media/${asset.assetId}`,
         actionLabel: 'Describe it',
@@ -174,7 +191,8 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     const page = String(row.page ?? 'home');
     items.push({
       id: `page-draft-${row.id}`,
-      severity: 'warning',
+      kind: 'draft',
+      severity: 'info',
       message: `Changes to the ${page === 'home' ? 'homepage' : page} are saved but not published.`,
       href: `/admin/website/${page}`,
       actionLabel: 'Review and publish',
@@ -190,6 +208,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (date >= today && date <= soon) {
       items.push({
         id: `special-${row.id}`,
+        kind: 'hours',
         severity: 'info',
         message: `Special hours are set for ${date}: ${row.note}.`,
         href: '/admin/settings',
@@ -209,7 +228,8 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     if (status === 'ended') {
       items.push({
         id: `theme-ended-${record.slug}`,
-        severity: 'warning',
+        kind: 'theme',
+        severity: 'info',
         message: `${name} is switched on but its dates have passed, so guests see Default Oasis. Set new dates or switch it off.`,
         href: '/admin/theme',
         actionLabel: 'Open the seasonal look',
@@ -217,6 +237,7 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
     } else if (status === 'scheduled') {
       items.push({
         id: `theme-scheduled-${record.slug}`,
+        kind: 'theme',
         severity: 'info',
         message: `${name} switches itself on ${formatVenueMoment(record.startAt, 'America/Chicago')}.`,
         href: '/admin/theme',
@@ -227,6 +248,37 @@ export async function getAttention(db: Db, now: Date): Promise<Attention[]> {
 
   const order = { blocking: 0, warning: 1, info: 2 };
   return items.sort((a, b) => order[a.severity] - order[b.severity]);
+}
+
+/**
+ * Housekeeping, as one sentence.
+ *
+ * Nothing here costs money right now, so nothing here gets a badge, a count in
+ * a chip, or a colour. The two biggest kinds are named in words; the rest are
+ * "a few other things". Reassuring where it can be: a past event that is still
+ * listed is hidden from guests, so nothing is broken.
+ */
+export function housekeepingSentence(items: Attention[]): string | null {
+  if (items.length === 0) return null;
+  const count = (kind: Attention['kind']) => items.filter((entry) => entry.kind === kind).length;
+  const words = (n: number) => ['zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][n] ?? String(n);
+  const parts: string[] = [];
+  const past = count('past-event');
+  if (past > 0) parts.push(`${words(past)} past ${past === 1 ? 'event is' : 'events are'} still on the calendar, hidden from guests`);
+  const soldOut = count('sold-out-dish');
+  if (soldOut > 0) parts.push(`${soldOut === 1 ? 'one dish is' : `${soldOut} dishes are`} marked sold out`);
+  const drafts = count('draft');
+  if (drafts > 0) parts.push(`${drafts === 1 ? 'one draft is' : `${drafts} drafts are`} waiting`);
+  const alt = count('alt-text');
+  if (alt > 0) parts.push(`${alt === 1 ? 'one photo has' : `${alt} photos have`} no description`);
+  const rest = items.length - past - soldOut - drafts - alt;
+  const lead = parts.slice(0, 2);
+  const remainder = parts.length - lead.length + (rest > 0 ? 1 : 0);
+  let sentence = lead.join(', and ');
+  if (!sentence) sentence = `${words(items.length)} small ${items.length === 1 ? 'thing' : 'things'} could use a look`;
+  else if (remainder > 0) sentence += `, plus a few other things`;
+  sentence = sentence.charAt(0).toUpperCase() + sentence.slice(1);
+  return `${sentence}. Tidy up whenever.`;
 }
 
 /** The most recent edits across every kind of record, for "recently changed". */

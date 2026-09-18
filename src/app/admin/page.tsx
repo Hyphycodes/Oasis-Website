@@ -1,313 +1,270 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminShell } from '@/components/admin/AdminShell';
-import { ArtworkSourceNote, ArtworkThumb, artworkSourceOf } from '@/components/admin/Artwork';
-import { Card, EmptyState, LinkButton, StateChip, TaskLink } from '@/components/admin/ui';
-import { getMediaMap } from '@/content/media';
+import { CountUp } from '@/components/admin/CountUp';
+import { Card, LinkButton, TaskLink } from '@/components/admin/ui';
 import { getSiteSettings } from '@/content/resolve';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
-import { getUpcomingEvents, ineligibleReason } from '@/lib/events';
-import { formatEventDate, formatEventTime } from '@/lib/format';
+import type { ResolvedEvent } from '@/content/types';
+import { getUpcomingEvents, venueIsoDate } from '@/lib/events';
+import { formatEventDateCompact, formatPrice, formatTimeRangeCompact } from '@/lib/format';
 import { getOpenState } from '@/lib/hours';
 import { getStaff } from '@/server/auth';
-import { getAttention, getRecentChanges, TABLE_LABEL } from '@/server/content/attention';
+import { getAttention, housekeepingSentence } from '@/server/content/attention';
 import { getEditableEvents } from '@/server/content/events';
+import { getEventAvailability } from '@/server/ticketing/availability';
+import { isTicketingConfigured } from '@/server/ticketing/db';
+import { getSalesSummaries, type SalesSummary } from '@/server/ticketing/sales';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Dashboard.
+ * Home: a money screen, not a task screen.
  *
- * It opens with what you came to do, not with numbers. Then the things that are
- * actually wrong, each linked to the field that fixes it. Then tonight. There are
- * no charts: a restaurant manager opening this on a Friday afternoon needs to
- * know whether anything is broken and what is on, and nothing else.
- *
- * Those problems used to arrive as one coloured banner each — eleven of them on
- * a busy week, stacked full-width above everything else, so the screen opened as
- * a wall of red and the four errands were pushed off the bottom. They are one
- * list now, in one card, worst first, with everything past the fourth folded
- * away. Nothing is lost; it just stops shouting.
+ * The first thing on it is what is selling and what is next. Housekeeping is
+ * one quiet, uncounted sentence at the bottom. Nothing here is red, nothing
+ * says SOON, nothing carries a badge. The only things that get a band at the
+ * top are the ones that cost money right now.
  */
-export default async function AdminDashboard() {
+export default async function AdminHome() {
   const staff = await getStaff();
   if (!staff) redirect('/admin/login');
 
   const now = new Date();
   const db = getReadDb();
-  const settings = await getSiteSettings();
+  const [settings, events, attention, inquiries] = await Promise.all([
+    getSiteSettings(),
+    db ? getEditableEvents(db) : { series: [], occurrences: [] },
+    db ? getAttention(db, now) : [],
+    db ? db.list<Row>('inquiries', { where: { status: 'new' } }) : [],
+  ]);
 
-  const [attention, recent, events, inquiries] = db
-    ? await Promise.all([
-        getAttention(db, now),
-        getRecentChanges(db),
-        getEditableEvents(db),
-        db.list<Row>('inquiries', { where: { status: 'new' } }),
-      ])
-    : [[], [], { series: [], occurrences: [] }, []];
+  const upcoming = getUpcomingEvents(events, now).filter((event) => event.seriesSlug === null);
+  const next = upcoming[0] ?? null;
+  const later = upcoming.slice(1, 6);
+  const week = upcoming.filter((event) => Date.parse(event.startsAt) < now.getTime() + 7 * 86_400_000);
+  const ids = upcoming.map((event) => event.overrideId!).filter(Boolean);
+  const [summaries, nextAvailability] = await Promise.all([
+    getSalesSummaries(ids),
+    next?.ticketing.enabled && next.overrideId ? getEventAvailability(next.overrideId) : Promise.resolve(null),
+  ]);
+  const nextSummary = next?.overrideId ? summaries.get(next.overrideId) ?? null : null;
 
+  const weekSold = week.reduce((sum, event) => sum + (summaries.get(event.overrideId ?? '')?.ticketsSold ?? 0), 0);
+  const weekCents = week.reduce((sum, event) => sum + (summaries.get(event.overrideId ?? '')?.netCents ?? 0), 0);
+
+  const openState = getOpenState(settings.hours.value, settings.temporaryClosures, now, settings.timeZone);
+  const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: settings.timeZone }).format(now));
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const name = staff.source === 'open' ? '' : `, ${(staff.name || staff.email).split(/[\s@]+/)[0]}`;
+  const stateLine = `${openState.open ? `Open now, ${openState.label.toLowerCase()}` : openState.label}. ${
+    upcoming.length === 0 ? 'Nothing on the calendar yet.' : upcoming.length === 1 ? 'One event on the calendar.' : `${upcoming.length} events on the calendar.`
+  }`;
+
+  // The only things that get a band: what costs money right now.
+  const problems = moneyProblems(upcoming, summaries, now, nextAvailability?.tiers.length ?? null);
+  const housekeeping = housekeepingSentence(attention.filter((entry) => entry.kind !== 'tickets'));
   const waiting = inquiries.length;
 
-  const upcoming = getUpcomingEvents(events, now, 5);
-  // One lookup for the whole list — the thumbnails are what let staff tell a
-  // Friday from a Saturday at a glance.
-  const media = await getMediaMap();
-  const openState = getOpenState(
-    settings.hours.value,
-    settings.temporaryClosures,
-    now,
-    settings.timeZone,
-  );
-
-  const urgent = attention.filter((entry) => entry.severity === 'blocking').length;
-  const shown = attention.slice(0, 4);
-  const folded = attention.slice(4);
-
   return (
-    <AdminShell
-      staff={staff}
-      local={isLocalDb()}
-      title="What would you like to change?"
-      description={
-        openState.open
-          ? `You are open now — ${openState.label.toLowerCase()}.`
-          : openState.label
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <TaskLink
-          href="/admin/events?new=1"
-          icon="events"
-          title="Add an event"
-          hint="Add the date, photo and details in one place"
-        />
-        <TaskLink
-          href="/admin/menu"
-          icon="menu"
-          title="Update the menu"
-          hint="Change a price, description or sold-out item"
-        />
-        <TaskLink
-          href="/admin/media?upload=1"
-          icon="photos"
-          title="Add a photo or video"
-          hint="Choose a file and the site handles the rest"
-        />
-        <TaskLink
-          href="/admin/settings"
-          icon="hours"
-          title="Hours & contact"
-          hint="Update opening times, holidays and contact details"
-        />
-      </div>
+    <AdminShell staff={staff} local={isLocalDb()} title={`${greeting}${name}.`} description={stateLine}>
+      {problems.length > 0 ? (
+        <div className="mb-6 grid gap-2">
+          {problems.map((problem) => (
+            <div key={problem.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-(--radius-md) border border-amber/50 bg-amber/8 px-4 py-3 text-[0.9375rem] text-brown">
+              <p className="min-w-0">{problem.message}</p>
+              <LinkButton href={problem.href} variant="primary">{problem.action}</LinkButton>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.875rem]">
-        <Link
-          href="/admin/website"
-          className="font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
-        >
-          Change page words or pictures
-        </Link>
-        <Link
-          href="/admin/theme"
-          className="font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
-        >
-          Dress the website for the season
-        </Link>
-        <Link
-          href="/admin/inquiries"
-          className="font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
-        >
-          {waiting > 0
-            ? `Read ${waiting} new ${waiting === 1 ? 'enquiry' : 'enquiries'}`
-            : 'Read enquiries'}
-        </Link>
-      </div>
-
-      <div className="mt-8">
-        {attention.length > 0 ? (
-          <Card
-            title="Needs attention"
-            action={
-              <span className="text-[0.8125rem] text-brown-soft">
-                {urgent > 0
-                  ? `${urgent} to fix now · ${attention.length} in total`
-                  : `${attention.length} ${attention.length === 1 ? 'thing' : 'things'}`}
-              </span>
-            }
-          >
-            <ul className="divide-y divide-brown/12">
-              {shown.map((entry) => (
-                <AttentionRow key={entry.id} entry={entry} />
-              ))}
-            </ul>
-
-            {folded.length > 0 ? (
-              <details className="mt-1 border-t border-brown/12">
-                <summary className="inline-flex min-h-11 cursor-pointer items-center text-[0.875rem] font-semibold text-clay">
-                  Show the other {folded.length}
-                </summary>
-                <ul className="divide-y divide-brown/12 border-t border-brown/12">
-                  {folded.map((entry) => (
-                    <AttentionRow key={entry.id} entry={entry} />
-                  ))}
-                </ul>
-              </details>
-            ) : null}
-          </Card>
-        ) : (
-          <Card>
-            <p className="flex items-center gap-2.5 text-[0.9375rem] text-brown">
-              <span
-                aria-hidden="true"
-                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-success/12 text-[0.75rem] font-bold text-success"
-              >
-                ✓
-              </span>
-              Everything is in order — nothing needs attention right now.
-            </p>
-          </Card>
-        )}
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Card
-          title="Coming up"
-          action={
-            <Link
-              href="/admin/events"
-              className="text-[0.875rem] text-clay underline underline-offset-4 hover:text-coral-deep"
-            >
-              All events
-            </Link>
-          }
-        >
-          {upcoming.length === 0 ? (
-            <EmptyState>Nothing on the calendar.</EmptyState>
-          ) : (
-            <ul className="divide-y divide-brown/12">
-              {upcoming.map((event) => {
-                const problem = ineligibleReason(event, now);
-                return (
-                  <li key={event.id} className="flex items-center gap-3 py-3">
-                    <ArtworkThumb
-                      asset={event.flyerAssetId ? (media[event.flyerAssetId] ?? null) : null}
-                    />
-                    {/* The name gets its own line rather than a share of one.
-                        On a phone the old row clipped it to "Oasis Fri…". */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[0.9375rem] text-brown">{event.title}</p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8125rem]">
-                        <span className="tabular font-semibold text-brown">
-                          {formatEventDate(event.startsAt)}
-                        </span>
-                        <span className="tabular text-brown-soft">
-                          {formatEventTime(event.startsAt)}
-                        </span>
-                        <ArtworkSourceNote source={artworkSourceOf(event)} />
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      {problem ? (
-                        <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
-                          {problem}
-                        </span>
-                      ) : !event.ticketUrl ? (
-                        <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-danger">
-                          No tickets
-                        </span>
-                      ) : (
-                        <StateChip state="published" />
-                      )}
-                      <Link
-                        href={`/admin/events/${event.seriesSlug ?? ''}`}
-                        className="text-[0.8125rem] text-clay underline underline-offset-4 hover:text-coral-deep"
-                      >
-                        Edit
-                      </Link>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+      {/* Up next — the only bold element. */}
+      {next ? (
+        <UpNext event={next} summary={nextSummary} tiersKnown={nextAvailability?.tiers.length ?? null} ticketingOn={isTicketingConfigured()} />
+      ) : (
+        <Card>
+          <p className="display text-[clamp(1.5rem,3vw,2rem)] leading-none text-brown">Nothing on the calendar yet.</p>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">Want to put something up? A flyer and a date is enough to start.</p>
+          <div className="mt-5">
+            <LinkButton href="/admin/events?new=1" variant="primary">Add an event</LinkButton>
+          </div>
         </Card>
+      )}
 
-        <Card title="Recently changed">
-          {recent.length === 0 ? (
-            <EmptyState>No changes yet. Everything is as it was set up.</EmptyState>
-          ) : (
-            <ul className="divide-y divide-brown/12">
-              {recent.map((entry) => (
-                <li key={entry.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3">
-                  <span className="min-w-0 flex-1 text-[0.9375rem] text-brown">
-                    {/* The label is what a person typed; the row id is a uuid.
-                        Show the uuid only when there is nothing better. */}
-                    {entry.label || `${TABLE_LABEL[entry.table] ?? entry.table} · ${entry.rowId}`}
-                  </span>
-                  <span className="text-[0.8125rem] text-brown-soft">
-                    {entry.actorName}, {changedOn(entry.at)}
-                  </span>
+      {/* This week, in one line, then the errands. */}
+      <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h2 className="text-[1rem] font-semibold text-brown">This week</h2>
+        <p className="tabular text-[0.9375rem] text-brown-soft">
+          {week.length === 0
+            ? 'Nothing on this week.'
+            : `${formatPrice(weekCents)} in tickets · ${weekSold} sold · ${week.length} ${week.length === 1 ? 'event' : 'events'}`}
+        </p>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <TaskLink href="/admin/events?new=1" icon="events" title="Add an event" />
+        <TaskLink href="/admin/menu" icon="menu" title="Update the menu" />
+        <TaskLink href="/admin/media?upload=1" icon="photos" title="Add a photo or video" />
+      </div>
+      {waiting > 0 ? (
+        <p className="mt-3 text-[0.9375rem] text-brown-soft">
+          <Link href="/admin/inquiries" className="font-semibold text-brown underline underline-offset-4">
+            {waiting === 1 ? 'One new enquiry' : `${waiting} new enquiries`}
+          </Link>{' '}
+          to read.
+        </p>
+      ) : null}
+
+      {later.length > 0 ? (
+        <section className="mt-8">
+          <h2 className="text-[1rem] font-semibold text-brown">Later</h2>
+          <ul className="mt-2 divide-y divide-brown/10">
+            {later.map((event) => {
+              const summary = summaries.get(event.overrideId ?? '');
+              return (
+                <li key={event.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-3 text-[0.9375rem]">
+                  <span className="tabular w-20 shrink-0 text-brown-soft">{formatEventDateCompact(event.startsAt).replace(/^\w+ /, '')}</span>
+                  <Link href={`/admin/events/one/${encodeURIComponent(event.overrideId ?? '')}`} className="min-w-0 flex-1 truncate font-semibold text-brown underline-offset-4 hover:underline">
+                    {event.title}
+                  </Link>
+                  <span className="tabular text-brown-soft">{soldLine(event, summary)}</span>
                 </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
+      {housekeeping ? (
+        <p className="mt-10 border-t border-brown/10 pt-5 text-[0.9375rem] leading-relaxed text-brown-soft">
+          {housekeeping}{' '}
+          <Link href="/admin/tidy" className="underline underline-offset-4 hover:text-brown">
+            See the list
+          </Link>
+        </p>
+      ) : null}
     </AdminShell>
   );
 }
 
-/**
- * "Mon, Sep 14" rather than a timestamp — and never a crash.
- *
- * A version row with a missing or malformed `at` would otherwise take the whole
- * dashboard down through Intl, which is a poor trade for one line of a history
- * list.
- */
-function changedOn(at: string): string {
-  const when = new Date(at);
-  return Number.isNaN(when.getTime()) ? 'earlier' : formatEventDate(at);
+function soldLine(event: ResolvedEvent, summary: SalesSummary | undefined): string {
+  if (!event.published) return 'draft';
+  if (!event.ticketing.enabled) return event.ticketUrl ? 'on Tickeri' : 'not on sale';
+  if (!summary) return 'not on sale yet';
+  return summary.capacity ? `${summary.ticketsSold} of ${summary.capacity}` : `${summary.ticketsSold} sold`;
 }
 
-const SEVERITY = {
-  blocking: { word: 'Fix now', chip: 'border-danger/45 bg-danger/8 text-danger' },
-  warning: { word: 'Soon', chip: 'border-warning/45 bg-warning/8 text-warning' },
-  info: { word: 'Note', chip: 'border-brown/25 bg-brown/6 text-brown-soft' },
-} as const;
-
-function severityOf(value: string) {
-  return value in SEVERITY ? SEVERITY[value as keyof typeof SEVERITY] : SEVERITY.info;
-}
-
-/**
- * One thing that wants doing.
- *
- * Severity is a word in a chip, not a colour wash across the whole row — the
- * same rule the state chips follow, and the reason eleven of these in a column
- * still read as a list rather than as an emergency.
- */
-function AttentionRow({
-  entry,
+function UpNext({
+  event,
+  summary,
+  tiersKnown,
+  ticketingOn,
 }: {
-  entry: { id: string; severity: string; message: string; href: string; actionLabel: string };
+  event: ResolvedEvent;
+  summary: SalesSummary | null;
+  tiersKnown: number | null;
+  ticketingOn: boolean;
 }) {
-  const severity = severityOf(entry.severity);
+  const inHouse = event.ticketing.enabled;
+  const capacity = summary?.capacity ?? event.ticketing.capacity ?? null;
+  const sold = summary?.ticketsSold ?? 0;
+  const left = capacity !== null ? Math.max(0, capacity - (summary?.seatsTaken ?? 0)) : null;
+  const percent = capacity ? Math.min(100, Math.round((sold / capacity) * 100)) : 0;
+  const isToday = venueIsoDate(event.startsAt) === venueIsoDate(new Date().toISOString());
+  const editHref = `/admin/events/one/${encodeURIComponent(event.overrideId ?? '')}`;
+  const salesHref = `/admin/events/${encodeURIComponent(event.overrideId ?? '')}/sales`;
 
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3">
-      <span
-        className={`inline-flex w-16 shrink-0 items-center justify-center rounded-(--radius-sm) border px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] ${severity.chip}`}
-      >
-        {severity.word}
-      </span>
-      <p className="min-w-0 flex-1 basis-64 text-[0.9375rem] leading-relaxed text-brown">
-        {entry.message}
+    <section aria-labelledby="up-next" className="admin-raised rounded-(--radius-lg) border border-brown/12 bg-linen p-5 sm:p-7">
+      <p id="up-next" className="text-[0.8125rem] font-semibold text-brown-soft">
+        Up next · {isToday ? 'Today' : formatEventDateCompact(event.startsAt)}
       </p>
-      <LinkButton href={entry.href} variant="quiet">
-        {entry.actionLabel} →
-      </LinkButton>
-    </li>
+      <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h2 className="display text-[clamp(1.75rem,3.4vw,2.5rem)] leading-none text-brown">{event.title}</h2>
+        <p className="tabular text-[1rem] text-brown-soft">{formatTimeRangeCompact(event.startsAt, event.endsAt)}</p>
+      </div>
+
+      {inHouse && summary ? (
+        <>
+          <div className="mt-6 h-2 overflow-hidden rounded-full bg-brown/10" role="img" aria-label={capacity ? `${sold} of ${capacity} sold` : `${sold} sold`}>
+            <div className="h-full rounded-full bg-amber" style={{ width: `${capacity ? percent : sold > 0 ? 100 : 0}%` }} />
+          </div>
+          <p className="admin-figure mt-3 text-[clamp(2rem,5vw,3rem)] text-brown">
+            <CountUp value={sold} />
+            {capacity ? <span className="text-brown-soft"> of {capacity} sold</span> : <span className="text-brown-soft"> sold</span>}
+          </p>
+          <p className="tabular mt-2 text-[0.9375rem] text-brown-soft">
+            {formatPrice(summary.netCents)} collected
+            {left !== null ? ` · ${left} left` : ''}
+            {summary.lastSaleAt ? ` · last sale ${ago(summary.lastSaleAt)}` : ' · no sales yet'}
+            {summary.doorCents > 0 ? ` · ${formatPrice(summary.doorCents)} at the door` : ''}
+          </p>
+        </>
+      ) : inHouse ? (
+        <p className="mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">
+          {!ticketingOn
+            ? 'Ticket sales are not connected on this copy of the site.'
+            : tiersKnown === 0
+              ? 'Ticketing is on but nothing is priced yet.'
+              : 'No sales yet.'}
+        </p>
+      ) : (
+        <p className="mt-5 text-[0.9375rem] leading-relaxed text-brown-soft">
+          {event.ticketUrl ? 'Tickets are sold on Tickeri, so sales are not counted here.' : 'Not on sale.'}
+        </p>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {inHouse ? <LinkButton href={salesHref} variant="primary">Open door list</LinkButton> : null}
+        <LinkButton href={editHref} variant={inHouse ? 'secondary' : 'primary'}>Edit event</LinkButton>
+        {inHouse ? <LinkButton href={`/admin/door?event=${encodeURIComponent(event.overrideId ?? '')}`} variant="secondary">Door</LinkButton> : null}
+      </div>
+    </section>
   );
+}
+
+function ago(iso: string): string {
+  const minutes = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (minutes < 2) return 'just now';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 36) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  return `${Math.round(hours / 24)} days ago`;
+}
+
+/**
+ * Real problems: only things that cost money right now.
+ * Anything else is housekeeping, and if it is not clear which, it is housekeeping.
+ */
+function moneyProblems(
+  upcoming: ResolvedEvent[],
+  summaries: Map<string, SalesSummary>,
+  now: Date,
+  nextTiers: number | null,
+): { id: string; message: string; href: string; action: string }[] {
+  const problems: { id: string; message: string; href: string; action: string }[] = [];
+  const next = upcoming[0];
+  if (next?.published && next.ticketing.enabled && nextTiers === 0) {
+    problems.push({
+      id: 'no-tiers',
+      message: `${next.title} is on sale with nothing priced. Guests can see it but cannot buy.`,
+      href: `/admin/events/one/${encodeURIComponent(next.overrideId ?? '')}`,
+      action: 'Add a ticket price',
+    });
+  }
+  for (const event of upcoming) {
+    if (!event.ticketing.enabled || !event.overrideId) continue;
+    const summary = summaries.get(event.overrideId);
+    const started = Date.parse(event.startsAt);
+    if (summary && summary.ticketsSold > 0 && summary.checkedIn === 0 && now.getTime() > started + 30 * 60_000 && now.getTime() < Date.parse(event.endsAt)) {
+      problems.push({
+        id: `no-checkins-${event.id}`,
+        message: `${event.title} started half an hour ago and nobody has been checked in yet.`,
+        href: `/admin/scan?event=${encodeURIComponent(event.overrideId)}`,
+        action: 'Open the scanner',
+      });
+    }
+  }
+  return problems;
 }

@@ -29,9 +29,9 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-(--radius-md) border border-brown/15 ${
+      className={`admin-raised rounded-(--radius-md) border border-brown/12 ${
         tone === 'quiet' ? 'bg-ivory' : 'bg-linen'
-      } p-4 shadow-[0_12px_35px_rgba(78,49,20,0.05)] sm:p-5`}
+      } p-4 sm:p-5`}
     >
       {title || action ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -246,22 +246,21 @@ export function TaskLink({
 }: {
   href: string;
   title: string;
-  hint: string;
+  /** Optional. The label is usually enough. */
+  hint?: string;
   icon: NavIconName;
 }) {
   return (
     <Link
       href={href}
-      className="group flex min-h-28 items-start gap-3.5 rounded-(--radius-md) border border-brown/12 bg-linen p-4 shadow-[0_12px_35px_rgba(78,49,20,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-coral/60 hover:shadow-[0_18px_45px_rgba(78,49,20,0.10)]"
+      className="admin-raised group flex min-h-14 items-center gap-3 rounded-(--radius-md) border border-brown/12 bg-linen px-4 py-3 transition-colors duration-150 hover:border-brown/30"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-teal text-amber transition-colors duration-200 group-hover:bg-coral group-hover:text-on-orange">
-        <NavIcon name={icon} className="size-5" />
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brown/8 text-brown">
+        <NavIcon name={icon} className="size-[18px]" />
       </span>
-      <span className="min-w-0 pt-0.5">
-        <span className="block text-[1rem] font-semibold text-brown group-hover:text-clay">
-          {title}
-        </span>
-        <span className="mt-1 block text-[0.8125rem] leading-relaxed text-brown-soft">{hint}</span>
+      <span className="min-w-0">
+        <span className="block text-[0.9375rem] font-semibold text-brown">{title}</span>
+        {hint ? <span className="mt-0.5 block text-[0.8125rem] leading-snug text-brown-soft">{hint}</span> : null}
       </span>
     </Link>
   );

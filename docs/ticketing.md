@@ -200,3 +200,24 @@ like a web sale, so capacity stays honest, then checks the tickets in on the spo
 in `event_sales_summary`.
 
 The `Permissions-Policy` header allows the camera for same-origin pages so `/admin/scan` can use it.
+
+---
+
+## The admin
+
+- **Home** (`/admin`) is a money screen: a time-aware greeting, one "Up next" card with sold /
+  capacity, money collected, seats left and the last sale (from `event_sales_summary`), a
+  one-line week total, three compact errands, the next few events, and one quiet housekeeping
+  sentence linking to `/admin/tidy`. The only things that get a band at the top are problems that
+  cost money right now: an event on sale with nothing priced, and an event that started half an
+  hour ago with no check-ins.
+- **Tidy** (`/admin/tidy`) lists housekeeping with a one-tap fix where one exists (take a past
+  event off the calendar, put a dish back) and a link where it does not.
+- **Sales** (`/admin/events/<event id>/sales`): sold, gross, refunded, net, web vs door, the
+  orders with search, a refund per order (Stripe, with the webhook doing the state change; door
+  and comp orders are marked directly), and a CSV of the attendees.
+- **Five sections.** Events (with Door), Menu, Look (seasonal look, photos), Visit (hours, pages,
+  enquiries), Team. Active section is an amber underline; on a phone the five are a bottom bar.
+- **The palette** is the public site's night: `src/app/admin/admin.css` remaps the admin's tokens
+  under `data-admin-look="evening"`, so every screen moved at once without a component changing.
+  Amber is the one accent and is spent on the one action per screen; links are text, underlined.

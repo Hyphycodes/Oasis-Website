@@ -3,40 +3,59 @@ import type { ReactNode } from 'react';
 import { signOut } from '@/server/actions/team';
 import type { Staff } from '@/server/auth';
 import { canOpen, ROLE_LABEL, type Section } from '@/server/permissions';
-import { AdminNav } from './AdminNav';
-import type { NavIconName } from './icons';
+import { AdminBottomBar, AdminNav, SectionTabs, type AdminNavItem } from './AdminNav';
 import { SaveStatusProvider } from './SaveStatus';
 import { Notice } from './ui';
 
 /**
  * The admin shell.
  *
- * Seven destinations, and an eighth only an Owner sees. That ceiling is the point:
- * a restaurant manager should be able to hold the whole tool in their head, and
- * every extra top-level item makes the five things they came to do harder to
- * find. "Website" is five named screens, not a pages collection.
+ * Five sections — Events, Menu, Look, Visit, Team — and every earlier screen
+ * still within two taps: the door lives under Events, photos and the seasonal
+ * look under Look, pages and enquiries under Visit. The owner's name and the
+ * way out to the website sit on the right, quietly.
  *
- * Everything a screen shares sits here rather than being repeated on each page:
- * the way back up a level, the link out to the real website, and the single
- * indicator that says a save worked.
+ * Everything a screen shares sits here rather than being repeated on each
+ * page: the way back up a level, the link out to the real website, and the
+ * single indicator that says a save worked.
  */
 
-const NAV: {
-  href: string;
-  label: string;
-  icon: NavIconName;
-  section?: Section;
-  ownerOnly?: boolean;
-}[] = [
-  { href: '/admin', label: 'Home', icon: 'home' },
+const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
+  {
+    href: '/admin/events',
+    label: 'Events',
+    icon: 'events',
+    section: 'events',
+    also: ['/admin/scan'],
+    screens: [
+      { href: '/admin/events', label: 'Events' },
+      { href: '/admin/door', label: 'Door' },
+    ],
+  },
   { href: '/admin/menu', label: 'Menu', icon: 'menu', section: 'menu' },
-  { href: '/admin/events', label: 'Events', icon: 'events', section: 'events' },
-  { href: '/admin/door', label: 'Door', icon: 'door', section: 'events' },
-  { href: '/admin/website', label: 'Pages', icon: 'pages', section: 'website' },
-  { href: '/admin/theme', label: 'Seasonal look', icon: 'season', section: 'website' },
-  { href: '/admin/media', label: 'Photos & videos', icon: 'photos', section: 'media' },
-  { href: '/admin/settings', label: 'Hours & contact', icon: 'hours', section: 'settings' },
-  { href: '/admin/team', label: 'Staff', icon: 'staff', ownerOnly: true },
+  {
+    href: '/admin/look',
+    label: 'Look',
+    icon: 'look',
+    section: 'website',
+    screens: [
+      { href: '/admin/look', label: 'Look' },
+      { href: '/admin/theme', label: 'Seasonal look' },
+      { href: '/admin/media', label: 'Photos & videos' },
+    ],
+  },
+  {
+    href: '/admin/settings',
+    label: 'Visit',
+    icon: 'visit',
+    section: 'settings',
+    screens: [
+      { href: '/admin/settings', label: 'Hours & contact' },
+      { href: '/admin/website', label: 'Pages' },
+      { href: '/admin/inquiries', label: 'Enquiries' },
+    ],
+  },
+  { href: '/admin/team', label: 'Team', icon: 'team', ownerOnly: true },
 ];
 
 export function AdminShell({
@@ -61,63 +80,51 @@ export function AdminShell({
   const items = NAV.filter((item) => {
     if (item.ownerOnly) return staff.role === 'owner';
     if (!item.section) return true;
+    // Visit groups settings with pages and enquiries; anyone who may open any
+    // of those sees the section, and each screen still checks its own access.
+    if (item.section === 'settings') {
+      return (
+        canOpen({ role: staff.role, sections: staff.sections }, 'settings') ||
+        canOpen({ role: staff.role, sections: staff.sections }, 'website')
+      );
+    }
     return canOpen({ role: staff.role, sections: staff.sections }, item.section);
   });
+  const navItems = items.map(({ href, label, icon, also, screens }) => ({ href, label, icon, also, screens }));
 
   return (
     <SaveStatusProvider>
-      <div className="min-h-dvh bg-ivory">
-        <header className="sticky top-0 z-40 border-b border-teal/20 bg-teal shadow-[0_8px_30px_rgba(10,48,43,0.12)]">
-          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
-            <Link
-              href="/admin"
-              className="shrink-0 text-[1.0625rem] font-semibold text-linen transition-opacity hover:opacity-80"
-            >
+      <div className="min-h-dvh bg-ivory pb-20 lg:pb-0">
+        <header className="sticky top-0 z-40 border-b border-night-text/10 bg-teal">
+          <div className="mx-auto flex max-w-[1280px] items-center gap-x-6 px-4 py-2.5 sm:px-6">
+            <Link href="/admin" className="display shrink-0 text-[1.375rem] leading-none text-night-text transition-opacity hover:opacity-80">
               Oasis
-              <span className="ml-1 font-normal text-linen/60">admin</span>
+              <span className="ml-1.5 font-sans text-[0.75rem] font-medium normal-case tracking-[0.12em] text-night-text/55">
+                admin
+              </span>
             </Link>
 
-            <AdminNav items={items.map(({ href, label, icon }) => ({ href, label, icon }))} />
+            <AdminNav items={navItems} />
 
-            <div className="ml-auto flex items-center gap-2 text-[0.8125rem] sm:gap-3">
-              {/* The way back to the website, and the most-used control after a
-                  change — so it is a button, not a link buried among the others. */}
+            <div className="ml-auto flex items-center gap-3 text-[0.8125rem]">
+              {staff.source !== 'open' ? (
+                <span className="hidden max-w-[12rem] truncate text-night-text/65 sm:block" title={`${staff.name || staff.email} · ${ROLE_LABEL[staff.role]}`}>
+                  {firstName(staff.name || staff.email)}
+                </span>
+              ) : null}
               <Link
                 href="/"
                 target="_blank"
-                className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-linen/25 bg-linen/8 px-3.5 text-[0.875rem] font-semibold text-linen transition-colors hover:bg-linen/18 sm:px-4"
+                className="inline-flex min-h-10 shrink-0 items-center gap-1 text-[0.875rem] font-semibold text-night-text/80 underline-offset-4 hover:text-night-text hover:underline"
               >
-                <span className="hidden sm:inline">View the website</span>
-                <span className="sm:hidden">Website</span>
-                <span aria-hidden="true">↗</span>
+                View site
               </Link>
-
               {staff.source !== 'open' ? (
-                <>
-                  {/* Initials on a phone, the full name once there is room. Who
-                      you are signed in as matters when a bar and a kitchen share
-                      one tablet. */}
-                  <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linen/12 text-[0.75rem] font-semibold uppercase text-linen lg:hidden"
-                    title={`${staff.name || staff.email} · ${ROLE_LABEL[staff.role]}`}
-                  >
-                    {initialsOf(staff.name || staff.email)}
-                  </span>
-                  <span className="hidden min-w-0 text-linen/65 lg:block">
-                    <span className="block truncate">{staff.name || staff.email}</span>
-                    <span className="block text-[0.75rem] text-linen/45">
-                      {ROLE_LABEL[staff.role]}
-                    </span>
-                  </span>
-                  <form action={signOut}>
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-10 items-center rounded-full px-2 text-linen/70 underline underline-offset-4 transition-colors hover:text-linen"
-                    >
-                      Sign out
-                    </button>
-                  </form>
-                </>
+                <form action={signOut}>
+                  <button type="submit" className="inline-flex min-h-10 items-center text-night-text/55 underline-offset-4 hover:text-night-text hover:underline">
+                    Sign out
+                  </button>
+                </form>
               ) : null}
             </div>
           </div>
@@ -127,32 +134,26 @@ export function AdminShell({
           {backTo || local ? (
             <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
               {backTo ? (
-                <Link
-                  href={backTo.href}
-                  className="inline-flex min-h-10 items-center gap-1.5 text-[0.875rem] font-semibold text-clay transition-colors hover:text-coral-deep"
-                >
+                <Link href={backTo.href} className="inline-flex min-h-10 items-center gap-1.5 text-[0.875rem] font-semibold text-brown-soft transition-colors hover:text-brown">
                   <span aria-hidden="true">←</span>
                   {backTo.label}
                 </Link>
               ) : null}
-
               {local ? (
                 <p className="rounded-full bg-brown/6 px-3 py-1.5 text-[0.8125rem] text-brown-soft">
-                  Preview copy — changes here do not affect the live website.
+                  Preview copy. Changes here do not affect the live website.
                 </p>
               ) : null}
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <SectionTabs items={navItems} />
+
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="min-w-0">
-              <h1 className="text-[length:var(--text-display-md)] font-semibold leading-tight tracking-[-0.02em] text-brown">
-                {title}
-              </h1>
+              <h1 className="display text-[clamp(1.75rem,3vw,2.5rem)] leading-none text-brown">{title}</h1>
               {description ? (
-                <p className="measure mt-1.5 text-[0.9375rem] leading-relaxed text-brown-soft">
-                  {description}
-                </p>
+                <p className="measure mt-2 text-[0.9375rem] leading-relaxed text-brown-soft">{description}</p>
               ) : null}
             </div>
             {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
@@ -160,6 +161,8 @@ export function AdminShell({
 
           <div className="mt-6">{children}</div>
         </main>
+
+        <AdminBottomBar items={navItems} />
       </div>
     </SaveStatusProvider>
   );
@@ -175,9 +178,6 @@ export function NoAccess({ what }: { what: string }) {
   );
 }
 
-function initialsOf(who: string): string {
-  const parts = who.split(/[\s@._-]+/).filter(Boolean);
-  const first = parts[0]?.[0];
-  if (!first) return '?';
-  return (first + (parts[1]?.[0] ?? '')).toUpperCase();
+function firstName(who: string): string {
+  return who.split(/[\s@]+/)[0] ?? who;
 }
