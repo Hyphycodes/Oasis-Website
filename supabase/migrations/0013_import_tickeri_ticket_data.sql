@@ -48,8 +48,7 @@ update public.event_occurrences set
   description_html = '<p>🎨 SNOOPY PAINT &amp; SIP ! 🐶🍂 HALLOWEEN POP UP BEGINS!</p><p>Due to high demand, we’re bringing it back—bigger and better! ALL AGES EVENT!!!</p><p>📅 Thursday, September 24th<br />⏰ 7PM Start<br />🎨 Instructor and painting supplies included<br />🎶 Music, drinks, photo opportunities &amp; great vibes!</p><p>No experience needed—just come ready to paint, sip and have fun! Tickets are limited, so grab yours now!</p>',
   age_policy = 'all_ages',
   summary = 'Halloween pop-up paint & sip — sold out, join the waitlist.',
-  status = 'sold-out'::event_status,
-  capacity = 0
+  status = 'sold-out'::event_status
 where id = 'tickeri:9s52lkdtlx32';
 
 update public.event_occurrences set
@@ -160,29 +159,32 @@ where id = 'tickeri:ckl3ja90j2m6';
 
 alter table public.event_occurrences enable trigger event_occurrences_guard_publish;
 
-insert into public.ticket_tiers (event_id, name, description, price_cents, seats_per_ticket, min_per_order, max_per_order, sort_order, is_active)
-select v.event_id, v.name, v.description, v.price_cents, v.seats_per_ticket, v.min_per_order, v.max_per_order, v.sort_order, v.is_active
+insert into public.ticket_tiers (event_id, name, description, price_cents, capacity, seats_per_ticket, min_per_order, max_per_order, sort_order, is_active)
+select v.event_id, v.name, v.description, v.price_cents, v.capacity, v.seats_per_ticket, v.min_per_order, v.max_per_order, v.sort_order, v.is_active
 from (values
-  ('tickeri:ly48t69ytbwh', 'General Admission', null::text, 1000, 1, 0, 5, 0, true),
-  ('tickeri:mv6rr2tii5m5', 'General Admission', null, 1000, 1, 0, 5, 0, true),
-  ('tickeri:9s52lkdtlx32', 'General Admission', null, 1000, 1, 0, 10, 0, true),
-  ('tickeri:0b6uk2g80hsg', 'General Admission', null, 1000, 1, 0, 5, 0, true),
-  ('tickeri:d59jua699tbj', 'General Admission', null, 2500, 1, 0, 5, 0, true),
-  ('tickeri:a2wlpotqkbsa', 'General Admission', null, 1000, 1, 0, 4, 0, true),
-  ('tickeri:j2wyhgin40r2', 'General Admission', null, 3500, 1, 0, 5, 0, true),
-  ('tickeri:xvt4t4jbzvwf', 'GENERAL ADMISSION', null, 2000, 1, 0, 5, 0, true),
-  ('tickeri:6n2pu69eopzu', 'GENERAL ADMISSION', null, 1000, 1, 0, 4, 0, true),
-  ('tickeri:4m2ambt0jv1e', 'General Admission', null, 1000, 1, 0, 5, 0, true),
-  ('tickeri:0q4w5wjxd5iv', 'General Admission', null, 1000, 1, 0, 4, 0, true),
-  ('tickeri:th9oa33ur1ou', 'General Admission', null, 2000, 1, 0, 4, 0, true),
-  ('tickeri:c8ju6ei787qj', 'EARLY BIRD General Admission', null, 1000, 1, 0, 5, 0, true),
-  ('tickeri:c8ju6ei787qj', 'General Admission', null, 2000, 1, 0, 5, 1, true),
-  ('tickeri:c8ju6ei787qj', 'TIER 3 General Admission', null, 3000, 1, 0, 5, 2, true),
-  ('tickeri:lmw4zcgl66qv', 'RESERVATION FEE (DISCOUNTED FROM BILL)', 'Discounted from your final bill when you arrive.', 500, 1, 0, 4, 0, true),
-  ('tickeri:ov5g3wopots7', 'General Admission', null, 2000, 1, 0, 4, 0, true),
-  ('tickeri:v1tts4vt8xfw', 'RESERVATION FEE (DISCOUNTED FROM BILL)', 'Discounted from your final bill when you arrive.', 500, 1, 0, 4, 0, true),
-  ('tickeri:1r6x02r8uzu6', 'General Admission', null, 3000, 1, 0, 5, 0, true),
-  ('tickeri:ckl3ja90j2m6', 'General Admission', null, 2000, 1, 0, 4, 0, true)
-) as v(event_id, name, description, price_cents, seats_per_ticket, min_per_order, max_per_order, sort_order, is_active)
+  ('tickeri:ly48t69ytbwh', 'General Admission', null::text, 1000, null::int, 1, 0, 5, 0, true),
+  ('tickeri:mv6rr2tii5m5', 'General Admission', null, 1000, null, 1, 0, 5, 0, true),
+  -- Genuinely sold out on Tickeri right now: capacity 0 on the tier itself
+  -- (event_occurrences.capacity must be NULL or positive, so "sold out"
+  -- belongs on the tier, not the event).
+  ('tickeri:9s52lkdtlx32', 'General Admission', null, 1000, 0, 1, 0, 10, 0, true),
+  ('tickeri:0b6uk2g80hsg', 'General Admission', null, 1000, null, 1, 0, 5, 0, true),
+  ('tickeri:d59jua699tbj', 'General Admission', null, 2500, null, 1, 0, 5, 0, true),
+  ('tickeri:a2wlpotqkbsa', 'General Admission', null, 1000, null, 1, 0, 4, 0, true),
+  ('tickeri:j2wyhgin40r2', 'General Admission', null, 3500, null, 1, 0, 5, 0, true),
+  ('tickeri:xvt4t4jbzvwf', 'GENERAL ADMISSION', null, 2000, null, 1, 0, 5, 0, true),
+  ('tickeri:6n2pu69eopzu', 'GENERAL ADMISSION', null, 1000, null, 1, 0, 4, 0, true),
+  ('tickeri:4m2ambt0jv1e', 'General Admission', null, 1000, null, 1, 0, 5, 0, true),
+  ('tickeri:0q4w5wjxd5iv', 'General Admission', null, 1000, null, 1, 0, 4, 0, true),
+  ('tickeri:th9oa33ur1ou', 'General Admission', null, 2000, null, 1, 0, 4, 0, true),
+  ('tickeri:c8ju6ei787qj', 'EARLY BIRD General Admission', null, 1000, null, 1, 0, 5, 0, true),
+  ('tickeri:c8ju6ei787qj', 'General Admission', null, 2000, null, 1, 0, 5, 1, true),
+  ('tickeri:c8ju6ei787qj', 'TIER 3 General Admission', null, 3000, null, 1, 0, 5, 2, true),
+  ('tickeri:lmw4zcgl66qv', 'RESERVATION FEE (DISCOUNTED FROM BILL)', 'Discounted from your final bill when you arrive.', 500, null, 1, 0, 4, 0, true),
+  ('tickeri:ov5g3wopots7', 'General Admission', null, 2000, null, 1, 0, 4, 0, true),
+  ('tickeri:v1tts4vt8xfw', 'RESERVATION FEE (DISCOUNTED FROM BILL)', 'Discounted from your final bill when you arrive.', 500, null, 1, 0, 4, 0, true),
+  ('tickeri:1r6x02r8uzu6', 'General Admission', null, 3000, null, 1, 0, 5, 0, true),
+  ('tickeri:ckl3ja90j2m6', 'General Admission', null, 2000, null, 1, 0, 4, 0, true)
+) as v(event_id, name, description, price_cents, capacity, seats_per_ticket, min_per_order, max_per_order, sort_order, is_active)
 where exists (select 1 from public.event_occurrences e where e.id = v.event_id)
   and not exists (select 1 from public.ticket_tiers t where t.event_id = v.event_id and t.name = v.name);
