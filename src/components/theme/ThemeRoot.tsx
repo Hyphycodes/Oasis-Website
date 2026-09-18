@@ -19,7 +19,9 @@ export function ThemeRoot({ theme, children }: { theme: ResolvedTheme; children:
   const motion = config.options.motion ? 'on' : 'off';
 
   const vars = {
-    '--t-canvas': definition.canvas,
+    // The canvas is the page surface the appearance row chose; the theme's
+    // own plum is only the fallback.
+    '--t-canvas': 'var(--color-ivory)',
     '--t-glow': config.options.glow ? preset.glow : 0,
     '--t-texture': config.options.texture ? preset.texture : 0,
     '--t-vignette': preset.vignette,
@@ -31,6 +33,7 @@ export function ThemeRoot({ theme, children }: { theme: ResolvedTheme; children:
   return (
     <div
       data-theme={theme.slug}
+      data-palette="appearance"
       data-intensity={config.intensity}
       data-motion={motion}
       className="theme-root"
@@ -38,7 +41,7 @@ export function ThemeRoot({ theme, children }: { theme: ResolvedTheme; children:
     >
       {/* Overscroll and the area behind a portal must match the canvas, and
           they belong to <html>, which this component cannot reach at render. */}
-      <style>{`html{background-color:${definition.canvas}}`}</style>
+      <style>{`html{background-color:var(--color-ivory, ${definition.canvas})}`}</style>
       <ThemeAttribute slug={theme.slug} motion={motion} />
       <ThemeAtmosphere theme={theme} />
       {children}

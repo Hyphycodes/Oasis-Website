@@ -211,6 +211,25 @@ export const DEFAULT_TICKETING: EventTicketing = {
   serviceFeeFlatCents: 0,
 };
 
+/** The sentences the event editor collects, and the flyer's own colour. */
+export interface EventDetails {
+  /** Sanitised HTML with bold, italic, links and lists. Null = use `description` as text. */
+  descriptionHtml: string | null;
+  includedText: string | null;
+  bringText: string | null;
+  arrivalText: string | null;
+  /** Dominant colour of the flyer, `#rrggbb`, extracted on upload. */
+  accentHint: string | null;
+}
+
+export const DEFAULT_DETAILS: EventDetails = {
+  descriptionHtml: null,
+  includedText: null,
+  bringText: null,
+  arrivalText: null,
+  accentHint: null,
+};
+
 /** Where a record came from. Tickeri rows are matched on re-import, not copied. */
 export interface EventProvenance {
   source: 'manual' | 'tickeri';
@@ -315,6 +334,7 @@ export interface ResolvedEvent {
   presentation: EventPresentation;
   provenance: EventProvenance;
   ticketing: EventTicketing;
+  details: EventDetails;
 }
 
 /** The defaults an event takes when it has expressed no preference. */

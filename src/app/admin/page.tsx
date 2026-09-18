@@ -88,7 +88,7 @@ export default async function AdminHome() {
           <p className="display text-[clamp(1.5rem,3vw,2rem)] leading-none text-brown">Nothing on the calendar yet.</p>
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">Want to put something up? A flyer and a date is enough to start.</p>
           <div className="mt-5">
-            <LinkButton href="/admin/events?new=1" variant="primary">Add an event</LinkButton>
+            <LinkButton href="/admin/events/new" variant="primary">Add an event</LinkButton>
           </div>
         </Card>
       )}
@@ -103,7 +103,7 @@ export default async function AdminHome() {
         </p>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
-        <TaskLink href="/admin/events?new=1" icon="events" title="Add an event" />
+        <TaskLink href="/admin/events/new" icon="events" title="Add an event" />
         <TaskLink href="/admin/menu" icon="menu" title="Update the menu" />
         <TaskLink href="/admin/media?upload=1" icon="photos" title="Add a photo or video" />
       </div>

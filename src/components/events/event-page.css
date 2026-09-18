@@ -69,3 +69,12 @@
   background: currentColor;
   opacity: 0.35;
 }
+
+/* The rich description: lists and links inside a measure of prose. */
+.event-prose ul,
+.event-prose ol { padding-left: 1.25rem; }
+.event-prose ul { list-style: disc; }
+.event-prose ol { list-style: decimal; }
+.event-prose li + li { margin-top: 0.25rem; }
+.event-prose p + p, .event-prose p + ul, .event-prose ul + p { margin-top: 1rem; }
+.event-prose a { text-decoration: underline; text-underline-offset: 4px; }

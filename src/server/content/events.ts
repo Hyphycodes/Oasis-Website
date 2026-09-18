@@ -13,7 +13,7 @@ import {
   isEventTreatment,
   isVisualPreset,
 } from '@/content/event-presentation';
-import { DEFAULT_TICKETING, type EventPresentation, type EventProvenance, type EventTicketing } from '@/content/types';
+import { DEFAULT_TICKETING, type EventDetails, type EventPresentation, type EventProvenance, type EventTicketing } from '@/content/types';
 import { liveValues, workingValues, type EditorialRow } from './editorial';
 
 /**
@@ -53,6 +53,17 @@ function ticketingFromRow(source: Row): EventTicketing {
     taxRateBps: Number(source.tax_rate_bps ?? DEFAULT_TICKETING.taxRateBps) || 0,
     serviceFeeBps: Number(source.service_fee_bps ?? 0) || 0,
     serviceFeeFlatCents: Number(source.service_fee_flat_cents ?? 0) || 0,
+  };
+}
+
+function detailsFromRow(source: Row): EventDetails {
+  const hint = source.accent_hint;
+  return {
+    descriptionHtml: (source.description_html as string | null) ?? null,
+    includedText: (source.included_text as string | null) ?? null,
+    bringText: (source.bring_text as string | null) ?? null,
+    arrivalText: (source.arrival_text as string | null) ?? null,
+    accentHint: typeof hint === 'string' && /^#[0-9a-f]{6}$/i.test(hint) ? hint : null,
   };
 }
 
@@ -136,6 +147,7 @@ function occurrenceFromRow(row: Row, mode: Mode): OccurrenceRecord {
     presentation: presentationFromRow(source),
     provenance: provenanceFromRow(source),
     ticketing: ticketingFromRow(source),
+    details: detailsFromRow(source),
   };
 }
 

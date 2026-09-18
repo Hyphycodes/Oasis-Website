@@ -12,7 +12,8 @@ import type { ResolvedEvent, SiteSettings } from '@/content/types';
 import { addToCalendarUrl } from '@/lib/events';
 import { formatEventDateCompact, formatTimeRangeCompact } from '@/lib/format';
 import { isSoldOut, priceHeadline, type TicketOffer } from '@/lib/ticketing/offer';
-import { flyerTint } from '@/server/content/flyer-tint';
+import { deepen, flyerTint } from '@/server/content/flyer-tint';
+import { hexToRgb } from '@/lib/appearance/contrast';
 import type { EventArtwork } from '@/components/events/EventArt';
 
 /**
@@ -43,7 +44,7 @@ export async function EventPage({
 }) {
   const flyer = artwork.flyer;
   const preset = PRESET_STYLE[event.presentation.visualPreset];
-  const tint = await flyerTint(flyer?.path ?? null, preset.surface);
+  const tint = event.details.accentHint ? deepenHex(event.details.accentHint) : await flyerTint(flyer?.path ?? null, preset.surface);
   const ended = Date.parse(event.endsAt) <= Date.now();
   const off = ended || event.status === 'cancelled' || event.status === 'postponed';
   const category = event.presentation.category;
@@ -56,6 +57,11 @@ export async function EventPage({
   const paragraphs = event.description.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const lead = event.summary.trim() || paragraphs[0] || '';
   const prose = event.summary.trim() ? paragraphs : paragraphs.slice(1);
+  const richHtml = event.details.descriptionHtml?.trim() || null;
+  // The sentences the editor collects, each said once, only when there is one.
+  const sentences = [event.details.includedText, event.details.bringText, event.details.arrivalText]
+    .map((line) => line?.trim())
+    .filter((line): line is string => Boolean(line));
 
   const ageLine = event.ageMin ? `${event.ageMin}+` : 'All ages';
   const showBar = !off;
@@ -139,7 +145,8 @@ export async function EventPage({
               ) : null}
 
               <ul className="event-facts mt-6 text-[0.9375rem] text-night-soft">
-                <li>{ageLine}</li>
+                <li>{event.ticketing.agePolicy === '18+' ? '18+' : event.ticketing.agePolicy === '21+' ? '21+' : ageLine}</li>
+                {event.details.includedText?.trim() ? <li>{event.details.includedText.trim()}</li> : null}
                 {event.musicFormats.length > 0 ? <li>{event.musicFormats.join(', ')}</li> : null}
                 {event.venueName !== settings.name ? <li>{event.venueName}</li> : null}
               </ul>
@@ -161,12 +168,18 @@ export async function EventPage({
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <h2 className="display text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">What to expect</h2>
-              <div className="measure mt-5 space-y-4 text-[1rem] leading-relaxed text-brown">
-                {prose.map((paragraph) => (
-                  <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+              <div className="measure event-prose mt-5 space-y-4 text-[1rem] leading-relaxed text-brown">
+                {richHtml ? (
+                  // Sanitised on the server when saved; bold, italic, links and lists only.
+                  <div dangerouslySetInnerHTML={{ __html: richHtml }} />
+                ) : (
+                  prose.map((paragraph) => <p key={paragraph.slice(0, 40)}>{paragraph}</p>)
+                )}
+                {sentences.slice(1).map((line) => (
+                  <p key={line}>{line}</p>
                 ))}
                 {event.ageNote ? <p>{event.ageNote}</p> : null}
-                {prose.length === 0 && !event.ageNote ? (
+                {!richHtml && prose.length === 0 && sentences.length < 2 && !event.ageNote ? (
                   <p>Come as you are. The kitchen and the bar are open the whole time.</p>
                 ) : null}
               </div>
@@ -224,4 +237,10 @@ export async function EventPage({
       {showBar && barAction ? <StickyBuyBar headline={headline} action={barAction} /> : null}
     </>
   );
+}
+
+/** A saved `#rrggbb` accent, deepened to a surface the way the live extractor does it. */
+function deepenHex(hex: string): string {
+  const rgb = hexToRgb(hex);
+  return rgb ? deepen(rgb.r, rgb.g, rgb.b) : '#1b0b1a';
 }

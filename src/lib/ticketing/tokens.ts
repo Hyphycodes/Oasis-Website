@@ -93,3 +93,17 @@ export function verifyTicketToken(token: string, key?: string): TicketToken | nu
 export function isTicketToken(input: string): boolean {
   return /^t1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(input.trim());
 }
+
+/** A one-day link that lets staff open a draft event on the real page. */
+export function signPreviewToken(eventId: string, now = new Date(), key?: string): string {
+  const exp = Math.floor(now.getTime() / 1000) + 86_400;
+  const payload = encode({ oid: eventId, exp } satisfies OrderToken);
+  return `p1.${payload}.${sign('p1', payload, key)}`;
+}
+
+export function verifyPreviewToken(token: string, now = new Date(), key?: string): string | null {
+  const data = verify(token, 'p1', key) as OrderToken | null;
+  if (!data || typeof data.oid !== 'string' || typeof data.exp !== 'number') return null;
+  if (data.exp * 1000 < now.getTime()) return null;
+  return data.oid;
+}

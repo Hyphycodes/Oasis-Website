@@ -10,6 +10,9 @@ import { getUpcomingEvents, standaloneEvents, ineligibleReason, venueIsoDate } f
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { getStaff, staffCan } from '@/server/auth';
 import { getEditableEvents } from '@/server/content/events';
+import { getSalesSummaries, type SalesSummary } from '@/server/ticketing/sales';
+import type { PublicAsset } from '@/content/media';
+import type { ResolvedEvent } from '@/content/types';
 import { canOpen } from '@/server/permissions';
 import { NewSeries } from './EventControls';
 import { NewOneTimeEvent } from './NewOneTimeEvent';
@@ -21,10 +24,8 @@ export const dynamic = 'force-dynamic';
 type Tab = 'upcoming' | 'series' | 'drafts' | 'past' | 'cancelled';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'upcoming', label: 'All nights' },
   { id: 'series', label: 'Repeating nights' },
-  { id: 'drafts', label: 'Drafts' },
-  { id: 'past', label: 'Past' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
@@ -108,9 +109,10 @@ export default async function AdminEventsPage({
   const lastSyncedLabel = lastSynced ? formatEventDateLong(lastSynced) : null;
 
   const past = overrides
-    .filter((row) => String(row.starts_at).slice(0, 10) < venueIsoDate(now.toISOString()))
+    .filter((row) => !row.series_slug && String(row.starts_at).slice(0, 10) < venueIsoDate(now.toISOString()))
     .slice(-15)
     .reverse();
+  const summaries = await getSalesSummaries([...specials, ...drafts].map((event) => event.overrideId!).filter(Boolean));
 
   return (
     <AdminShell
@@ -120,7 +122,7 @@ export default async function AdminEventsPage({
       description="Add a special event, or update one of your regular Friday and Saturday nights."
       actions={
         <>
-          <LinkButton href="/admin/events?new=1" variant="primary">
+          <LinkButton href="/admin/events/new" variant="primary">
             Add an event
           </LinkButton>
           <LinkButton href="/events" external>
@@ -147,43 +149,13 @@ export default async function AdminEventsPage({
             </div>
           ) : null}
 
-          {specials.length > 0 ? (
-            <div className="mb-6">
-              <Card title={`${specials.length} special ${specials.length === 1 ? 'event' : 'events'}`}>
-                <ul className="divide-y divide-brown/12">
-                  {specials.map((special) => (
-                    <li key={special.id} className="flex items-center gap-x-4 gap-y-1 py-3">
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[0.9375rem] font-semibold text-brown">
-                          {special.title}
-                        </span>
-                        <span className="tabular block text-[0.8125rem] text-brown-soft">
-                          {formatEventDateLong(special.startsAt)}
-                        </span>
-                        <span className="text-[0.75rem] text-brown-soft">
-                          {special.flyerAssetId ? 'Official flyer ✓' : 'No flyer yet'}
-                          {special.presentation.treatment !== 'standard'
-                            ? ` · ${special.presentation.treatment === 'takeover' ? 'Hero takeover' : 'Featured'}`
-                            : ''}
-                        </span>
-                      </span>
-                      {special.status === 'sold-out' ? (
-                        <span className="shrink-0 text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-warning">
-                          Sold out
-                        </span>
-                      ) : null}
-                      <Link
-                        href={`/admin/events/one/${encodeURIComponent(special.id)}`}
-                        className="shrink-0 text-[0.8125rem] font-semibold text-clay underline underline-offset-4 hover:text-coral-deep"
-                      >
-                        Edit
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </div>
-          ) : null}
+          <EventGroups
+            onSale={specials.filter((event) => event.published)}
+            drafts={drafts}
+            pastRows={past}
+            summaries={summaries}
+            media={media}
+          />
 
           <div className="mb-5">
             <Tabs
@@ -342,6 +314,78 @@ export default async function AdminEventsPage({
         </>
       )}
     </AdminShell>
+  );
+}
+
+/**
+ * The list, newest first, in the three states an event can be in.
+ * Each row: flyer, name, date, sold of capacity, state. One glance.
+ */
+function EventGroups({
+  onSale,
+  drafts,
+  pastRows,
+  summaries,
+  media,
+}: {
+  onSale: ResolvedEvent[];
+  drafts: ResolvedEvent[];
+  pastRows: Row[];
+  summaries: Map<string, SalesSummary>;
+  media: Record<string, PublicAsset>;
+}) {
+  const soldLine = (event: ResolvedEvent) => {
+    const summary = summaries.get(event.overrideId ?? '');
+    if (!event.ticketing.enabled) return event.ticketUrl ? 'on Tickeri' : 'no sales';
+    if (!summary) return 'not on sale';
+    return summary.capacity ? `${summary.ticketsSold} / ${summary.capacity} sold` : `${summary.ticketsSold} sold`;
+  };
+  const group = (title: string, events: ResolvedEvent[], state: string) =>
+    events.length === 0 ? null : (
+      <section key={title} className="mb-6">
+        <h2 className="text-[1rem] font-semibold text-brown">{title}</h2>
+        <ul className="mt-2 divide-y divide-brown/10">
+          {events.map((event) => (
+            <li key={event.id} className="flex items-center gap-3 py-3">
+              <ArtworkThumb asset={event.flyerAssetId ? (media[event.flyerAssetId] ?? null) : null} />
+              <div className="min-w-0 flex-1">
+                <Link href={`/admin/events/one/${encodeURIComponent(event.overrideId ?? event.id)}`} className="block truncate text-[0.9375rem] font-semibold text-brown underline-offset-4 hover:underline">
+                  {event.title || 'Untitled event'}
+                </Link>
+                <p className="tabular text-[0.8125rem] text-brown-soft">
+                  {formatEventDateLong(event.startsAt)} · {soldLine(event)}
+                </p>
+              </div>
+              <span className="text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-brown-soft">{state}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  return (
+    <div className="mb-6">
+      {group('On sale', onSale, 'live')}
+      {group('Drafts', drafts, 'draft')}
+      {pastRows.length > 0 ? (
+        <section className="mb-6">
+          <h2 className="text-[1rem] font-semibold text-brown">Past</h2>
+          <ul className="mt-2 divide-y divide-brown/10">
+            {pastRows.map((row) => (
+              <li key={String(row.id)} className="flex items-center gap-4 py-2.5 text-[0.9375rem]">
+                <span className="tabular w-24 shrink-0 text-brown-soft">{String(row.starts_at).slice(0, 10)}</span>
+                <Link href={`/admin/events/one/${encodeURIComponent(String(row.id))}`} className="min-w-0 flex-1 truncate text-brown underline-offset-4 hover:underline">
+                  {String(row.title ?? 'Event')}
+                </Link>
+                <span className="text-[0.75rem] uppercase tracking-[0.06em] text-brown-soft">{String(row.status)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {onSale.length === 0 && drafts.length === 0 && pastRows.length === 0 ? (
+        <EmptyState>No special events yet. New event, top right, is where they start.</EmptyState>
+      ) : null}
+    </div>
   );
 }
 

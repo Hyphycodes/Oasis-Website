@@ -1,7 +1,9 @@
 import {
   DEFAULT_PRESENTATION,
   DEFAULT_PROVENANCE,
+  DEFAULT_DETAILS,
   DEFAULT_TICKETING,
+  type EventDetails,
   type EventPresentation,
   type EventTicketing,
   type EventProvenance,
@@ -69,6 +71,7 @@ export interface OccurrenceRecord {
   presentation?: Partial<EventPresentation> | null;
   provenance?: EventProvenance | null;
   ticketing?: EventTicketing | null;
+  details?: EventDetails | null;
 }
 
 export interface EventInput {
@@ -262,6 +265,7 @@ function resolve(
     // Only a standalone event can sell tickets here; a series night inherits
     // nothing, because weekly nights are free at the door.
     ticketing: (!seriesSlug && occurrence?.ticketing) || DEFAULT_TICKETING,
+    details: (!seriesSlug && occurrence?.details) || DEFAULT_DETAILS,
   };
 }
 

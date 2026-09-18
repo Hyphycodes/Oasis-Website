@@ -3,6 +3,9 @@ import { Anton, Archivo } from 'next/font/google';
 import { site } from '@/content/site';
 import { seo } from '@/content/pages';
 import { SITE_URL } from '@/lib/seo';
+import { AppearanceStyle } from '@/components/appearance/AppearanceStyle';
+import { AppearancePreviewListener } from '@/components/appearance/AppearancePreviewListener';
+import { getAppearance } from '@/server/appearance';
 import './globals.css';
 
 /**
@@ -61,10 +64,19 @@ export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The look is a database row, cached for a minute and revalidated on save.
+  // It is emitted here, in the head, so the first paint is already right.
+  const appearance = await getAppearance();
   return (
     <html lang="en" className={`${archivo.variable} ${anton.variable}`}>
-      <body>{children}</body>
+      <head>
+        <AppearanceStyle appearance={appearance} />
+      </head>
+      <body>
+        <AppearancePreviewListener />
+        {children}
+      </body>
     </html>
   );
 }

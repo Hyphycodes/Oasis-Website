@@ -4,6 +4,7 @@ import { cache } from 'react';
 import { getMediaMap } from '@/content/media';
 import { getReadDb } from '@/lib/db';
 import { listThemeRecords } from '@/server/content/theme';
+import { getAppearance } from '@/server/appearance';
 import { normalizeConfig, presetFor } from './config';
 import { getThemeDefinition, isSeasonalSlug, PRESETS } from './registry';
 import { isThemeActiveAt } from './schedule';
@@ -74,6 +75,24 @@ export const getActiveTheme = cache(async (): Promise<ResolvedTheme> => {
   if (forced && process.env.NODE_ENV !== 'production' && isSeasonalSlug(forced)) {
     const record = (await getThemeRecords()).find((entry) => entry.slug === forced);
     return resolveTheme(forced, record?.config, 'forced');
+  }
+
+  // The appearance row says which season the site is in. `none` hands the
+  // decision to the scheduled seasonal theme, as before; anything else turns
+  // the decorations on at the chosen intensity, honouring the one switch.
+  const appearance = await getAppearance();
+  if (appearance.season === 'halloween' || appearance.season === 'muertos') {
+    const record = (await getThemeRecords()).find((entry) => entry.slug === 'halloween-dotd');
+    const on = appearance.decorationsEnabled;
+    return resolveTheme(
+      'halloween-dotd',
+      {
+        assets: record?.config.assets ?? {},
+        options: { texture: on, glow: on, petals: on, edges: on, motion: on },
+        intensity: appearance.decorationIntensity === 'lively' ? 'standard' : 'subtle',
+      },
+      'manual',
+    );
   }
 
   const now = new Date();

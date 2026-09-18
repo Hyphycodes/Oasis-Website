@@ -20,7 +20,7 @@
    field instead of brown on ivory). Ratios in comments are against the canvas.
    ========================================================================== */
 
-[data-theme='halloween-dotd'] {
+[data-theme='halloween-dotd']:not([data-palette='appearance']) {
   /* --- Canvas -------------------------------------------------------- */
   --t-canvas: #120a12;
 

@@ -17,7 +17,7 @@ export const ACCEPTED_MEDIA: Record<string, 'image' | 'video'> = {
   'video/webm': 'video',
 };
 
-const MAX_IMAGE_BYTES = 8_000_000;
+const MAX_IMAGE_BYTES = 10_000_000;
 const MAX_VIDEO_BYTES = 25_000_000;
 const MAX_DIRECT_VIDEO_BYTES = 50_000_000;
 
@@ -74,9 +74,21 @@ export async function storeMediaFile({
   let n = 2;
   while (existing.some((row) => row.asset_id === assetId)) assetId = `${base}-${n++}`;
 
-  const extension = file.name.match(/\.[a-z0-9]+$/i)?.[0] ?? (kind === 'video' ? '.mp4' : '.jpg');
+  let extension = file.name.match(/\.[a-z0-9]+$/i)?.[0] ?? (kind === 'video' ? '.mp4' : '.jpg');
+  let bytes: Buffer = Buffer.from(await file.arrayBuffer());
+  let contentType = file.type;
+  // Flyers arrive as 10MB PNGs straight out of Canva. The website serves a
+  // web-optimised copy: no wider than 1800px, WebP, quality 84. The original
+  // is not kept — the owner has it, and the site never needs more.
+  if (kind === 'image' && (file.size > 700_000 || /\.(png|jpe?g)$/i.test(file.name))) {
+    const optimised = await optimiseImage(bytes);
+    if (optimised) {
+      bytes = optimised;
+      extension = '.webp';
+      contentType = 'image/webp';
+    }
+  }
   const filename = `${assetId}${extension}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
 
   let publicPath: string;
   if (isLocalDb()) {
@@ -89,7 +101,7 @@ export async function storeMediaFile({
     if (!supabase) return { ok: false, message: 'The upload service is not available right now.' };
     const { error } = await supabase.storage
       .from('media')
-      .upload(filename, bytes, { contentType: file.type, upsert: false });
+      .upload(filename, bytes, { contentType, upsert: false });
     if (error) return { ok: false, message: 'The upload did not finish. Please try once more.' };
     publicPath = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
   }
@@ -106,9 +118,18 @@ export async function storeMediaFile({
     width: size?.width ?? 0,
     height: size?.height ?? 0,
     tags,
-    mime: file.type,
-    size_bytes: file.size,
+    mime: contentType,
+    size_bytes: bytes.length,
   });
+}
+
+async function optimiseImage(bytes: Buffer): Promise<Buffer | null> {
+  try {
+    const { default: sharp } = await import('sharp');
+    return await sharp(bytes).rotate().resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true }).webp({ quality: 84 }).toBuffer();
+  } catch {
+    return null;
+  }
 }
 
 export async function registerDirectMedia({

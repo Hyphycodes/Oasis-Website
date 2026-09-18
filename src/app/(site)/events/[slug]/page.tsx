@@ -7,10 +7,12 @@ import { Band, Frame } from '@/components/primitives/Band';
 import { ButtonLink, ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
 import { getSiteSettings } from '@/content/resolve';
-import { getPublicEvents } from '@/server/content/events';
+import { getEditableEvents, getPublicEvents } from '@/server/content/events';
+import { getReadDb } from '@/lib/db';
+import { verifyPreviewToken } from '@/lib/ticketing/tokens';
 import { resolveEventArtwork, resolveManyEventArtwork } from '@/server/content/event-art';
 import { getTicketOffer, offersFor } from '@/server/ticketing/offer';
-import { addToCalendarUrl, findStandaloneEvent, getSeriesOccurrences, getUpcomingEvents, nextEvent, STATUS_LABEL } from '@/lib/events';
+import { addToCalendarUrl, findStandaloneEvent, getSeriesOccurrences, getUpcomingEvents, nextEvent, standaloneEvents, STATUS_LABEL } from '@/lib/events';
 import { formatEventDateLong, formatPrice, formatTimeRange } from '@/lib/format';
 import { absoluteUrl, buildMetadata, eventJsonLd, JsonLd } from '@/lib/seo';
 
@@ -57,14 +59,31 @@ export async function generateMetadata({
   });
 }
 
-export default async function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function EventDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ preview?: string }>;
+}) {
+  const [{ slug }, query] = await Promise.all([params, searchParams ?? Promise.resolve<{ preview?: string }>({})]);
   const [input, settings] = await Promise.all([getPublicEvents(), getSiteSettings()]);
   const now = new Date();
 
   const series = input.series.find((entry) => entry.slug === slug);
   if (!series) {
-    const event = findStandaloneEvent(input, slug);
+    let event = findStandaloneEvent(input, slug);
+    // A signed preview link lets staff see a draft on the real page, with its
+    // unpublished edits, for a day. Nothing about it is cached.
+    if (query.preview) {
+      const previewId = verifyPreviewToken(query.preview);
+      const db = previewId ? getReadDb() : null;
+      if (previewId && db) {
+        const working = await getEditableEvents(db);
+        const draft = standaloneEvents(working.occurrences).find((entry) => entry.overrideId === previewId && !entry.archivedAt);
+        if (draft && (draft.slug === slug || !event)) event = draft;
+      }
+    }
     if (!event) notFound();
 
     // One pass for everything the page shows: this event's artwork and offer,
