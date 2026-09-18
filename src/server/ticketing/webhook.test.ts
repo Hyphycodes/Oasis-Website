@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type Stripe from 'stripe';
 import { handleStripeEvent, type StoredOrder, type WebhookStore } from './webhook';
 
-function memoryStore(order: StoredOrder) {
+function memoryStore(order: StoredOrder, seatsLeft = true) {
   const state = {
     order: { ...order },
     tickets: 0,
@@ -31,6 +31,9 @@ function memoryStore(order: StoredOrder) {
     async voidTickets(_id, status) {
       state.ticketStatus = status;
     },
+    async seatsStillAvailable() {
+      return seatsLeft;
+    },
     log(message) {
       state.logs.push(message);
     },
@@ -45,14 +48,19 @@ const baseOrder: StoredOrder = {
   totalCents: 2000,
   refundedCents: 0,
   stripePaymentIntentId: 'pi_1',
+  // A live hold: the seats are still this order's.
+  expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
 };
+
+/** The same order, but the hold lapsed while the card was being typed. */
+const lapsedOrder: StoredOrder = { ...baseOrder, expiresAt: new Date(Date.now() - 60_000).toISOString() };
 
 function event(type: string, object: Record<string, unknown>): Stripe.Event {
   return { id: `evt_${type}`, type, created: 1_700_000_000, data: { object } } as unknown as Stripe.Event;
 }
 
-function effects() {
-  const calls = { confirmations: 0, alerts: [] as string[] };
+function effects(refund?: () => Promise<void>) {
+  const calls = { confirmations: 0, alerts: [] as string[], refunds: [] as string[] };
   return {
     calls,
     effects: {
@@ -61,6 +69,10 @@ function effects() {
       },
       async alertOwner(subject: string) {
         calls.alerts.push(subject);
+      },
+      async refundInFull(paymentIntentId: string) {
+        calls.refunds.push(paymentIntentId);
+        if (refund) await refund();
       },
     },
   };
@@ -80,12 +92,57 @@ describe('handleStripeEvent', () => {
     expect(fx.calls.confirmations).toBe(1);
   });
 
+  it('refunds in full when the seats went while the card was being taken', async () => {
+    const { store, state } = memoryStore(lapsedOrder, false);
+    const fx = effects();
+    const outcome = await handleStripeEvent(
+      event('payment_intent.succeeded', { id: 'pi_1', latest_charge: 'ch_1' }),
+      store,
+      fx.effects,
+    );
+    expect(outcome).toMatchObject({ handled: true, action: 'oversold-refunded' });
+    expect(fx.calls.refunds).toEqual(['pi_1']);
+    // No tickets, money back, holds released, and the owner told.
+    expect(state.tickets).toBe(0);
+    expect(state.order.status).toBe('canceled');
+    expect(state.order.refundedCents).toBe(2000);
+    expect(state.holdsReleased).toBe(1);
+    expect(fx.calls.alerts.some((line) => line.includes('oversold'))).toBe(true);
+    expect(fx.calls.confirmations).toBe(0);
+  });
+
+  it('keeps an order whose hold lapsed but whose seats are still free', async () => {
+    const { store, state } = memoryStore(lapsedOrder, true);
+    const fx = effects();
+    const outcome = await handleStripeEvent(
+      event('payment_intent.succeeded', { id: 'pi_1', latest_charge: 'ch_1' }),
+      store,
+      fx.effects,
+    );
+    expect(outcome).toMatchObject({ handled: true, action: 'paid' });
+    expect(fx.calls.refunds).toEqual([]);
+    expect(state.tickets).toBe(2);
+  });
+
+  it('never silently keeps the money when the refund itself fails', async () => {
+    const { store, state } = memoryStore(lapsedOrder, false);
+    const fx = effects(async () => { throw new Error('stripe down'); });
+    await expect(
+      handleStripeEvent(event('payment_intent.succeeded', { id: 'pi_1', latest_charge: 'ch_1' }), store, fx.effects),
+    ).rejects.toThrow('stripe down');
+    // Still pending, so the retried event tries the refund again, and the
+    // owner has already been told to do it by hand.
+    expect(state.order.status).toBe('pending');
+    expect(state.tickets).toBe(0);
+    expect(fx.calls.alerts.some((line) => line.includes('URGENT'))).toBe(true);
+  });
+
   it('a failing email never fails the webhook', async () => {
     const { store, state } = memoryStore(baseOrder);
     const outcome = await handleStripeEvent(
       event('payment_intent.succeeded', { id: 'pi_1', latest_charge: 'ch_1' }),
       store,
-      { sendConfirmation: async () => { throw new Error('smtp down'); }, alertOwner: async () => {} },
+      { sendConfirmation: async () => { throw new Error('smtp down'); }, alertOwner: async () => {}, refundInFull: async () => {} },
     );
     expect(outcome.handled).toBe(true);
     expect(state.order.status).toBe('paid');

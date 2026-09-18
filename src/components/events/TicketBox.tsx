@@ -114,6 +114,12 @@ function TierPicker({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A code is a promoter's name as often as it is a discount, so it is offered
+  // quietly rather than shouted: nobody buying at full price should feel they
+  // are missing one.
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const promoId = useId();
   const face = useMemo(() => faceTotalCents(offer.tiers, quantities), [offer.tiers, quantities]);
   const { feeCents, totalCents: total } = useMemo(() => estimateTotalCents(face, offer.fees), [face, offer.fees]);
   const count = Object.values(quantities).reduce((sum, n) => sum + n, 0);
@@ -142,15 +148,17 @@ function TierPicker({
       const items = offer.tiers
         .filter((tier) => (quantities[tier.id] ?? 0) > 0)
         .map((tier) => ({ tierId: tier.id, quantity: quantities[tier.id] ?? 0 }));
+      const code = promoCode.trim();
       const response = await fetch('/api/checkout/reserve', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ eventId: offer.eventId, items }),
+        body: JSON.stringify({ eventId: offer.eventId, items, ...(code ? { promoCode: code } : {}) }),
       });
       const data = (await response.json().catch(() => null)) as
-        | { ok?: boolean; orderNumber?: string; message?: string }
+        | { ok?: boolean; orderNumber?: string; message?: string; code?: string }
         | null;
       if (!response.ok || !data?.orderNumber) {
+        if (data?.code === 'PROMO_INVALID') setCodeOpen(true);
         setError(data?.message ?? 'Checkout is not open yet. Try again in a moment.');
         setBusy(false);
         return;
@@ -208,6 +216,37 @@ function TierPicker({
           {count === 0 ? '' : total === 0 ? 'Free' : formatPrice(total)}
         </p>
       </div>
+
+      {codeOpen ? (
+        <div className="mt-4">
+          <label htmlFor={promoId} className="block text-[0.875rem] font-semibold text-night-text">
+            Promo or promoter code
+          </label>
+          <input
+            id={promoId}
+            name="promoCode"
+            value={promoCode}
+            onChange={(event) => { setPromoCode(event.target.value); setError(null); }}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={40}
+            placeholder="OASIS10"
+            className="mt-1.5 min-h-12 w-full rounded-(--radius-md) border border-night-text/25 bg-obsidian/40 px-4 text-[1rem] uppercase tracking-[0.06em] text-night-text placeholder:normal-case placeholder:tracking-normal placeholder:text-night-soft/60 focus:border-amber"
+          />
+          {/* The price here is the face value. What a code takes off is worked
+              out on the server at checkout, where the total is the real one. */}
+          <p className="mt-2 text-[0.8125rem] text-night-soft">Applied at checkout, where you will see the new total before paying.</p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setCodeOpen(true)}
+          className="mt-3 inline-flex min-h-11 items-center text-[0.875rem] text-night-soft underline underline-offset-4 hover:text-night-text"
+        >
+          Have a code?
+        </button>
+      )}
 
       <button type="submit" className={`${BUTTON} mt-4`} disabled={count === 0 || busy}>
         {busy ? 'One moment…' : 'Get tickets'}

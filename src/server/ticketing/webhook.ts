@@ -20,6 +20,8 @@ export interface StoredOrder {
   totalCents: number;
   refundedCents: number;
   stripePaymentIntentId: string | null;
+  /** When the seats stopped being held. Null for an order that never held any. */
+  expiresAt: string | null;
 }
 
 export interface WebhookStore {
@@ -29,12 +31,20 @@ export interface WebhookStore {
   setStatus(orderId: string, status: string, patch?: Record<string, unknown>): Promise<void>;
   releaseHolds(orderId: string): Promise<void>;
   voidTickets(orderId: string, status: 'void' | 'refunded'): Promise<void>;
+  /**
+   * Can this order's seats still be honoured? Asked only when a payment lands
+   * after the hold lapsed, which is the one way a paid order can find its room
+   * already sold.
+   */
+  seatsStillAvailable(orderId: string): Promise<boolean>;
   log(message: string): void;
 }
 
 export interface WebhookEffects {
   sendConfirmation(orderId: string): Promise<void>;
   alertOwner(subject: string, body: string): Promise<void>;
+  /** Give the whole payment back. Throws if Stripe refuses, so the event retries. */
+  refundInFull(paymentIntentId: string, reason: string): Promise<void>;
 }
 
 export type WebhookOutcome =
@@ -62,6 +72,37 @@ export async function handleStripeEvent(
       const pi = event.data.object;
       const order = await store.findOrderByPaymentIntent(pi.id);
       if (!order) return { handled: false, reason: `no order for ${pi.id}` };
+
+      // The one way a paid order can find its room already gone: the hold
+      // lapsed while the card was being typed and somebody else took the
+      // seats. Money is never quietly kept for a ticket that cannot exist —
+      // it goes straight back and the owner hears about it.
+      const lapsed = order.status === 'pending' && order.expiresAt !== null && Date.parse(order.expiresAt) <= Date.now();
+      if (lapsed && !(await store.seatsStillAvailable(order.id))) {
+        try {
+          await effects.refundInFull(pi.id, `Oversold: ${order.orderNumber}`);
+        } catch (error) {
+          // Leave the order pending and let Stripe retry the event: an
+          // un-refunded oversell is the one state nobody may sleep through.
+          await effects.alertOwner(
+            `URGENT: could not refund oversold ${order.orderNumber}`,
+            `The seats for ${order.orderNumber} were gone when the payment landed and the refund failed: ${String(error)}. Refund it by hand in Stripe.`,
+          );
+          throw error;
+        }
+        await store.setStatus(order.id, 'canceled', {
+          refunded_cents: order.totalCents,
+          notes: 'Sold out while the payment was being taken. Refunded in full automatically.',
+        });
+        await store.releaseHolds(order.id);
+        store.log(`OVERSOLD ${order.orderNumber}: refunded ${order.totalCents} cents, no tickets issued`);
+        await effects.alertOwner(
+          `Refunded an oversold order: ${order.orderNumber}`,
+          `The last seats went while ${order.orderNumber} was paying. The full amount has been refunded automatically and no tickets were issued. They deserve an apology and probably a comp.`,
+        );
+        return { handled: true, action: 'oversold-refunded', orderId: order.id };
+      }
+
       const { minted } = await store.fulfill(order.id, chargeId(pi), new Date(event.created * 1000));
       store.log(`paid ${order.orderNumber}, minted ${minted}`);
       // After the commit, and never allowed to fail the webhook.

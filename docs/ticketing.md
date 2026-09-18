@@ -157,6 +157,16 @@ Stripe webhook ─ POST /api/webhooks/stripe ─▶ processed_stripe_events inse
   is pure and tested against an in-memory store.
 - A free order (promo to $0) is fulfilled straight from `reserve` through the same
   `fulfill_order`, with no Stripe involved.
+- **Oversell recovery.** A hold lasts twelve minutes; a card can take longer. If a payment
+  succeeds after the hold lapsed *and* the seats are gone, the webhook refunds the whole payment,
+  cancels the order, issues no tickets and alerts the owner — money is never quietly kept for a
+  ticket that cannot exist. If the refund itself fails, the order stays pending, the owner is told
+  to refund by hand, and the event is left to Stripe to retry. A lapsed hold whose seats are still
+  free is simply fulfilled: the guest was only slow, not unlucky.
+- **Codes** are entered in the ticket box ("Have a code?") and validated by `reserve_order`, never
+  in the browser. The box shows face value; the discount appears on the checkout page, where the
+  total is the real one. A `tracking_only` code takes nothing off and exists to attribute the sale
+  to a promoter.
 - **With Stripe not configured**, `reserve` still holds the seats and still answers with the order
   number (`payment: 'unavailable'`, no client secret), so "Get tickets" lands on the checkout page
   like any other order. That page reads the configuration, not the missing secret: it never renders

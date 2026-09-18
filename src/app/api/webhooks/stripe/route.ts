@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
     const outcome = await handleStripeEvent(event, supabaseWebhookStore(client), {
       sendConfirmation: sendOrderConfirmation,
       alertOwner,
+      async refundInFull(paymentIntentId, reason) {
+        // Idempotent on the payment intent: a retried webhook cannot refund twice.
+        await stripe.refunds.create(
+          { payment_intent: paymentIntentId, reason: 'requested_by_customer', metadata: { oasis_reason: reason.slice(0, 190) } },
+          { idempotencyKey: `oversold-${paymentIntentId}` },
+        );
+      },
     });
     return NextResponse.json({ ok: true, ...outcome });
   } catch (error) {
