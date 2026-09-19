@@ -30,6 +30,8 @@ export const dynamic = 'force-dynamic';
 export default async function AdminHome() {
   const staff = await getStaff();
   if (!staff) redirect('/admin/login');
+  // An employee account's work is in the staff app, not here.
+  if (staff.role === 'staff' || staff.role === 'contractor') redirect('/staff');
 
   const now = new Date();
   const db = getReadDb();

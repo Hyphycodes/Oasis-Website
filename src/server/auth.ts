@@ -51,7 +51,7 @@ const OPEN_STAFF: Staff = {
 
 const LOCAL_COOKIE = 'oasis_local_staff';
 
-/** The three development identities, one per role, so permissions are testable. */
+/** The development identities, one per role, so permissions are testable. */
 export const LOCAL_STAFF: Record<Role, Staff> = {
   owner: {
     id: 'local-owner',
@@ -76,6 +76,24 @@ export const LOCAL_STAFF: Record<Role, Staff> = {
     email: 'contributor@oasis.local',
     name: 'Robin (Contributor)',
     role: 'editor',
+    sections: [],
+    active: true,
+    source: 'local',
+  },
+  staff: {
+    id: 'local-staff',
+    email: 'carlos@oasis.local',
+    name: 'Carlos (Bartender)',
+    role: 'staff',
+    sections: [],
+    active: true,
+    source: 'local',
+  },
+  contractor: {
+    id: 'local-contractor',
+    email: 'sofia@oasis.local',
+    name: 'Sofia (Paint instructor)',
+    role: 'contractor',
     sections: [],
     active: true,
     source: 'local',

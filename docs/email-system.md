@@ -34,6 +34,26 @@ code does not send email. With the switch off, every guest email is written to
 
 ---
 
+## Staff operations email
+
+Seven more templates, added with the employee operations system: **welcome to
+the team**, **schedule published**, **shift changed**, **time-off decision**,
+**training assigned**, **document expiring** and **event assignment**. They
+share one component (`src/emails/components/StaffShell.tsx`) — a headline, a
+sentence, a small table of facts, an optional manager note, one button — and go
+out through `emailService.sendStaffNotice()`, so they land in `email_log` like
+everything else and appear in the admin's Communications screen.
+
+They are raised by `notify()` (`src/server/staff/notifications.ts`), not called
+directly: email is one channel of the notification abstraction, and an employee
+can turn their own off in their profile. Everything smaller — a task assigned,
+an announcement posted, a swap claimed — stays in the app.
+
+**They are `audience: 'staff'`, so the guest delivery switch does not gate
+them.** See `docs/employee-operations.md` §Notifications and email.
+
+---
+
 ## Where things live
 
 ```

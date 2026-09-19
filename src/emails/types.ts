@@ -204,6 +204,26 @@ export interface AccountEmailProps {
   test?: boolean;
 }
 
+/**
+ * The staff operations emails share one shape: a headline, a sentence, a
+ * few labelled details (when, where, what position), an optional note in
+ * the manager's own words, and one button into the staff app. Seven
+ * templates, one component, distinct subjects — see src/emails/templates/staff.
+ */
+export interface StaffEmailProps {
+  brand: EmailBrand;
+  name: string | null;
+  email: string;
+  headline: string;
+  intro: string;
+  details: { label: string; value: string }[];
+  /** A manager's note, plain text, line breaks respected. */
+  note: string | null;
+  actionUrl: string;
+  actionLabel: string;
+  test?: boolean;
+}
+
 /** What every template produces, with the subject and plain text beside the HTML. */
 export interface RenderedEmail {
   subject: string;

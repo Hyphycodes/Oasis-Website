@@ -30,6 +30,15 @@ export class SupabaseDb implements Db {
     for (const [column, value] of Object.entries(options.where ?? {})) {
       query = value === null ? query.is(column, null) : query.eq(column, value);
     }
+    for (const [column, values] of Object.entries(options.whereIn ?? {})) {
+      if (values.length === 0) return [];
+      query = query.in(column, [...values]);
+    }
+    if (options.range) {
+      const { column, from, to } = options.range;
+      if (from !== undefined) query = query.gte(column, from);
+      if (to !== undefined) query = query.lt(column, to);
+    }
     if (options.orderBy) query = query.order(options.orderBy, { ascending: !options.desc });
     if (typeof options.limit === 'number') query = query.limit(options.limit);
 

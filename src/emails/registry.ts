@@ -21,7 +21,14 @@ export type TemplateId =
   | 'magic_link'
   | 'password_reset'
   | 'verify_email'
-  | 'welcome';
+  | 'welcome'
+  | 'staff_welcome'
+  | 'schedule_published'
+  | 'shift_changed'
+  | 'time_off_decision'
+  | 'training_required'
+  | 'document_expiring'
+  | 'event_assignment';
 
 export type EmailLogType =
   | 'confirmation'
@@ -37,7 +44,14 @@ export type EmailLogType =
   | 'password_reset'
   | 'verify_email'
   | 'welcome'
-  | 'owner_alert';
+  | 'owner_alert'
+  | 'staff_welcome'
+  | 'schedule_published'
+  | 'shift_changed'
+  | 'time_off_decision'
+  | 'training_required'
+  | 'document_expiring'
+  | 'event_assignment';
 
 export type EmailCategory = 'transactional' | 'account' | 'staff';
 
@@ -193,6 +207,81 @@ export const EMAIL_TEMPLATES: TemplateInfo[] = [
     wiring: 'template',
   },
 ];
+
+const STAFF_OPS_TEMPLATES: TemplateInfo[] = [
+  {
+    id: 'staff_welcome',
+    name: 'Welcome to the team',
+    description: 'A new employee’s first email: what Oasis is, and the button into their onboarding checklist.',
+    category: 'staff',
+    logType: 'staff_welcome',
+    needsEvent: false,
+    trigger: 'A manager adds an employee in the staff app and sends the invitation.',
+    wiring: 'live',
+  },
+  {
+    id: 'schedule_published',
+    name: 'Schedule published',
+    description: 'Your shifts for the week, with one link to the schedule.',
+    category: 'staff',
+    logType: 'schedule_published',
+    needsEvent: false,
+    trigger: 'A manager publishes a week in the staff app. One email per employee with shifts in it.',
+    wiring: 'live',
+  },
+  {
+    id: 'shift_changed',
+    name: 'Shift changed',
+    description: 'A published shift moved, was reassigned or was cancelled.',
+    category: 'staff',
+    logType: 'shift_changed',
+    needsEvent: false,
+    trigger: 'A manager changes or cancels a published shift, or approves a coverage request.',
+    wiring: 'live',
+  },
+  {
+    id: 'time_off_decision',
+    name: 'Time-off decision',
+    description: 'Approved or denied, with the manager’s note.',
+    category: 'staff',
+    logType: 'time_off_decision',
+    needsEvent: false,
+    trigger: 'A manager decides a time-off request.',
+    wiring: 'live',
+  },
+  {
+    id: 'training_required',
+    name: 'Training assigned',
+    description: 'A new required training module, its due date, and a link straight into it.',
+    category: 'staff',
+    logType: 'training_required',
+    needsEvent: false,
+    trigger: 'A manager assigns a module, or a module is re-required after a new version.',
+    wiring: 'live',
+  },
+  {
+    id: 'document_expiring',
+    name: 'Document expiring',
+    description: 'A certificate is about to expire, with what to upload.',
+    category: 'staff',
+    logType: 'document_expiring',
+    needsEvent: false,
+    trigger: 'The hourly cron, once per document, thirty days before it expires.',
+    wiring: 'live',
+  },
+  {
+    id: 'event_assignment',
+    name: 'Event assignment',
+    description: 'You are working an event: the night, the role, the time.',
+    category: 'staff',
+    logType: 'event_assignment',
+    needsEvent: false,
+    trigger: 'A manager assigns someone to an event in the staffing section.',
+    wiring: 'live',
+  },
+];
+
+EMAIL_TEMPLATES.push(...STAFF_OPS_TEMPLATES);
 
 export function templateInfo(id: string): TemplateInfo | null {
   return EMAIL_TEMPLATES.find((template) => template.id === id) ?? null;

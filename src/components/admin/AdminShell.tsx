@@ -64,7 +64,8 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
     ownerOnly: true,
     also: ['/admin/setup'],
     screens: [
-      { href: '/admin/team', label: 'Team' },
+      { href: '/admin/team', label: 'Accounts' },
+      { href: '/staff/team', label: 'Employees' },
       { href: '/admin/setup', label: 'Setup' },
     ],
   },
@@ -124,6 +125,13 @@ export function AdminShell({
                   {firstName(staff.name || staff.email)}
                 </span>
               ) : null}
+              <Link
+                href="/staff"
+                className="hidden min-h-10 shrink-0 items-center gap-1 text-[0.875rem] font-semibold text-night-text/80 underline-offset-4 hover:text-night-text hover:underline sm:inline-flex"
+                title="The employee app: schedule, team, training, tasks"
+              >
+                Staff app
+              </Link>
               <Link
                 href="/"
                 target="_blank"

@@ -34,6 +34,7 @@ Open <http://localhost:3000>. **No configuration is required** — the site serv
 | `npm test` | Vitest |
 | `npm run assets:check` | Validate the media registry against the actual files |
 | `npm run content:seed` | Regenerate `supabase/seed.sql` from `src/content/` |
+| `npm run seed:staff-demo` | A realistic week of staff data for development (never production) |
 | `npm run assets:fetch` | Re-pull reference media from the current Wix site |
 | `npm run email:dev` | **Browse every email design** with sample data at <http://localhost:3030> |
 | `npm run email:export` | Write every email preview as static HTML into `.email-previews/` |
@@ -51,6 +52,7 @@ src/
 ├── app/
 │   ├── (site)/          public routes — one root layout, header, footer
 │   ├── admin/           admin subtree; never bundled into a public page
+│   ├── staff/           the employee app; its own shell, bottom bar and night
 │   ├── actions/         server actions (inquiry submission)
 │   ├── globals.css      design tokens as CSS custom properties
 │   └── sitemap.ts · robots.ts · opengraph-image.tsx
@@ -58,7 +60,7 @@ src/
 │   ├── layout/          header, mobile drawer, footer, announcement bar
 │   ├── primitives/      Band, Frame, Button, Display, Reveal, PageHeader
 │   ├── media/           Asset, AssetVideo, Placeholder — registry-driven
-│   ├── menu/ events/ home/ forms/ admin/
+│   ├── menu/ events/ home/ forms/ admin/ staff/
 ├── emails/              React Email design system: components, templates, previews, fixtures
 ├── content/             ← THE SOURCE OF TRUTH
 │   ├── site.ts          hours, address, phone, links, socials
@@ -68,10 +70,19 @@ src/
 │   ├── pages.ts         section copy and per-page SEO
 │   ├── assets.ts        media registry
 │   └── resolve.ts       Supabase-with-static-fallback resolver
-├── lib/                 events, hours, format, seo, supabase
-├── server/              server-only: actions, ticketing, email service (src/server/email)
-└── middleware.ts        edge gate for /admin
+├── lib/                 events, hours, format, seo, supabase, staff (time, conflicts)
+├── server/              server-only: actions, ticketing, email service, staff domain
+└── middleware.ts        edge gate for /admin and /staff
 ```
+
+### Two products, one sign-in
+
+`/admin` is where ownership and management **configure the business** — the menu,
+the events, the look, the ticketing. `/staff` is where employees **do their
+work** — their shift, tonight's event, their training, their tasks. One Supabase
+session covers both; `profiles.role` decides which you see, and an employee
+account that lands on `/admin` is sent to `/staff`, where its work is. See
+[`docs/employee-operations.md`](./docs/employee-operations.md).
 
 ### Three decisions worth knowing before you change anything
 
@@ -107,6 +118,8 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 
 | Document | For |
 |---|---|
+| [**`docs/CURRENT-STATUS.md`**](./docs/CURRENT-STATUS.md) | **What this repository actually does today — start here** |
+| [`docs/employee-operations.md`](./docs/employee-operations.md) | **The staff system**: `/staff`, scheduling, training, onboarding, event staffing, contractors, security |
 | [`PLAN.md`](./PLAN.md) | Architecture, routes, data model, milestones |
 | [`docs/OWNER-QUICK-START.md`](./docs/OWNER-QUICK-START.md) | **The restaurant owner — start here** |
 | [`docs/ADMIN-GUIDE.md`](./docs/ADMIN-GUIDE.md) | Day-to-day editing, plain language |

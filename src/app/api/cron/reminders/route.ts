@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { emailService } from '@/server/email/service';
+import { opsElevatedDb } from '@/server/staff/db';
+import { listEmployees } from '@/server/staff/employees';
+import { sweepExpiringDocuments } from '@/server/staff/expiry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,6 +21,12 @@ export const dynamic = 'force-dynamic';
  * it. That is deliberate — an unasked-for email costs more goodwill than it
  * earns, and the sender reputation of a brand-new domain is not worth
  * spending on a "thanks for coming".
+ *
+ * The same route also runs the ONE staff job that needs a clock: telling an
+ * employee their certificate expires in thirty days. Everything else about
+ * requirements is computed when somebody looks; nobody looks at a bar card a
+ * month early. It is skipped entirely until the staff tables exist, so this
+ * route behaves exactly as before on a database without migration 0022.
  */
 
 interface Stage {
@@ -36,6 +45,25 @@ const STAGES: Stage[] = [
 ];
 
 const MAX_PER_RUN = 200;
+
+/**
+ * Warns about certificates lapsing inside thirty days. Never throws: a staff
+ * job must not fail the ticket reminders that share this route, and on a
+ * database without the employee tables it simply finds nothing.
+ */
+async function expiringDocuments(): Promise<number> {
+  try {
+    const db = opsElevatedDb();
+    if (!db) return 0;
+    const employees = await listEmployees(db);
+    if (employees.length === 0) return 0;
+    const { told } = await sweepExpiringDocuments(db, employees.map((employee) => employee.id));
+    return told;
+  } catch (error) {
+    console.warn(`[cron] document expiry sweep skipped: ${error instanceof Error ? error.message : String(error)}`);
+    return 0;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();
@@ -110,6 +138,8 @@ export async function GET(request: NextRequest) {
     }
     results[stage.id] = sent;
   }
+
+  results.documents_expiring = await expiringDocuments();
 
   return NextResponse.json({ ok: true, ...results });
 }
