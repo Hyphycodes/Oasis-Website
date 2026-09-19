@@ -211,17 +211,19 @@ Applied to production on **19 September 2026** (recorded as `20260919003500`), v
 23 live, 0 published-but-finished, 5 archived, and every live event's start matching the instant its
 flyer was filed under — so all 23 render their photograph.
 
-All 23 are **published**. Five of them — El Alfa (2 Oct), Bad Bunny (4 Oct), Drake (11 Oct) and the
-two extra Hello Kitty Halloween seatings (27 Sep, 15 Oct) — are live with `ticketing_enabled = false`,
-because their flyers, titles, times and ticket links are known but their tier prices are not. Their
-ticket button therefore sends the guest to Tickeri. Everything else sells on this site, at the prices
-migration 0013 read off Tickeri.
+All 23 are **published**, and all 23 **sell through this website**. No public surface offers an
+outbound ticket link any more: `getTicketOffer()` only returns an `external` offer when in-house
+ticketing is off, and after `0020_internal_ticketing_for_remaining_events.sql` it is on everywhere.
+The five events 0019 added keep `ticket_url = NULL` as well, so there is no outside link left to
+fall back to even if ticketing were switched off again — such an event would read "pay at the door"
+rather than sending a guest to another site.
 
-**Do not turn ticketing on for those five before their tiers are priced.** `getTicketOffer()` in
-`src/server/ticketing/offer.ts` returns an `external` offer — the working Tickeri button — only while
-ticketing is off. With it on and no priced tiers it returns `pending`, which deliberately refuses to
-fall back to someone else's link, and the event would render with no ticket button at all. Price the
-tiers in the admin first, then enable it.
+**Five prices are a $20 placeholder and need confirming**: the two Hello Kitty Halloween seatings
+(27 Sep, 15 Oct), El Alfa (2 Oct), Bad Bunny (4 Oct) and Drake (11 Oct). `tickeri.com` is refused by
+the build environment's egress proxy, so their real tier prices have never been read the way 0013
+read the other eighteen. $20 is the most common Paint & Sip price already on the calendar. Each of
+the five carries an admin-only `note` saying so; correct them in **Admin → Events → the event →
+Tickets** before the site takes real money.
 
 Keeping it current afterwards is still **"Check Tickeri now"** on the deployed site, which reads the
 organizer page directly. This build environment cannot reach tickeri.com — its egress proxy refuses

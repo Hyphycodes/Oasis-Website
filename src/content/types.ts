@@ -375,7 +375,20 @@ export interface OneTimeEventSeed {
   featured?: boolean;
   treatment?: EventTreatment;
   priority?: number;
-  ticketUrl: string;
+  /**
+   * Where the ticket button goes, and NULL on every event we sell ourselves.
+   *
+   * This is the fallback content, served only when no database is configured,
+   * and without a database there are no tiers to sell from. The choice is
+   * therefore between sending a guest to an outside site and saying "pay at
+   * the door", and the restaurant sells its own tickets: a degraded fallback
+   * must not quietly start handing customers to a third party. The Tickeri
+   * page is still recorded, as `sourceUrl`, which is provenance and is never
+   * rendered as a link.
+   */
+  ticketUrl: string | null;
+  /** The Tickeri page this event was read from. Provenance only — never a link. */
+  sourceUrl: string;
   priceText?: string | null;
   ageMin?: number | null;
   ageNote?: string | null;

@@ -541,6 +541,28 @@ describe('seeded one-time events keep their official flyers', () => {
     }
   });
 
+  /**
+   * Oasis sells its own tickets. The fallback must not quietly become a
+   * referral to someone else's checkout just because the database is missing:
+   * without a database there are no tiers, `fallbackOffer` sees a ticketUrl and
+   * returns an `external` offer, and every ticket button on the site starts
+   * pointing off-site. Keeping the Tickeri page in `sourceUrl` instead means
+   * the provenance survives with no way for it to be rendered as a link.
+   */
+  it('never sends a guest to an outside ticket site', () => {
+    for (const seed of oneTimeEvents) {
+      expect(seed.ticketUrl, `${seed.title} carries an outbound ticket link`).toBeNull();
+      expect(occurrenceFromSeed(seed).ticketUrl).toBeNull();
+    }
+  });
+
+  it('keeps the Tickeri page as provenance, so the import can still match', () => {
+    for (const seed of oneTimeEvents) {
+      expect(seed.sourceUrl).toContain(seed.sourceEventId);
+      expect(occurrenceFromSeed(seed).provenance?.sourceUrl).toBe(seed.sourceUrl);
+    }
+  });
+
   it('carries no event twice and no slug twice', () => {
     const ids = oneTimeEvents.map((seed) => seed.sourceEventId);
     const slugs = oneTimeEvents.map((seed) => seed.slug);

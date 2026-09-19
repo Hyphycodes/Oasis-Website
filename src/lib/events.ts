@@ -407,7 +407,7 @@ export function occurrenceFromSeed(seed: OneTimeEventSeed): OccurrenceRecord {
     provenance: {
       source: 'tickeri',
       sourceEventId: seed.sourceEventId,
-      sourceUrl: seed.ticketUrl,
+      sourceUrl: seed.sourceUrl,
       syncedAt: null,
     },
   };

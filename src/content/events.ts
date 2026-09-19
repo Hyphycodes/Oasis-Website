@@ -89,9 +89,10 @@ export const eventOverrides: {
  * not what a guest normally sees: it is the documented fallback `staticInput()`
  * in src/server/content/events.ts serves when no database is configured, and it
  * is the shape the whole calendar is reviewed in. The database is brought to
- * the same calendar by supabase/migrations/0019_tickeri_calendar_correction.sql,
- * and kept current afterwards by Admin -> Events -> "Check Tickeri", which reads
- * the organizer page directly. See docs/events-system.md -> "Reconciliation".
+ * the same calendar by supabase/migrations/0019_tickeri_calendar_correction.sql
+ * and 0020_internal_ticketing_for_remaining_events.sql, and kept current
+ * afterwards by Admin -> Events -> "Check Tickeri", which reads the organizer
+ * page directly. See docs/events-system.md -> "Reconciliation".
  *
  * `date` AND `startMinutes` ARE LOAD-BEARING, NOT DECORATIVE. An event's photo is
  * matched to it by provider id AND exact start instant — see importedFlyer() in
@@ -102,15 +103,26 @@ export const eventOverrides: {
  * beside the flyer itself, and src/lib/events.test.ts asserts the two still
  * agree, so this cannot drift again unnoticed.
  *
+ * EVERY `ticketUrl` IS NULL, AND THAT IS THE POINT. Oasis sells its own tickets;
+ * no button on this website sends a guest to another site. Without a database
+ * there are no tiers to sell from, so this fallback states the price and leaves
+ * entry at the door rather than quietly handing customers to a third party. The
+ * Tickeri page each event was read from is kept as `sourceUrl`, which is
+ * provenance and is never rendered as a link. `src/lib/events.test.ts` asserts
+ * it stays that way.
+ *
  * `slug` is the live URL of the event page. Where a slug reads oddly — the
  * September 19 brunch is still `hello-kitty-fall-paint-lunch`, and October 18 is
  * still `feid-halloween-sunday-brunch` — it is because the restaurant re-themed
  * that night on Tickeri after the page had been published, and changing the slug
  * would break links already handed out.
  *
- * Prices are the ticket prices read off Tickeri for migration 0013. The five
- * nights with no price are the ones this site does not sell directly: their
- * button sends the guest to Tickeri.
+ * `priceText` mirrors the cheapest ticket tier in the database, and is what the
+ * fallback shows in place of a live price. FIVE OF THEM ARE A $20 PLACEHOLDER —
+ * the two Hello Kitty Halloween seatings, El Alfa, Bad Bunny and Drake — because
+ * tickeri.com is unreachable from the build environment and their real prices
+ * have never been read. They are flagged on the events themselves too, in the
+ * admin-only `note`. Confirm them before the site takes real money.
  *
  * `flyerAssetId` is absent by design: the flyers live in the repo already, under
  * public/events/imported/<tickeri id>.jpg, indexed by imported-flyers.json.
@@ -129,7 +141,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/ly48t69ytbwh/snoopy-chicago-bears-paint-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/ly48t69ytbwh/snoopy-chicago-bears-paint-brunch',
     sourceEventId: 'ly48t69ytbwh',
   },
   {
@@ -145,7 +158,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/mv6rr2tii5m5/selena-quintanilla-paint-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/mv6rr2tii5m5/selena-quintanilla-paint-brunch',
     sourceEventId: 'mv6rr2tii5m5',
   },
   {
@@ -162,7 +176,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     visualPreset: 'marigold',
     status: 'sold-out',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/9s52lkdtlx32/snoopy-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/9s52lkdtlx32/snoopy-paint-sip',
     sourceEventId: '9s52lkdtlx32',
   },
   {
@@ -178,7 +193,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/0b6uk2g80hsg/scream-paint-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/0b6uk2g80hsg/scream-paint-brunch',
     sourceEventId: '0b6uk2g80hsg',
   },
   {
@@ -193,7 +209,9 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     endMinutes: 21 * 60,
     category: 'paint-sip',
     visualPreset: 'marigold',
-    ticketUrl: 'https://www.tickeri.com/events/hkfw1xqjh0p0/hello-kitty-halloween-paint-sip',
+    priceText: '$20',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/hkfw1xqjh0p0/hello-kitty-halloween-paint-sip',
     sourceEventId: 'hkfw1xqjh0p0',
   },
   {
@@ -209,7 +227,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$25',
-    ticketUrl: 'https://www.tickeri.com/events/d59jua699tbj/michael-myres-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/d59jua699tbj/michael-myres-paint-sip',
     sourceEventId: 'd59jua699tbj',
   },
   {
@@ -224,7 +243,9 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     endMinutes: 24 * 60,
     category: 'paint-sip',
     visualPreset: 'marigold',
-    ticketUrl: 'https://www.tickeri.com/events/bw9gnwdladhw/el-alfa-paint-sip-party',
+    priceText: '$20',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/bw9gnwdladhw/el-alfa-paint-sip-party',
     sourceEventId: 'bw9gnwdladhw',
   },
   {
@@ -240,7 +261,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/a2wlpotqkbsa/hello-kitty-halloween-sunday-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/a2wlpotqkbsa/hello-kitty-halloween-sunday-brunch',
     sourceEventId: 'a2wlpotqkbsa',
   },
   {
@@ -255,7 +277,9 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     endMinutes: 21 * 60,
     category: 'paint-sip',
     visualPreset: 'marigold',
-    ticketUrl: 'https://www.tickeri.com/events/ihart5g24vfj/bad-bunny-un-halloween-sin-ti-paint-sip',
+    priceText: '$20',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/ihart5g24vfj/bad-bunny-un-halloween-sin-ti-paint-sip',
     sourceEventId: 'ihart5g24vfj',
   },
   {
@@ -271,7 +295,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$35',
-    ticketUrl: 'https://www.tickeri.com/events/j2wyhgin40r2/pumpkin-carving-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/j2wyhgin40r2/pumpkin-carving-paint-sip',
     sourceEventId: 'j2wyhgin40r2',
   },
   {
@@ -290,7 +315,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     treatment: 'featured',
     priority: 10,
     priceText: '$20',
-    ticketUrl: 'https://www.tickeri.com/events/xvt4t4jbzvwf/scream-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/xvt4t4jbzvwf/scream-paint-sip',
     sourceEventId: 'xvt4t4jbzvwf',
   },
   {
@@ -306,7 +332,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/6n2pu69eopzu/halloween-brunch-w-scream',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/6n2pu69eopzu/halloween-brunch-w-scream',
     sourceEventId: '6n2pu69eopzu',
   },
   {
@@ -321,7 +348,9 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     endMinutes: 21 * 60,
     category: 'paint-sip',
     visualPreset: 'marigold',
-    ticketUrl: 'https://www.tickeri.com/events/yy7aaovvp6fz/drake-paint-sip-night',
+    priceText: '$20',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/yy7aaovvp6fz/drake-paint-sip-night',
     sourceEventId: 'yy7aaovvp6fz',
   },
   {
@@ -337,7 +366,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/4m2ambt0jv1e/hello-kitty-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/4m2ambt0jv1e/hello-kitty-paint-sip',
     sourceEventId: '4m2ambt0jv1e',
   },
   {
@@ -352,7 +382,9 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     endMinutes: 23 * 60,
     category: 'paint-sip',
     visualPreset: 'marigold',
-    ticketUrl: 'https://www.tickeri.com/events/xraeo6y9f6zu/hello-kitty-halloween-paint-sip',
+    priceText: '$20',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/xraeo6y9f6zu/hello-kitty-halloween-paint-sip',
     sourceEventId: 'xraeo6y9f6zu',
   },
   {
@@ -368,7 +400,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$10',
-    ticketUrl: 'https://www.tickeri.com/events/0q4w5wjxd5iv/pumpkin-halloween-paint-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/0q4w5wjxd5iv/pumpkin-halloween-paint-brunch',
     sourceEventId: '0q4w5wjxd5iv',
   },
   {
@@ -384,7 +417,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$20',
-    ticketUrl: 'https://www.tickeri.com/events/th9oa33ur1ou/chucky-x-hello-kitty-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/th9oa33ur1ou/chucky-x-hello-kitty-paint-sip',
     sourceEventId: 'th9oa33ur1ou',
   },
   {
@@ -400,7 +434,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'nightlife',
     visualPreset: 'marigold',
     priceText: '$10–$30',
-    ticketUrl: 'https://www.tickeri.com/events/c8ju6ei787qj/puro-pinche-perreo-hosted-by-flames',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/c8ju6ei787qj/puro-pinche-perreo-hosted-by-flames',
     sourceEventId: 'c8ju6ei787qj',
   },
   {
@@ -416,7 +451,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$5 reservation',
-    ticketUrl: 'https://www.tickeri.com/events/lmw4zcgl66qv/selena-quintanilla-halloween-sunday-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/lmw4zcgl66qv/selena-quintanilla-halloween-sunday-brunch',
     sourceEventId: 'lmw4zcgl66qv',
   },
   {
@@ -432,7 +468,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'nightlife',
     visualPreset: 'marigold',
     priceText: '$20',
-    ticketUrl: 'https://www.tickeri.com/events/ov5g3wopots7/thriller-halloween-costume-party',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/ov5g3wopots7/thriller-halloween-costume-party',
     sourceEventId: 'ov5g3wopots7',
   },
   {
@@ -448,7 +485,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'brunch',
     visualPreset: 'marigold',
     priceText: '$5 reservation',
-    ticketUrl: 'https://www.tickeri.com/events/v1tts4vt8xfw/dia-de-los-muertos-sunday-brunch',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/v1tts4vt8xfw/dia-de-los-muertos-sunday-brunch',
     sourceEventId: 'v1tts4vt8xfw',
   },
   {
@@ -464,7 +502,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$30',
-    ticketUrl: 'https://www.tickeri.com/events/1r6x02r8uzu6/hello-kitty-christmas-edition-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/1r6x02r8uzu6/hello-kitty-christmas-edition-paint-sip',
     sourceEventId: '1r6x02r8uzu6',
   },
   {
@@ -480,7 +519,8 @@ export const oneTimeEvents: OneTimeEventSeed[] = [
     category: 'paint-sip',
     visualPreset: 'marigold',
     priceText: '$20',
-    ticketUrl: 'https://www.tickeri.com/events/ckl3ja90j2m6/grinch-paint-sip',
+    ticketUrl: null,
+    sourceUrl: 'https://www.tickeri.com/events/ckl3ja90j2m6/grinch-paint-sip',
     sourceEventId: 'ckl3ja90j2m6',
   },
 ];
