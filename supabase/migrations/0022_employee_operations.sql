@@ -35,6 +35,12 @@
 
 -- ------------------------------------------------------------ helpers -------
 
+-- current_employee_id() is `language sql`, and Postgres validates a SQL
+-- function's body at CREATE time by planning it against the catalog as it
+-- stands right then -- which is before `employees` exists further down this
+-- same file. `local` keeps this scoped to the migration's own transaction.
+set local check_function_bodies = off;
+
 create or replace function public.is_manager()
 returns boolean
 language sql
@@ -108,8 +114,19 @@ alter table public.event_series
 alter table public.event_occurrences
   add column if not exists location_id uuid references public.locations (id) on delete set null;
 
+-- event_series_guard_publish / event_occurrences_guard_publish (0003) block a
+-- change to a published row's live columns unless the acting role reads as
+-- owner/admin via can_publish() -- which resolves through auth.uid() and so
+-- has no one to check against in a migration session. Same precedent as the
+-- backfill in 0013: switched off for these two backfill statements only.
+alter table public.event_series disable trigger event_series_guard_publish;
+alter table public.event_occurrences disable trigger event_occurrences_guard_publish;
+
 update public.event_series      set location_id = '0a515000-0000-4000-8000-000000000001' where location_id is null;
 update public.event_occurrences set location_id = '0a515000-0000-4000-8000-000000000001' where location_id is null;
+
+alter table public.event_series enable trigger event_series_guard_publish;
+alter table public.event_occurrences enable trigger event_occurrences_guard_publish;
 
 comment on column public.event_occurrences.location_id is
   'Where the night happens. Null reads as the default location (Lockport) so nothing that inserted events before 0022 breaks.';

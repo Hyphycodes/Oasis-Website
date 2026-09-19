@@ -51,7 +51,7 @@ designated address and requires a verified identity.
 
 ### Database
 
-Migrations `0001`–`0020` are applied to the live project, confirmed 19 September
+Migrations `0001`–`0022` are applied to the live project, confirmed 19 September
 2026. Row Level Security is the authorisation boundary throughout; orders,
 tickets, holds, scans and the email log have no public policies at all.
 
@@ -76,15 +76,15 @@ or an answer from the restaurant before it does anything.
 
 ## EMPLOYEE OPERATIONS
 
-**New, and not yet applied to the live database.** The staff system at `/staff`:
-the employee app and the manager surfaces. Full architecture in
+**New, and applied to the live database 19 September 2026.** The staff system at
+`/staff`: the employee app and the manager surfaces. Full architecture in
 [`docs/employee-operations.md`](./employee-operations.md).
 
 ### What is built
 
 | Area | State |
 |---|---|
-| **Schema** — 35 tables, RLS on every one, 6 column guards, a private file bucket | Written in `0021_staff_roles.sql` and `0022_employee_operations.sql`. **Not applied.** |
+| **Schema** — 35 tables, RLS on every one, 6 column guards, a private file bucket | Written in `0021_staff_roles.sql` and `0022_employee_operations.sql`. **Applied.** `supabase/tests/employee-operations-rls.sql` ran against the live project and was silent; the `employee-files` bucket is confirmed private. |
 | **Locations** | Lockport is a row; events backfilled; shifts, tasks, incidents, announcements and employees all carry one. The owner gets an all-locations view. |
 | **Employees** | Profiles, positions (11), multiple locations, emergency contact, uniform, language, status, manager, the private photo. |
 | **Onboarding** | A 12-item checklist that ships as a starting point, progress per person, and a manager dashboard of not started / in progress / ready. |
@@ -105,10 +105,11 @@ the employee app and the manager surfaces. Full architecture in
 
 ### What it needs to go live
 
-1. Apply `0021` then `0022` to the Supabase project (separately — Postgres will
-   not use an enum value in the transaction that added it).
-2. Run `supabase/tests/employee-operations-rls.sql` and confirm it is silent.
-3. Confirm the `employee-files` bucket is **private** in Supabase Storage.
+1. ~~Apply `0021` then `0022` to the Supabase project~~ — done.
+2. ~~Run `supabase/tests/employee-operations-rls.sql` and confirm it is silent~~
+   — done, silent.
+3. ~~Confirm the `employee-files` bucket is **private** in Supabase Storage~~ —
+   confirmed.
 4. Add the first manager, configure the requirements, write the first training
    modules, then add the team.
 
@@ -126,8 +127,9 @@ jurisdiction requires.
 
 In rough order of value.
 
-1. **Apply the employee-operations migrations** and walk one real employee
-   through onboarding end to end. Everything else in this list is smaller.
+1. **Walk one real employee through onboarding end to end.** The migrations are
+   applied; add the first manager and the team next, per
+   `docs/employee-operations.md` §Going live steps 4–7.
 2. **Answer the four content questions** (`docs/CONTENT-QUESTIONS.md`). The site
    should not launch permanently on unconfirmed hours and a disputed phone
    number.

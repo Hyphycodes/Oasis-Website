@@ -10,11 +10,13 @@ This is the document to read before touching any of it.
 
 Migrations: `0021_staff_roles.sql`, `0022_employee_operations.sql`.
 
-> **Not yet applied to the live project.** Both migrations are written, reviewed
-> and exercised locally, and `supabase/tests/employee-operations-rls.sql` proves
-> the access rules against real Row Level Security. Applying them to
-> `yrfvnqgybbvbkwonvycw` is a deliberate act nobody has performed yet — see
-> [Going live](#going-live).
+> **Applied to the live project** (`yrfvnqgybbvbkwonvycw`), 19 September 2026.
+> `supabase/tests/employee-operations-rls.sql` was run against the live database
+> immediately after and was silent — the access rules hold under real Row Level
+> Security, not only locally. The `employee-files` bucket is confirmed private.
+> What remains before the first real employee uses it is steps 4 onward in
+> [Going live](#going-live): add the first manager, configure the requirements,
+> write the first training modules, add the team.
 
 ---
 
@@ -607,13 +609,18 @@ by accident.
 
 ## Going live
 
-1. **Apply the migrations** to the Supabase project, in order:
+1. ~~**Apply the migrations** to the Supabase project, in order:
    `0021_staff_roles.sql` then `0022_employee_operations.sql`. They are separate
-   because Postgres will not use an enum value in the transaction that added it.
-2. **Run the walkthrough** — `supabase/tests/employee-operations-rls.sql` —
-   against the project and confirm it is silent.
-3. **Check the bucket.** Migration 0022 creates `employee-files` as private.
-   Confirm in Supabase Storage that it is not public.
+   because Postgres will not use an enum value in the transaction that added it.~~
+   Done, 19 September 2026. `0022` disables the two `guard_publish` triggers
+   `event_series_guard_publish` and `event_occurrences_guard_publish` around its
+   Lockport backfill of `event_series`/`event_occurrences.location_id`, the same
+   way `0013` did for its Tickeri backfill — `can_publish()` resolves through
+   `auth.uid()`, which a migration session has none of.
+2. ~~**Run the walkthrough** — `supabase/tests/employee-operations-rls.sql` —
+   against the project and confirm it is silent.~~ Done, same day: silent.
+3. ~~**Check the bucket.** Migration 0022 creates `employee-files` as private.
+   Confirm in Supabase Storage that it is not public.~~ Confirmed private.
 4. **Add the first manager.** They need `profiles.role = 'admin'` (Team &
    permissions in the admin) and an employee row (`/staff/team/new`, adding
    themselves) if they also work shifts.

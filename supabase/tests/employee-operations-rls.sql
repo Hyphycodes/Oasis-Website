@@ -80,6 +80,13 @@ insert into public.availability_rules (employee_id, weekday, available) values
 insert into public.contractors (id, name, service_type) values ('00000000-0000-4000-8000-00000000c001', 'RLS DJ', 'dj');
 insert into public.incidents (summary, category, reporter_name) values ('RLS incident', 'other', 'RLS Manager');
 
+-- An open (unassigned) published shift, for check 12. Created here, before
+-- any impersonation begins, because shifts_manager_insert requires
+-- is_manager() -- an employee picking one up is a shift_requests insert, not
+-- a shifts insert.
+insert into public.shifts (id, location_id, employee_id, position_id, starts_at, ends_at, status, published_at)
+values ('00000000-0000-4000-8000-00000000b001', '0a515000-0000-4000-8000-000000000001', null, 'bartender', now() + interval '7 days', now() + interval '7 days 6 hours', 'published', now());
+
 -- --------------------------------------------------------------- helpers --
 
 create or replace function pg_temp.become(user_id uuid) returns void language plpgsql as $$
@@ -165,8 +172,6 @@ begin
   assert n = 0, 'Carlos can read Maria''s availability';
 
   -- 12. an open shift can be picked up, and only for yourself
-  insert into public.shifts (id, location_id, employee_id, position_id, starts_at, ends_at, status, published_at)
-  values ('00000000-0000-4000-8000-00000000b001', '0a515000-0000-4000-8000-000000000001', null, 'bartender', now() + interval '7 days', now() + interval '7 days 6 hours', 'published', now());
   begin
     insert into public.shift_requests (shift_id, kind, requested_by, claimed_by, status)
     values ('00000000-0000-4000-8000-00000000b001', 'cover', '00000000-0000-4000-8000-00000000e003', '00000000-0000-4000-8000-00000000e003', 'claimed');
