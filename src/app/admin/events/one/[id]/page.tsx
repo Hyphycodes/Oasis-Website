@@ -15,6 +15,10 @@ import { canOpen } from '@/server/permissions';
 import { getSalesSummaries } from '@/server/ticketing/sales';
 import { venueLocalParts } from '@/themes/schedule';
 import { EventEditor, type EditorPromo } from './EventEditor';
+import { EventStaffingPanel } from '@/components/staff/EventStaffingPanel';
+import { listEmployees } from '@/server/staff/employees';
+import { eventStaffing } from '@/server/staff/staffing';
+import { getStaffContext, contextCan } from '@/server/staff/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +121,14 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
   });
   const previewUrl = `/events/${encodeURIComponent(String(working.slug ?? ''))}?preview=${encodeURIComponent(signPreviewTokenSafe(String(row.id)))}`;
 
+  // Staffing lives in the staff system; the admin shows the same board so the
+  // night can be run from either screen.
+  const opsContext = await getStaffContext();
+  const canStaffEvents = opsContext ? contextCan(opsContext, 'events.staff') : false;
+  const [staffing, employees] = canStaffEvents
+    ? await Promise.all([eventStaffing(db, String(row.id)).catch(() => null), listEmployees(db).catch(() => [])])
+    : [null, []];
+
   return (
     <AdminShell
       staff={staff}
@@ -145,6 +157,18 @@ export default async function OneOffEventPage({ params }: { params: Promise<{ id
         canPublish={canPublish}
         problems={row.published !== false ? {} : publishProblems(working, tierRows)}
       />
+
+      {staffing ? (
+        <section className="mt-10 rounded-(--radius-md) border border-brown/12 px-4 py-4">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[1.0625rem] font-semibold text-brown">Staffing</h2>
+            <a href={`/staff/events/${encodeURIComponent(String(row.id))}`} className="text-[0.875rem] font-semibold text-brown-soft underline underline-offset-4">
+              Open in the staff app
+            </a>
+          </div>
+          <EventStaffingPanel staffing={staffing} employees={employees} timezone={settings.timeZone} canStaff={canStaffEvents} compact />
+        </section>
+      ) : null}
 
       <details className="mt-10 rounded-(--radius-md) border border-brown/12 px-4 py-3">
         <summary className="min-h-11 cursor-pointer text-[1rem] font-semibold text-brown">How it appears on the homepage, and extra artwork</summary>

@@ -1,0 +1,90 @@
+import Link from 'next/link';
+import { ShiftRow } from '@/components/staff/ShiftCard';
+import { StaffShell } from '@/components/staff/StaffShell';
+import { Button, Chips, Empty, Screen, Section } from '@/components/staff/ui';
+import { addDays, formatDate, weekOf, zonedDate, zonedInstant } from '@/lib/staff/time';
+import { listShiftViews } from '@/server/staff/schedule';
+import { listTimeOff } from '@/server/staff/timeoff';
+import { isDenied, staffPage } from '../_lib';
+
+export const dynamic = 'force-dynamic';
+
+/** My schedule: a week, day by day, with the month a tap away. */
+export default async function MySchedulePage({ searchParams }: { searchParams: Promise<{ week?: string; view?: string }> }) {
+  const page = await staffPage('schedule.view_self');
+  if (isDenied(page)) return page.denied;
+  const { context, db, unread } = page;
+  const params = await searchParams;
+  const timezone = context.location.timezone;
+  const today = zonedDate(new Date(), timezone);
+  const anchor = params.week && /^\d{4}-\d{2}-\d{2}$/.test(params.week) ? params.week : today;
+  const monthView = params.view === 'month';
+  const days = monthView ? Array.from({ length: 35 }, (_, index) => addDays(weekOf(anchor)[0]!, index)) : weekOf(anchor);
+  const from = zonedInstant(days[0]!, 0, timezone);
+  const to = zonedInstant(addDays(days[days.length - 1]!, 1), 0, timezone);
+  const employee = context.employee;
+  const [shifts, timeOff] = employee ? await Promise.all([listShiftViews(db, { from, to, employeeId: employee.id }), listTimeOff(db, { employeeId: employee.id, status: 'approved', from: days[0] })]) : [[], []];
+  const byDay = new Map(days.map((day) => [day, shifts.filter((shift) => zonedDate(shift.startsAt, timezone) === day)]));
+  const previous = addDays(days[0]!, monthView ? -35 : -7);
+  const next = addDays(days[0]!, monthView ? 35 : 7);
+  const hasAny = shifts.length > 0;
+
+  return (
+    <StaffShell context={context} unread={unread}>
+      <Screen
+        title="Schedule"
+        lead={`${formatDate(days[0]!, 'short')} – ${formatDate(days[days.length - 1]!, 'short')}`}
+        actions={
+          <div className="flex items-center gap-1.5">
+            <Button href={`/staff/schedule?week=${previous}${monthView ? '&view=month' : ''}`} small>
+              ←
+            </Button>
+            <Button href={`/staff/schedule${monthView ? '?view=month' : ''}`} small>
+              Today
+            </Button>
+            <Button href={`/staff/schedule?week=${next}${monthView ? '&view=month' : ''}`} small>
+              →
+            </Button>
+          </div>
+        }
+      >
+        <Chips
+          items={[
+            { href: `/staff/schedule?week=${anchor}`, label: 'Week', active: !monthView },
+            { href: `/staff/schedule?week=${anchor}&view=month`, label: 'Month', active: monthView },
+            { href: '/staff/schedule/coverage', label: 'Up for grabs', active: false },
+            { href: '/staff/time-off', label: 'Time off', active: false },
+            { href: '/staff/availability', label: 'Availability', active: false },
+          ]}
+        />
+        {!employee ? <Empty title="No schedule of your own." detail="You are signed in as a manager without an employee profile." /> : null}
+        {employee && !hasAny ? <Empty title={monthView ? 'No shifts this month.' : 'No shifts this week.'} detail="You’re off — enjoy it." /> : null}
+        {employee ? (
+          <div className="grid gap-3">
+            {days.map((day) => {
+              const mine = byDay.get(day) ?? [];
+              const off = timeOff.find((request) => day >= request.startsOn && day <= request.endsOn);
+              if (monthView && mine.length === 0 && !off) return null;
+              return (
+                <Section key={day} title={`${day === today ? 'Today · ' : ''}${formatDate(day)}`}>
+                  {mine.length === 0 ? (
+                    <p className="px-1 text-[0.875rem] text-brown-soft">{off ? 'Time off (approved)' : 'Off'}</p>
+                  ) : (
+                    <div className="staff-panel px-4">
+                      {mine.map((shift) => (
+                        <ShiftRow key={shift.id} shift={shift} href={`/staff/schedule/shift/${shift.id}`} showDate={false} />
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              );
+            })}
+          </div>
+        ) : null}
+        <p className="text-[0.8125rem] text-brown-soft">
+          Need a day? <Link href="/staff/time-off" className="font-semibold text-brown underline underline-offset-4">Request time off</Link> or <Link href="/staff/availability" className="font-semibold text-brown underline underline-offset-4">update your availability</Link>.
+        </p>
+      </Screen>
+    </StaffShell>
+  );
+}

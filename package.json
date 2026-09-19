@@ -17,6 +17,7 @@
     "verify": "npm run lint && npm run typecheck && npm run test && npm run assets:check && npm run build",
     "content:migrate": "tsx scripts/migrate-content.ts",
     "seed:events": "tsx scripts/seed-events.ts",
+    "seed:staff-demo": "tsx scripts/seed-staff-demo.ts",
     "email:dev": "email dev --dir src/emails/previews --port 3030",
     "email:export": "email export --dir src/emails/previews --outDir .email-previews"
   },
