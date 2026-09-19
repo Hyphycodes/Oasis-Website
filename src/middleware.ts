@@ -4,12 +4,16 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { isAdminOpen } from '@/server/admin-access';
 
 /**
- * Edge gate for /admin.
+ * Edge gate for /admin and /staff.
  *
  * This refreshes the session cookie and bounces anonymous visitors to the login
  * page. It is a convenience layer, NOT the authorization boundary — every
  * mutation re-checks the role server-side, and Postgres RLS is what actually
- * enforces access. See supabase/migrations/0001_init.sql.
+ * enforces access. See supabase/migrations/0001_init.sql and 0022.
+ *
+ * The staff app and the admin share one sign-in. An employee account
+ * (profiles.role = 'staff') that lands on /admin is sent to /staff, where its
+ * work is; the admin pages would only show it "no access" screens.
  */
 export async function middleware(request: NextRequest) {
   // The admin is open: there is nothing to gate, and bouncing people to a login
@@ -53,17 +57,31 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const inStaff = pathname.startsWith('/staff');
+  const inAdmin = pathname.startsWith('/admin') && pathname !== '/admin/login';
 
-  if (!user && pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  if (!user && (inStaff || inAdmin)) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = '/admin/login';
     redirect.searchParams.set('next', pathname);
     return NextResponse.redirect(redirect);
   }
 
+  // An employee account has nothing to do in the admin. One small read of
+  // their own profile row (allowed by RLS) and they land where their work is.
+  if (user && inAdmin) {
+    const { data } = await supabase.from('profiles').select('role').eq('user_id', user.id).maybeSingle();
+    if (data?.role === 'staff' || data?.role === 'contractor') {
+      const redirect = request.nextUrl.clone();
+      redirect.pathname = '/staff';
+      redirect.search = '';
+      return NextResponse.redirect(redirect);
+    }
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/staff/:path*'],
 };

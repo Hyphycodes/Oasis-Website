@@ -23,10 +23,13 @@ const ORDER = [
   'page_seo',
   'page_lists',
   'site_themes',
+  'locations',
+  'positions',
+  'requirement_types',
 ];
 
 const JSONB_COLUMNS = new Set(['payload', 'ranges', 'items', 'config']);
-const TEXT_ARRAY_COLUMNS = new Set(['dietary', 'music_formats', 'includes', 'tags']);
+const TEXT_ARRAY_COLUMNS = new Set(['dietary', 'music_formats', 'includes', 'tags', 'applies_to_positions', 'applies_to_locations']);
 const OMIT_COLUMNS = new Set(['draft', 'archived_at', 'updated_by']);
 
 function quote(value: string): string {

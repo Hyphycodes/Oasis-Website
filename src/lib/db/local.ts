@@ -134,6 +134,19 @@ export class LocalDb implements Db {
     for (const [column, value] of Object.entries(options.where ?? {})) {
       rows = rows.filter((row) => (value === null ? row[column] == null : row[column] === value));
     }
+    for (const [column, values] of Object.entries(options.whereIn ?? {})) {
+      const set = new Set<unknown>(values);
+      rows = rows.filter((row) => set.has(row[column]));
+    }
+    if (options.range) {
+      const { column, from, to } = options.range;
+      rows = rows.filter((row) => {
+        const value = row[column];
+        if (value == null) return false;
+        const text = String(value);
+        return (from === undefined || text >= from) && (to === undefined || text < to);
+      });
+    }
 
     if (options.orderBy) {
       const key = options.orderBy;

@@ -14,6 +14,13 @@ export type Row = Record<string, unknown>;
 export interface ListOptions {
   /** Equality filters, ANDed. `null` matches SQL `is null`. */
   where?: Record<string, string | number | boolean | null>;
+  /** Membership filters, ANDed with `where`. An empty list matches nothing. */
+  whereIn?: Record<string, readonly (string | number)[]>;
+  /**
+   * One inclusive-from, exclusive-to window on a column, for "the shifts this
+   * week" without loading every shift ever. Values compare as ISO strings.
+   */
+  range?: { column: string; from?: string; to?: string };
   /** Column to sort by, ascending unless `desc`. */
   orderBy?: string;
   desc?: boolean;
@@ -77,6 +84,42 @@ export const PRIMARY_KEY: Record<string, string> = {
   processed_stripe_events: 'id',
   email_log: 'id',
   rate_limits: 'key',
+  // Employee operations (migration 0022).
+  locations: 'id',
+  positions: 'id',
+  employees: 'id',
+  employee_positions: 'id',
+  employee_locations: 'id',
+  employee_notes: 'id',
+  requirement_types: 'id',
+  employee_requirements: 'id',
+  training_modules: 'id',
+  training_sections: 'id',
+  training_questions: 'id',
+  training_answer_keys: 'question_id',
+  training_assignments: 'id',
+  training_attempts: 'id',
+  shifts: 'id',
+  shift_history: 'id',
+  availability_rules: 'id',
+  availability_exceptions: 'id',
+  time_off_requests: 'id',
+  shift_requests: 'id',
+  tasks: 'id',
+  checklist_templates: 'id',
+  checklist_template_items: 'id',
+  checklist_runs: 'id',
+  checklist_run_items: 'id',
+  contractors: 'id',
+  contractor_bookings: 'id',
+  event_assignments: 'id',
+  staff_announcements: 'id',
+  staff_announcement_reads: 'id',
+  staff_notifications: 'id',
+  ops_comments: 'id',
+  incidents: 'id',
+  incident_employees: 'id',
+  ops_audit_log: 'id',
 };
 
 export function primaryKey(table: string): string {

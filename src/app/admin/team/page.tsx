@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { Card, EmptyState, Notice } from '@/components/admin/ui';
+import { Card, EmptyState, LinkButton, Notice } from '@/components/admin/ui';
 import { getReadDb, isLocalDb } from '@/lib/db';
 import type { Row } from '@/lib/db/types';
 import { getStaff, LOCAL_STAFF, staffCan } from '@/server/auth';
-import { ROLE_LABEL, ROLE_SUMMARY, SECTIONS, type Role } from '@/server/permissions';
+import { ADMIN_ROLES, ROLE_LABEL, ROLE_SUMMARY, SECTIONS, type Role } from '@/server/permissions';
 import { AddTeamMember } from './AddTeamMember';
 import { TeamMemberForm } from './TeamMemberForm';
 
@@ -44,7 +44,7 @@ export default async function TeamPage() {
         {!local ? <Card title="Add a staff member"><AddTeamMember /></Card> : null}
         <Card title="What each role can do">
           <dl className="grid gap-3">
-            {(['owner', 'admin', 'editor'] as Role[]).map((role) => (
+            {ADMIN_ROLES.map((role) => (
               <div key={role} className="border-b border-brown/12 pb-3 last:border-b-0">
                 <dt className="text-[0.9375rem] font-semibold text-brown">{ROLE_LABEL[role]}</dt>
                 <dd className="mt-0.5 text-[0.875rem] text-brown-soft">{ROLE_SUMMARY[role]}</dd>
@@ -64,7 +64,7 @@ export default async function TeamPage() {
               role. Real accounts are created in Supabase.
             </Notice>
             <ul className="mt-4 grid gap-2">
-              {(Object.keys(LOCAL_STAFF) as Role[]).map((role) => (
+              {(Object.keys(LOCAL_STAFF) as Role[]).filter((role) => role !== 'contractor').map((role) => (
                 <li key={role} className="flex flex-wrap items-baseline gap-x-3 border-b border-brown/12 pb-2">
                   <span className="text-[0.9375rem] font-medium text-brown">
                     {LOCAL_STAFF[role].name}
@@ -104,6 +104,16 @@ export default async function TeamPage() {
             )}
           </Card>
         )}
+
+        <Card title="Employees" tone="quiet">
+          <p className="measure text-[0.9375rem] leading-relaxed text-brown-soft">
+            Bartenders, servers, door and event staff are added in the staff app, not here. An employee
+            account signs in to <code className="text-brown">/staff</code> and never sees this admin.
+          </p>
+          <div className="mt-4">
+            <LinkButton href="/staff/team">Open the team directory</LinkButton>
+          </div>
+        </Card>
 
         <Card title="Connected services" tone="quiet">
           <p className="measure text-[0.9375rem] leading-relaxed text-brown-soft">

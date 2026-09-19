@@ -11,18 +11,31 @@
  * and the label is presentation.
  */
 
-export type Role = 'owner' | 'admin' | 'editor';
+/**
+ * Five stored values. `staff` and `contractor` arrived with migration 0021 for
+ * the employee operations system: an account with either has NO content or
+ * admin capability here — the matrix below gives them nothing — and gets its
+ * operational access from `src/server/staff/permissions.ts` instead.
+ */
+export type Role = 'owner' | 'admin' | 'editor' | 'staff' | 'contractor';
+
+/** The roles the admin's Team screen offers. Employees are added from the staff app. */
+export const ADMIN_ROLES: Role[] = ['owner', 'admin', 'editor'];
 
 export const ROLE_LABEL: Record<Role, string> = {
   owner: 'Owner',
   admin: 'Manager',
   editor: 'Contributor',
+  staff: 'Employee',
+  contractor: 'Contractor',
 };
 
 export const ROLE_SUMMARY: Record<Role, string> = {
   owner: 'Everything, including staff accounts and connected services.',
   admin: 'Edit and publish the menu, events, pages and photos.',
   editor: 'Edit anything allowed and save it as a draft for a manager to publish.',
+  staff: 'The Oasis staff app: schedule, training, tasks and their own profile. No website access.',
+  contractor: 'Reserved for DJs and instructors with a sign-in. Nothing yet.',
 };
 
 export type Capability =
@@ -70,6 +83,8 @@ const MATRIX: Record<Role, Capability[]> = {
     'settings.manage',
   ],
   editor: ['content.edit', 'media.upload', 'inquiries.manage'],
+  staff: [],
+  contractor: [],
 };
 
 /** Admin sections a Contributor can be restricted to. Empty means all of them. */
@@ -97,6 +112,8 @@ export function can(actor: Actor, capability: Capability): boolean {
 export function canOpen(actor: Actor, section: Section): boolean {
   if (actor.active === false) return false;
   if (section === 'settings') return can(actor, 'settings.manage');
+  // An employee or contractor account has no admin section at all.
+  if (actor.role === 'staff' || actor.role === 'contractor') return false;
   if (actor.role !== 'editor') return true;
   const allowed = actor.sections ?? [];
   return allowed.length === 0 || allowed.includes(section);

@@ -7,6 +7,7 @@ import type {
   EventUpdateProps,
   RefundConfirmationProps,
   RenderedEmail,
+  StaffEmailProps,
   StaffInvitationProps,
   TicketConfirmationProps,
   TicketResendProps,
@@ -22,6 +23,13 @@ import * as TicketConfirmation from './templates/TicketConfirmation';
 import * as TicketResend from './templates/TicketResend';
 import * as VerifyEmail from './templates/VerifyEmail';
 import * as Welcome from './templates/Welcome';
+import * as StaffWelcome from './templates/staff/StaffWelcome';
+import * as SchedulePublished from './templates/staff/SchedulePublished';
+import * as ShiftChanged from './templates/staff/ShiftChanged';
+import * as TimeOffDecision from './templates/staff/TimeOffDecision';
+import * as TrainingRequired from './templates/staff/TrainingRequired';
+import * as DocumentExpiring from './templates/staff/DocumentExpiring';
+import * as EventAssignment from './templates/staff/EventAssignment';
 
 /**
  * Template id → props, so a caller cannot render a refund with ticket props.
@@ -39,6 +47,13 @@ export interface TemplateProps {
   password_reset: AccountEmailProps;
   verify_email: AccountEmailProps;
   welcome: AccountEmailProps;
+  staff_welcome: StaffEmailProps;
+  schedule_published: StaffEmailProps;
+  shift_changed: StaffEmailProps;
+  time_off_decision: StaffEmailProps;
+  training_required: StaffEmailProps;
+  document_expiring: StaffEmailProps;
+  event_assignment: StaffEmailProps;
 }
 
 interface TemplateModule<P> {
@@ -59,6 +74,13 @@ const MODULES: { [K in TemplateId]: TemplateModule<TemplateProps[K]> } = {
   password_reset: PasswordReset,
   verify_email: VerifyEmail,
   welcome: Welcome,
+  staff_welcome: StaffWelcome,
+  schedule_published: SchedulePublished,
+  shift_changed: ShiftChanged,
+  time_off_decision: TimeOffDecision,
+  training_required: TrainingRequired,
+  document_expiring: DocumentExpiring,
+  event_assignment: EventAssignment,
 };
 
 export const TEST_SUBJECT_PREFIX = '[TEST] ';

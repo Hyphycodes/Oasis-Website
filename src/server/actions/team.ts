@@ -38,7 +38,13 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
     return { ok: false, message: 'That email and password did not match. Please try again.' };
   }
 
-  redirect('/admin');
+  redirect(safeNext(formData.get('next')) ?? '/admin');
+}
+
+/** Only a path on this site, so a sign-in link cannot bounce someone elsewhere. */
+function safeNext(value: FormDataEntryValue | null): string | null {
+  const next = typeof value === 'string' ? value.trim() : '';
+  return next.startsWith('/') && !next.startsWith('//') ? next : null;
 }
 
 /** Development sign-in. Refuses outright anywhere the local database is not live. */
@@ -47,11 +53,11 @@ export async function signInAs(_prev: ActionState, formData: FormData): Promise<
     return { ok: false, message: 'Sign in with your email and password.' };
   }
   const role = String(formData.get('role') ?? '') as Role;
-  if (!['owner', 'admin', 'editor'].includes(role)) {
+  if (!['owner', 'admin', 'editor', 'staff', 'contractor'].includes(role)) {
     return { ok: false, message: 'Pick an account.' };
   }
   await signInLocally(role);
-  redirect('/admin');
+  redirect(safeNext(formData.get('next')) ?? (role === 'staff' || role === 'contractor' ? '/staff' : '/admin'));
 }
 
 export async function signOut(): Promise<void> {
@@ -63,7 +69,7 @@ export async function signOut(): Promise<void> {
 
 const roleSchema = z.object({
   userId: z.string().min(1),
-  role: z.enum(['owner', 'admin', 'editor']),
+  role: z.enum(['owner', 'admin', 'editor', 'staff', 'contractor']),
   sections: z.string().max(200).optional(),
   active: z.coerce.boolean(),
 });

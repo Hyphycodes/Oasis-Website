@@ -2,6 +2,7 @@ import 'server-only';
 
 import { isAdminOpen } from '@/server/admin-access';
 import { buildRecords } from '@/server/migration/records';
+import { buildStaffDemo } from '@/server/staff/demo';
 import { getServiceClient, getSessionClient, isSupabaseConfigured } from '@/lib/supabase/server';
 import { LocalDb } from './local';
 import { SupabaseDb } from './supabase';
@@ -25,7 +26,11 @@ import type { Db } from './types';
 let local: LocalDb | null = null;
 
 function localDb(): LocalDb {
-  local ??= new LocalDb(undefined, () => buildRecords().tables);
+  // The local file is development-only (refused in production, below), which
+  // is the one place the staff demo — an owner, a manager, a bartender, a
+  // schedule — is seeded without being asked. Supabase never gets it unless
+  // `scripts/seed-staff-demo.ts` is run on purpose.
+  local ??= new LocalDb(undefined, () => ({ ...buildRecords().tables, ...buildStaffDemo() }));
   return local;
 }
 

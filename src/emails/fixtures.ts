@@ -9,6 +9,7 @@ import type {
   RefundConfirmationProps,
   StaffInvitationProps,
   TicketConfirmationProps,
+  StaffEmailProps,
 } from './types';
 
 /**
@@ -254,4 +255,109 @@ export const staffInvitation: StaffInvitationProps = {
   invitedBy: 'Jerry',
   acceptUrl: `${PREVIEW_ORIGIN}/auth/activate#preview`,
   expiresInHours: 24,
+};
+
+/* ---------------------------------------------------------- staff operations */
+
+const staffBase = {
+  brand,
+  name: 'Carlos Mendoza',
+  email: 'carlos@example.com',
+};
+
+export const staffWelcome: StaffEmailProps = {
+  ...staffBase,
+  headline: 'Welcome to Oasis, Carlos.',
+  intro: 'Alex added you to the Oasis team as a Bartender at Oasis Lockport. Everything you need for work — your schedule, training, tasks and documents — is in the Oasis staff app.',
+  details: [
+    { label: 'Position', value: 'Bartender' },
+    { label: 'Location', value: 'Oasis Lockport' },
+    { label: 'Start date', value: 'Friday, October 2' },
+  ],
+  note: 'Finish your onboarding checklist before your first shift. It takes about twenty minutes.',
+  actionUrl: `${PREVIEW_ORIGIN}/staff/onboarding`,
+  actionLabel: 'Start onboarding',
+};
+
+export const schedulePublished: StaffEmailProps = {
+  ...staffBase,
+  headline: 'Your schedule for Sep 28 – Oct 4 is out.',
+  intro: 'Three shifts this week at Oasis Lockport.',
+  details: [
+    { label: 'Fri Oct 2', value: '5:00 PM – Close · Bartender' },
+    { label: 'Sat Oct 3', value: '8:30 PM – 2:30 AM · Bartender · Oasis Latin Saturdays' },
+    { label: 'Sun Oct 4', value: '4:00 PM – 10:00 PM · Bartender · Bad Bunny Paint & Sip' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/staff/schedule`,
+  actionLabel: 'Open my schedule',
+};
+
+export const shiftChanged: StaffEmailProps = {
+  ...staffBase,
+  headline: 'Your Saturday shift moved.',
+  intro: 'A manager changed one of your published shifts.',
+  details: [
+    { label: 'Was', value: 'Sat Oct 3 · 8:30 PM – 2:30 AM · Bartender' },
+    { label: 'Now', value: 'Sat Oct 3 · 7:00 PM – 2:30 AM · Bartender' },
+    { label: 'Location', value: 'Oasis Lockport' },
+  ],
+  note: 'Doors open earlier for Latin Saturdays this week. Thanks for coming in early.',
+  actionUrl: `${PREVIEW_ORIGIN}/staff/schedule`,
+  actionLabel: 'See the shift',
+};
+
+export const timeOffDecision: StaffEmailProps = {
+  ...staffBase,
+  headline: 'Your time off is approved.',
+  intro: 'Alex approved your request. It is on the schedule, and you will not be scheduled for those days.',
+  details: [
+    { label: 'Dates', value: 'Wed Oct 14 – Thu Oct 15' },
+    { label: 'Decided by', value: 'Alex' },
+  ],
+  note: 'Enjoy it.',
+  actionUrl: `${PREVIEW_ORIGIN}/staff/time-off`,
+  actionLabel: 'View my requests',
+};
+
+export const trainingRequired: StaffEmailProps = {
+  ...staffBase,
+  headline: 'New training: Door & QR scanner.',
+  intro: 'A required module was assigned to you. It takes about 15 minutes and ends with a short quiz.',
+  details: [
+    { label: 'Module', value: 'Door & QR scanner' },
+    { label: 'Due', value: 'Friday, October 9' },
+    { label: 'Passing score', value: '80%' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/staff/training`,
+  actionLabel: 'Start training',
+};
+
+export const documentExpiring: StaffEmailProps = {
+  ...staffBase,
+  headline: 'Your BASSET card expires soon.',
+  intro: 'Upload the renewed card before it expires so you stay cleared to work the bar.',
+  details: [
+    { label: 'Document', value: 'BASSET / alcohol service' },
+    { label: 'Expires', value: 'Friday, October 30' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/staff/documents`,
+  actionLabel: 'Upload the new card',
+};
+
+export const eventAssignment: StaffEmailProps = {
+  ...staffBase,
+  headline: 'You are working Bad Bunny Paint & Sip.',
+  intro: 'Alex put you on the door for Sunday’s event.',
+  details: [
+    { label: 'Event', value: 'Bad Bunny Paint & Sip' },
+    { label: 'When', value: 'Sun Oct 4 · 5:00 PM – 10:00 PM' },
+    { label: 'Role', value: 'Door' },
+    { label: 'Doors', value: '6:00 PM' },
+  ],
+  note: 'Scanner phones are charging at the host stand. Wristbands are in the office.',
+  actionUrl: `${PREVIEW_ORIGIN}/staff/schedule`,
+  actionLabel: 'See the night',
 };

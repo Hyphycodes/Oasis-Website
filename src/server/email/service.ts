@@ -4,7 +4,7 @@ import { INLINE_TICKET_LIMIT } from '@/emails/components/TicketCard';
 import * as fixtures from '@/emails/fixtures';
 import { EMAIL_TEMPLATES, type EmailLogType, type TemplateId, templateInfo } from '@/emails/registry';
 import { renderEmail, type TemplateProps } from '@/emails/render';
-import type { EmailBrand, EmailEvent, EmailTicket, EventUpdateKind, RenderedEmail, StaffInvitationProps, TicketDirection } from '@/emails/types';
+import type { EmailBrand, EmailEvent, EmailTicket, EventUpdateKind, RenderedEmail, StaffEmailProps, StaffInvitationProps, TicketDirection } from '@/emails/types';
 import { isSigningConfigured } from '@/lib/ticketing/tokens';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { getOrderById, isPaidStatus, type OrderRecord } from '@/server/ticketing/orders';
@@ -23,6 +23,7 @@ import { resendTransport, type EmailAttachment, type EmailTransport } from './tr
  *   emailService.sendRefundConfirmation(orderId, {...})
  *   emailService.sendEventUpdate(eventId, {...})
  *   emailService.sendStaffInvitation({...})
+ *   emailService.sendStaffNotice('shift_changed', {...})
  *   emailService.sendAuthEmail(payload)
  *   emailService.sendTest({...})
  *   emailService.sendOwnerAlert(subject, body)
@@ -318,6 +319,23 @@ export function createEmailService(deps: EmailServiceDeps) {
       return deliver({ audience: 'staff', type: 'staff_invitation', template: 'staff_invitation', to: input.email, rendered, refId: `invite-${input.email}-${Date.now()}` });
     },
 
+    /**
+     * One of the seven staff operations emails (welcome, schedule published,
+     * shift changed, time-off decision, training required, document expiring,
+     * event assignment). Staff audience: the guest delivery switch does not
+     * apply, because nothing about this goes to a guest.
+     */
+    async sendStaffNotice(
+      templateId: 'staff_welcome' | 'schedule_published' | 'shift_changed' | 'time_off_decision' | 'training_required' | 'document_expiring' | 'event_assignment',
+      input: Omit<StaffEmailProps, 'brand'>,
+      options: { refId?: string } = {},
+    ): Promise<SendResult> {
+      const brand = await deps.loadBrand();
+      const rendered = await renderEmail(templateId, { ...input, brand });
+      const info = templateInfo(templateId)!;
+      return deliver({ audience: 'staff', type: info.logType, template: templateId, to: input.email, rendered, refId: options.refId ?? `${templateId}-${input.email}-${Date.now()}` });
+    },
+
     /** What the Supabase auth hook calls. Staff audience: sign-in must work before the guest switch is on. */
     async sendAuthEmail(payload: AuthHookPayload, context: { supabaseUrl: string; siteUrl: string; role?: string | null; invitedBy?: string | null }): Promise<SendResult> {
       const brand = await deps.loadBrand();
@@ -434,6 +452,20 @@ async function buildTemplateProps(
     }
     case 'thanks_for_coming':
       return { templateId: input.templateId, event, attachments: [], props: { brand, customer, event: event!, reviewUrl: null, test } };
+    case 'staff_welcome':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.staffWelcome, brand, test } };
+    case 'schedule_published':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.schedulePublished, brand, test } };
+    case 'shift_changed':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.shiftChanged, brand, test } };
+    case 'time_off_decision':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.timeOffDecision, brand, test } };
+    case 'training_required':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.trainingRequired, brand, test } };
+    case 'document_expiring':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.documentExpiring, brand, test } };
+    case 'event_assignment':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.eventAssignment, brand, test } };
     case 'staff_invitation':
       return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.staffInvitation, brand, acceptUrl: `${brand.siteUrl}/auth/activate`, test } };
     case 'magic_link':
@@ -489,6 +521,7 @@ export const emailService = {
   sendEventUpdateForOrder: (...args: Parameters<ReturnType<typeof createEmailService>['sendEventUpdateForOrder']>) => getEmailService().sendEventUpdateForOrder(...args),
   sendThanksForComing: (...args: Parameters<ReturnType<typeof createEmailService>['sendThanksForComing']>) => getEmailService().sendThanksForComing(...args),
   sendStaffInvitation: (...args: Parameters<ReturnType<typeof createEmailService>['sendStaffInvitation']>) => getEmailService().sendStaffInvitation(...args),
+  sendStaffNotice: (...args: Parameters<ReturnType<typeof createEmailService>['sendStaffNotice']>) => getEmailService().sendStaffNotice(...args),
   sendAuthEmail: (...args: Parameters<ReturnType<typeof createEmailService>['sendAuthEmail']>) => getEmailService().sendAuthEmail(...args),
   renderPreview: (...args: Parameters<ReturnType<typeof createEmailService>['renderPreview']>) => getEmailService().renderPreview(...args),
   sendTest: (...args: Parameters<ReturnType<typeof createEmailService>['sendTest']>) => getEmailService().sendTest(...args),

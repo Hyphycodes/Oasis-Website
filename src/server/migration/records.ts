@@ -8,6 +8,7 @@ import { announcements, site } from '@/content/site';
 import type { Row } from '@/lib/db/types';
 import { stableUuid } from '@/lib/stable-uuid';
 import { THEMES } from '@/themes/registry';
+import { REFERENCE_LOCATIONS, REFERENCE_POSITIONS, REFERENCE_REQUIREMENT_TYPES } from '@/content/staff-reference';
 
 /**
  * The single content mapping.
@@ -472,6 +473,15 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
   const counts = Object.fromEntries(
     Object.entries(tables).map(([table, rows]) => [table, rows.length]),
   );
+
+  /* -------------------------------------------------- staff reference data */
+
+  // The location, the positions and the onboarding checklist: configuration,
+  // not people. Demo employees live in src/server/staff/demo.ts and are only
+  // ever seeded on purpose.
+  put('locations', REFERENCE_LOCATIONS);
+  put('positions', REFERENCE_POSITIONS);
+  put('requirement_types', REFERENCE_REQUIREMENT_TYPES);
 
   return { tables, report: { counts, transformed, skipped, invalid } };
 }

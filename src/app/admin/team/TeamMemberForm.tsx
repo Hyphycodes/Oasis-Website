@@ -3,7 +3,7 @@
 import { ActionForm, SubmitButton } from '@/components/admin/ActionForm';
 import { Checkbox, Label, Select } from '@/components/admin/ui';
 import { saveTeamMember } from '@/server/actions/team';
-import { ROLE_LABEL, type Role } from '@/server/permissions';
+import { ADMIN_ROLES, ROLE_LABEL, type Role } from '@/server/permissions';
 
 export function TeamMemberForm({
   member,
@@ -32,7 +32,7 @@ export function TeamMemberForm({
         <div>
           <Label htmlFor={`role-${member.userId}`}>Role</Label>
           <Select id={`role-${member.userId}`} name="role" defaultValue={member.role}>
-            {(['owner', 'admin', 'editor'] as Role[]).map((role) => (
+            {(ADMIN_ROLES.includes(member.role) ? ADMIN_ROLES : [...ADMIN_ROLES, member.role]).map((role) => (
               <option key={role} value={role}>
                 {ROLE_LABEL[role]}
               </option>
