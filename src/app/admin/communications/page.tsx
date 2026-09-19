@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AdminShell, NoAccess } from '@/components/admin/AdminShell';
-import { Card, EmptyState, HelpNote } from '@/components/admin/ui';
+import { Card, EmptyState, HelpNote, LinkButton } from '@/components/admin/ui';
 import { EMAIL_TEMPLATES } from '@/emails/registry';
 import { isLocalDb } from '@/lib/db';
 import { getStaff, staffCan } from '@/server/auth';
@@ -44,6 +44,7 @@ export default async function CommunicationsPage() {
       local={local}
       title="Emails"
       description="What guests and staff receive from Oasis: tickets, reminders, refunds, changes, invitations. Preview any of them against a real event and send yourself a test."
+      actions={<LinkButton href="/admin/communications/gallery">See every email</LinkButton>}
     >
       <div className="grid gap-5">
         <Card title="Status">
@@ -82,7 +83,7 @@ export default async function CommunicationsPage() {
           </Card>
         ) : null}
 
-        <Card title="Every email the site sends">
+        <Card title="Every email the site sends" action={<LinkButton href="/admin/communications/gallery" variant="quiet">See them all side by side →</LinkButton>}>
           <ul className="divide-y divide-brown/10">
             {EMAIL_TEMPLATES.map((template) => (
               <li key={template.id} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto] sm:items-start">
@@ -96,7 +97,7 @@ export default async function CommunicationsPage() {
             ))}
           </ul>
           <p className="mt-4 text-[0.8125rem] leading-relaxed text-brown-soft">
-            Designs live in code (<code>src/emails/</code>); run <code>npm run email:dev</code> to browse every version with sample data. docs/email-system.md explains the rest.
+            Designs live in code (<code>src/emails/</code>). <a href="/admin/communications/gallery" className="text-clay underline underline-offset-4">The gallery</a> draws all of them at once; <code>npm run email:dev</code> adds the awkward scenarios. docs/email-system.md explains the rest.
           </p>
         </Card>
 

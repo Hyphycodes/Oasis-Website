@@ -26,9 +26,12 @@ export async function GET(request: NextRequest) {
 
   const preview = await emailService.renderPreview({ templateId: template, variant: params.get('variant'), eventId: params.get('event'), test: params.get('test') === '1' });
   if ('error' in preview) {
+    // Status 200 with a header rather than a 4xx: the iframe on Communications
+    // shows the sentence, and the gallery reads `x-email-error` to label the
+    // card instead of scraping it back out of the markup.
     return new NextResponse(`<!doctype html><meta charset="utf-8"><body style="font-family:sans-serif;padding:24px;color:#6a3f05;background:#fbf6ea">${escape(preview.error)}</body>`, {
       status: 200,
-      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' },
+      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'x-email-error': encodeURIComponent(preview.error) },
     });
   }
   let html = preview.rendered.html;

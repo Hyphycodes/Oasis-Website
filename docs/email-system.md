@@ -83,6 +83,7 @@ src/server/email/                   the service — server only
 src/app/api/webhooks/resend         delivery events in
 src/app/api/webhooks/supabase-auth  Supabase asks us to send an auth email
 src/app/admin/communications        the admin screen, its preview route, its actions
+src/app/admin/communications/gallery  every template at once, in the admin
 supabase/migrations/0018_…          the widened email_log
 ```
 
@@ -183,6 +184,14 @@ In the admin, **Events → Emails** previews any template against a **real
 event** (artwork, name, date, time, venue) with a stand-in guest and order,
 at phone or desktop width, and can send that exact preview to one address as
 a test.
+
+**Events → Emails → See every email** (`/admin/communications/gallery`) is
+the same renderer as a wall: every template and every version of the ones
+that have versions, drawn small, with its subject line, filtered by audience
+and optionally shown as a test send. Click one for it full size, with ← →
+through the rest. It needs no terminal, so it is the one to reach for after
+changing the header, the footer or the palette; `email:dev` is still where
+the awkward scenarios above live.
 
 ---
 
