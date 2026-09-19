@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { NavIcon, type NavIconName } from './icons';
 
 /**
- * Five sections.
+ * The primary admin sections.
  *
  * On a desktop they sit in the header with a small amber underline on the
  * one you are in — not a filled pill, so the accent stays for actions. On a
@@ -58,7 +58,7 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
   );
 }
 
-/** The five icons a thumb reaches on a phone. */
+/** The primary section icons a thumb reaches on a phone. */
 export function AdminBottomBar({ items }: { items: AdminNavItem[] }) {
   const pathname = usePathname();
   return (

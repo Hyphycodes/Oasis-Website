@@ -75,6 +75,18 @@ export class LocalDb implements Db {
         const raw = await readFile(this.file, 'utf8');
         this.cache = JSON.parse(raw) as Tables;
         this.cachedMtimeMs = (await stat(this.file)).mtimeMs;
+        // A local database may predate a newly added migration. Add only tables
+        // that do not exist yet; never replace or merge rows in a table staff
+        // has already edited.
+        const fresh = this.seed();
+        let upgraded = false;
+        for (const [table, rows] of Object.entries(fresh)) {
+          if (!(table in this.cache)) {
+            this.cache[table] = rows;
+            upgraded = true;
+          }
+        }
+        if (upgraded) await this.flush();
       } catch {
         this.cache = this.seed();
         await this.flush();

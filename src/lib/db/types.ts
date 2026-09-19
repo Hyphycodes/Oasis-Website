@@ -120,6 +120,13 @@ export const PRIMARY_KEY: Record<string, string> = {
   incidents: 'id',
   incident_employees: 'id',
   ops_audit_log: 'id',
+  // Link Hubs (migration 0023).
+  link_hub_locations: 'id',
+  link_hubs: 'id',
+  link_hub_modes: 'id',
+  link_hub_blocks: 'id',
+  link_hub_analytics: 'id',
+  link_hub_leads: 'id',
 };
 
 export function primaryKey(table: string): string {

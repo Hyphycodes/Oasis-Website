@@ -88,7 +88,7 @@ const MATRIX: Record<Role, Capability[]> = {
 };
 
 /** Admin sections a Contributor can be restricted to. Empty means all of them. */
-export const SECTIONS = ['menu', 'events', 'website', 'media', 'settings'] as const;
+export const SECTIONS = ['menu', 'events', 'hubs', 'website', 'media', 'settings'] as const;
 export type Section = (typeof SECTIONS)[number];
 
 export interface Actor {

@@ -2,12 +2,13 @@ import type { MetadataRoute } from 'next';
 import { getPublicEvents } from '@/server/content/events';
 import { buildCalendar } from '@/lib/event-calendar';
 import { absoluteUrl } from '@/lib/seo';
+import { listSearchableHubSlugs } from '@/server/content/link-hubs';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const input = await getPublicEvents();
+  const [input, hubSlugs] = await Promise.all([getPublicEvents(), listSearchableHubSlugs()]);
   const { series } = input;
 
   const staticRoutes: { path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' }[] = [
@@ -48,5 +49,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'daily' as const,
         priority: 0.7,
       })),
+    ...hubSlugs.map((slug) => ({
+      url: absoluteUrl(`/go/${slug}`),
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.4,
+    })),
   ];
 }

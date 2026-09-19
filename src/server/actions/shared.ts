@@ -42,6 +42,7 @@ export const AFFECTED: Record<string, { routes: string[]; subtrees?: string[] }>
     routes: ['/', '/menu', '/events', '/catering', '/private-events', '/visit', '/careers', '/legal/privacy'],
     subtrees: ['/events'],
   },
+  hubs: { routes: ['/links'], subtrees: ['/go'] },
 };
 
 export function revalidate(area: keyof typeof AFFECTED): string[] {

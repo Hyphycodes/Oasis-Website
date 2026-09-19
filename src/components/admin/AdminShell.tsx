@@ -10,7 +10,7 @@ import { Notice } from './ui';
 /**
  * The admin shell.
  *
- * Five sections — Events, Menu, Look, Visit, Team — and every earlier screen
+ * Six sections — Events, Menu, Hubs, Look, Visit, Team — and every earlier screen
  * still within two taps: the door lives under Events, photos and the seasonal
  * look under Look, pages and enquiries under Visit. The owner's name and the
  * way out to the website sit on the right, quietly.
@@ -35,6 +35,12 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
     ],
   },
   { href: '/admin/menu', label: 'Menu', icon: 'menu', section: 'menu' },
+  {
+    href: '/admin/link-hubs',
+    label: 'Hubs',
+    icon: 'hubs',
+    section: 'hubs',
+  },
   {
     href: '/admin/look',
     label: 'Look',

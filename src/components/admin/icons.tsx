@@ -1,7 +1,7 @@
 /**
  * The admin's small line drawings.
  *
- * Five sections, plus the pictures the home screen's quick actions and the
+ * Primary sections, plus the pictures the home screen's quick actions and the
  * door reuse. Kept plain on purpose: each one sits beside its own label, so
  * it only has to be distinguishable from the others, not self-explanatory.
  */
@@ -19,7 +19,8 @@ export type NavIconName =
   | 'scan'
   | 'look'
   | 'visit'
-  | 'team';
+  | 'team'
+  | 'hubs';
 
 const PATHS: Record<NavIconName, string[]> = {
   home: ['M3.5 10.5 12 3.5l8.5 7', 'M5.8 9.5V20h12.4V9.5'],
@@ -46,6 +47,7 @@ const PATHS: Record<NavIconName, string[]> = {
     'M9.5 11a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6z', 'M3.5 20c0-3.2 2.7-5.3 6-5.3s6 2.1 6 5.3',
     'M16.8 8.8a2.4 2.4 0 1 0 0-4.8', 'M17.6 20c0-2.5-.8-4.2-2.2-5.2',
   ],
+  hubs: ['M7 7h10v10H7z', 'M4 4h4', 'M16 4h4v4', 'M20 16v4h-4', 'M8 20H4v-4', 'M10 10h4v4h-4z'],
 };
 
 export function NavIcon({ name, className = '' }: { name: NavIconName; className?: string }) {

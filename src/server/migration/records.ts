@@ -58,6 +58,30 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
   // the static modules say and nothing is duplicated into the database.
   put('site_settings', [{ id: 'default', payload: {} }]);
 
+  // Link Hubs ship with a reusable location record but no public hubs. Staff
+  // create the two recommended hubs from templates in Admin → Link Hubs, so a
+  // migration never publishes a demo page by surprise.
+  put('link_hub_locations', [{
+    id: 'lockport',
+    name: 'Oasis Mexican Kitchen & Bar — Lockport',
+    address: '1250 E. 9th St., Lockport, IL 60441',
+    phone: site.phone.value,
+    review_url: null,
+    directions_url: site.directionsUrl,
+    reservation_url: site.reservationUrl,
+    menu_url: '/menu',
+    instagram_url: site.socials.find((entry) => entry.platform === 'instagram')?.url ?? null,
+    tiktok_url: site.socials.find((entry) => entry.platform === 'tiktok')?.url ?? null,
+    facebook_url: site.socials.find((entry) => entry.platform === 'facebook')?.url ?? null,
+    contact_email: site.email,
+    enabled: true,
+  }]);
+  put('link_hubs', []);
+  put('link_hub_modes', []);
+  put('link_hub_blocks', []);
+  put('link_hub_analytics', []);
+  put('link_hub_leads', []);
+
   // Seasonal themes ship OFF. The row exists so the admin's theme screen has
   // something to edit on a fresh install; the config is empty because the
   // theme's own defaults apply until the admin changes something.

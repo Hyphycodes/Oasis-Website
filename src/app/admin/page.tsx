@@ -104,9 +104,10 @@ export default async function AdminHome() {
             : `${formatPrice(weekCents)} in tickets · ${weekSold} sold · ${week.length} ${week.length === 1 ? 'event' : 'events'}`}
         </p>
       </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <TaskLink href="/admin/events/new" icon="events" title="Add an event" />
         <TaskLink href="/admin/menu" icon="menu" title="Update the menu" />
+        <TaskLink href="/admin/link-hubs" icon="hubs" title="Link hubs" />
         <TaskLink href="/admin/media?upload=1" icon="photos" title="Add a photo or video" />
       </div>
       {waiting > 0 ? (

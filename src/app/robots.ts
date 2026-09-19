@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         // The admin area holds no public content and should never be indexed.
-        disallow: ['/admin', '/admin/'],
+        disallow: ['/admin', '/admin/', '/go/*/display'],
       },
     ],
     sitemap: absoluteUrl('/sitemap.xml'),
