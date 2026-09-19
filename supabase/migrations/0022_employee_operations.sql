@@ -1283,20 +1283,24 @@ alter table public.email_log add constraint email_log_type_known
 
 -- The onboarding checklist Oasis starts with. Nothing legal is asserted: each
 -- row is a slot management fills with its own form, link or policy text.
-insert into public.requirement_types (slug, title, description, category, kind, system_key, required, onboarding, sort) values
-  ('welcome',            'Welcome to Oasis',          'Read the welcome note and what to expect in your first week.', 'handbook',   'acknowledgement', null,                true,  true, 0),
-  ('personal-details',   'Personal details',          'Your name, phone and how we should address you.',            'profile',    'system', 'personal_details',  true,  true, 10),
-  ('emergency-contact',  'Emergency contact',         'Who we call if something happens at work.',                  'profile',    'system', 'emergency_contact', true,  true, 20),
-  ('availability',       'Availability',              'The days and times you can work.',                           'profile',    'system', 'availability',      true,  true, 30),
-  ('positions',          'Position assignment',       'A manager assigns the positions you work.',                  'profile',    'system', 'positions',         true,  true, 40),
-  ('location',           'Location assignment',       'A manager assigns where you work.',                          'profile',    'system', 'location',          true,  true, 50),
-  ('uniform',            'Uniform',                   'Your shirt size and the uniform agreement.',                 'uniform',    'acknowledgement', null,        true,  true, 60),
-  ('employee-policies',  'Employee policies',         'The house policies every employee acknowledges.',            'policy',     'acknowledgement', null,        true,  true, 70),
-  ('payroll-paperwork',  'Tax and payroll paperwork', 'Completed on the payroll provider''s site; a manager confirms it is in.', 'payroll', 'manager_verify', null, true, true, 80),
-  ('food-handler',       'Food handler certificate',  'Upload your certificate. Required for kitchen and food-running positions where Oasis policy says so.', 'certification', 'upload', null, false, true, 90),
-  ('basset',             'BASSET / alcohol service',  'Upload your BASSET card. Whether it is required per position is an Oasis policy setting.', 'certification', 'upload', null, false, true, 100),
-  ('first-shift',        'First shift confirmed',     'Your first shift is on the schedule and you have confirmed it.', 'profile', 'system', 'first_shift',      true,  true, 110)
-on conflict (slug) do nothing;
+--
+-- The ids are FIXED, and match src/content/staff-reference.ts. supabase/seed.sql
+-- carries the same twelve rows, and a generated id here would collide with them
+-- on the slug unique index the second time one of the two ran.
+insert into public.requirement_types (id, slug, title, description, category, kind, system_key, required, onboarding, sort) values
+  ('0a515000-0000-4000-8000-0000000000a1', 'welcome',            'Welcome to Oasis',          'Read the welcome note and what to expect in your first week.', 'handbook',   'acknowledgement', null,                true,  true, 0),
+  ('0a515000-0000-4000-8000-0000000000a2', 'personal-details',   'Personal details',          'Your name, phone and how we should address you.',            'profile',    'system', 'personal_details',  true,  true, 10),
+  ('0a515000-0000-4000-8000-0000000000a3', 'emergency-contact',  'Emergency contact',         'Who we call if something happens at work.',                  'profile',    'system', 'emergency_contact', true,  true, 20),
+  ('0a515000-0000-4000-8000-0000000000a4', 'availability',       'Availability',              'The days and times you can work.',                           'profile',    'system', 'availability',      true,  true, 30),
+  ('0a515000-0000-4000-8000-0000000000a5', 'positions',          'Position assignment',       'A manager assigns the positions you work.',                  'profile',    'system', 'positions',         true,  true, 40),
+  ('0a515000-0000-4000-8000-0000000000a6', 'location',           'Location assignment',       'A manager assigns where you work.',                          'profile',    'system', 'location',          true,  true, 50),
+  ('0a515000-0000-4000-8000-0000000000a7', 'uniform',            'Uniform',                   'Your shirt size and the uniform agreement.',                 'uniform',    'acknowledgement', null,        true,  true, 60),
+  ('0a515000-0000-4000-8000-0000000000a8', 'employee-policies',  'Employee policies',         'The house policies every employee acknowledges.',            'policy',     'acknowledgement', null,        true,  true, 70),
+  ('0a515000-0000-4000-8000-0000000000a9', 'payroll-paperwork',  'Tax and payroll paperwork', 'Completed on the payroll provider''s site; a manager confirms it is in.', 'payroll', 'manager_verify', null, true, true, 80),
+  ('0a515000-0000-4000-8000-0000000000b1', 'food-handler',       'Food handler certificate',  'Upload your certificate. Required for kitchen and food-running positions where Oasis policy says so.', 'certification', 'upload', null, false, true, 90),
+  ('0a515000-0000-4000-8000-0000000000b2', 'basset',             'BASSET / alcohol service',  'Upload your BASSET card. Whether it is required per position is an Oasis policy setting.', 'certification', 'upload', null, false, true, 100),
+  ('0a515000-0000-4000-8000-0000000000b3', 'first-shift',        'First shift confirmed',     'Your first shift is on the schedule and you have confirmed it.', 'profile', 'system', 'first_shift',      true,  true, 110)
+on conflict (id) do nothing;
 
 update public.requirement_types set expires_after_days = 1095 where slug in ('food-handler', 'basset') and expires_after_days is null;
 update public.requirement_types set applies_to_positions = array['kitchen', 'server', 'busser'] where slug = 'food-handler' and applies_to_positions = '{}';

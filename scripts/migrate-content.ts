@@ -36,6 +36,11 @@ const ORDER = [
   'page_seo',
   'page_lists',
   'site_themes',
+  // Staff reference data (migration 0022 inserts the same rows; these ids match,
+  // so running both updates rather than duplicating).
+  'locations',
+  'positions',
+  'requirement_types',
 ];
 
 async function main() {

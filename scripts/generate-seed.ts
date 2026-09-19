@@ -29,7 +29,10 @@ const ORDER = [
 ];
 
 const JSONB_COLUMNS = new Set(['payload', 'ranges', 'items', 'config']);
-const TEXT_ARRAY_COLUMNS = new Set(['dietary', 'music_formats', 'includes', 'tags', 'applies_to_positions', 'applies_to_locations']);
+const TEXT_ARRAY_COLUMNS = new Set(['dietary', 'music_formats', 'includes', 'tags', 'applies_to_positions']);
+// Postgres will not implicitly cast text[] into a uuid[] column, and an empty
+// array is exactly where that bites: `'{}'::text[]` fails on applies_to_locations.
+const UUID_ARRAY_COLUMNS = new Set(['applies_to_locations']);
 const OMIT_COLUMNS = new Set(['draft', 'archived_at', 'updated_by']);
 
 function quote(value: string): string {
@@ -43,11 +46,12 @@ function sql(column: string, value: unknown): string {
   if (JSONB_COLUMNS.has(column) || (typeof value === 'object' && !Array.isArray(value))) {
     return `${quote(JSON.stringify(value))}::jsonb`;
   }
-  if (TEXT_ARRAY_COLUMNS.has(column)) {
+  if (TEXT_ARRAY_COLUMNS.has(column) || UUID_ARRAY_COLUMNS.has(column)) {
+    const type = UUID_ARRAY_COLUMNS.has(column) ? 'uuid' : 'text';
     const values = value as unknown[];
     return values.length
-      ? `array[${values.map((entry) => quote(String(entry))).join(', ')}]::text[]`
-      : `'{}'::text[]`;
+      ? `array[${values.map((entry) => quote(String(entry))).join(', ')}]::${type}[]`
+      : `'{}'::${type}[]`;
   }
   return quote(String(value));
 }

@@ -1,10 +1,11 @@
-import { ActionForm, Field, OneTap, SubmitButton, TextArea, TextInput } from '@/components/staff/forms';
+import { OneTap } from '@/components/staff/forms';
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Back, Empty, Pill, Screen, Section } from '@/components/staff/ui';
 import { formatDateRange, formatRelative } from '@/lib/staff/time';
-import { cancelTimeOff, submitTimeOff } from '@/server/actions/staff/timeoff';
+import { cancelTimeOff } from '@/server/actions/staff/timeoff';
 import { listTimeOff } from '@/server/staff/timeoff';
 import { isDenied, staffPage } from '../_lib';
+import { RequestTimeOff } from './RequestTimeOff';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,27 +25,7 @@ export default async function TimeOffPage() {
       <Screen title="Time off">
         <Section title="Request time off">
           <div className="staff-panel px-4 py-4">
-            <ActionForm action={submitTimeOff} className="grid gap-4 sm:grid-cols-2">
-              {(state) => (
-                <>
-                  <Field id="startsOn" label="First day" error={state.errors?.startsOn}>
-                    <TextInput id="startsOn" name="startsOn" type="date" min={today} required />
-                  </Field>
-                  <Field id="endsOn" label="Last day" hint="Same as the first for one day." error={state.errors?.endsOn}>
-                    <TextInput id="endsOn" name="endsOn" type="date" min={today} />
-                  </Field>
-                  <Field id="reason" label="Reason" hint="Optional.">
-                    <TextInput id="reason" name="reason" maxLength={120} placeholder="Wedding, travel, appointment…" />
-                  </Field>
-                  <Field id="note" label="Anything else" hint="Optional.">
-                    <TextArea id="note" name="note" rows={2} maxLength={500} />
-                  </Field>
-                  <div className="sm:col-span-2">
-                    <SubmitButton>Send request</SubmitButton>
-                  </div>
-                </>
-              )}
-            </ActionForm>
+            <RequestTimeOff today={today} />
           </div>
         </Section>
         <Section title="Your requests" count={requests.length}>

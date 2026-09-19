@@ -29,6 +29,17 @@ on the admin area, stored enquiries, and owner editing.
 | `RESEND_WEBHOOK_SECRET` | Delivery reports | **YES** | Verifies `/api/webhooks/resend`, which records delivered/bounced in `email_log`. |
 | `SUPABASE_AUTH_HOOK_SECRET` | Branded staff emails | **YES** | Verifies `/api/webhooks/supabase-auth`, the Supabase Send Email hook. |
 
+### The staff system adds no variables
+
+`/staff` (see `docs/employee-operations.md`) runs on the same Supabase project,
+the same auth session and the same Resend configuration as everything else. It
+needs migrations `0021` and `0022` applied and the private `employee-files`
+storage bucket they create — no new environment variable. Staff email is
+`audience: 'staff'`, so `EMAIL_DELIVERY_ENABLED` (the **guest** switch) does not
+gate it: sign-in and schedule notices have to work before Oasis is ready to
+email guests. Without `RESEND_API_KEY` the app works and every send is logged as
+skipped.
+
 ### How the site URL is resolved
 
 `src/lib/site-url.ts` tries these in order and uses the first one that parses as a real `http(s)`
