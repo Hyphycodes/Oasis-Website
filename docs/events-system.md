@@ -207,11 +207,21 @@ The whole published calendar is seeded in `src/content/events.ts` and applied to
 12 November 2026, each keyed to its Tickeri id, with its official flyer already in the repo under
 `public/events/imported/<tickeri id>.jpg` and indexed by `src/content/imported-flyers.json`.
 
-Five of those nights are inserted as **drafts** (`published = false`, `ticketing_enabled = false`):
-El Alfa (2 Oct), Bad Bunny (4 Oct), Drake (11 Oct) and the two extra Hello Kitty Halloween seatings
-(27 Sep, 15 Oct). Their flyers, titles, times and ticket links are known; their tier prices are not,
-so their button sends the guest to Tickeri and a staff member publishes once they have checked the
-detail. Everything else is published with the prices migration 0013 read off Tickeri.
+Applied to production on **19 September 2026** (recorded as `20260919003500`), verified afterwards:
+23 live, 0 published-but-finished, 5 archived, and every live event's start matching the instant its
+flyer was filed under — so all 23 render their photograph.
+
+All 23 are **published**. Five of them — El Alfa (2 Oct), Bad Bunny (4 Oct), Drake (11 Oct) and the
+two extra Hello Kitty Halloween seatings (27 Sep, 15 Oct) — are live with `ticketing_enabled = false`,
+because their flyers, titles, times and ticket links are known but their tier prices are not. Their
+ticket button therefore sends the guest to Tickeri. Everything else sells on this site, at the prices
+migration 0013 read off Tickeri.
+
+**Do not turn ticketing on for those five before their tiers are priced.** `getTicketOffer()` in
+`src/server/ticketing/offer.ts` returns an `external` offer — the working Tickeri button — only while
+ticketing is off. With it on and no priced tiers it returns `pending`, which deliberately refuses to
+fall back to someone else's link, and the event would render with no ticket button at all. Price the
+tiers in the admin first, then enable it.
 
 Keeping it current afterwards is still **"Check Tickeri now"** on the deployed site, which reads the
 organizer page directly. This build environment cannot reach tickeri.com — its egress proxy refuses

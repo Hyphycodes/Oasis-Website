@@ -24,16 +24,26 @@
 -- 2. FIVE EVENTS ON TICKERI WERE NOT IN THIS TABLE AT ALL.
 --
 --    Their flyers are already in the repo (public/events/imported/<id>.jpg), so
---    only the rows were missing. They are inserted as DRAFTS (published = false)
---    with ticketing_enabled = false, because unlike the events 0013 converted,
---    no tier prices have been read for them: the page sends the guest to
---    Tickeri, and a staff member publishes once they have checked the detail.
+--    only the rows were missing. They are inserted PUBLISHED, so the site lists
+--    the whole calendar, but with ticketing_enabled = false: unlike the events
+--    0013 converted, no tier prices have been read for them, so Oasis has
+--    nothing to sell and the guest is sent to Tickeri instead.
 --
--- 3. FOUR FINISHED EVENTS WERE STILL PUBLISHED.
+--    That flag is load-bearing rather than cautious. getTicketOffer() in
+--    src/server/ticketing/offer.ts returns 'external' -- a working ticket
+--    button pointing at Tickeri -- only while ticketing is OFF. Turning it on
+--    before tiers are priced would return 'pending' instead, deliberately
+--    refusing to fall back to someone else's link, and these five events would
+--    publish with no ticket button at all. Enable it per event in the admin
+--    once its tiers exist.
 --
---    All four are in the past and no longer listed on Tickeri. They are
---    archived, not deleted -- getAttention() raises a published past date on the
---    dashboard, and archiving is how that is cleared without losing the record.
+-- 3. FIVE FINISHED EVENTS WERE STILL PUBLISHED.
+--
+--    All five are in the past. They are archived, not deleted --
+--    getAttention() raises a published past date on the dashboard, and
+--    archiving is how that is cleared without losing the record. Four were
+--    already gone from Tickeri; the fifth, Junior H, was still listed when the
+--    calendar was captured on the 17th and had finished by the time this ran.
 --
 -- Presentation columns (category, preset, featured, priority, treatment) are
 -- left alone, as every Tickeri sync leaves them alone -- with one correction
@@ -141,7 +151,7 @@ update public.event_occurrences set
   ends_at   = timestamptz '2026-11-13T04:00:00Z'
 where id = 'tickeri:ckl3ja90j2m6';  -- Thu 2026-11-12 19:00 local — Grinch Paint & Sip
 
--- 2. The five nights that were on Tickeri but not in this table. Drafts.
+-- 2. The five nights that were on Tickeri but not in this table.
 
 insert into public.event_occurrences (
   id, series_slug, slug, title, summary, description, description_html,
@@ -152,7 +162,7 @@ insert into public.event_occurrences (
 select
   v.id, null, v.slug, v.title, v.summary, '', v.description_html,
   v.starts_at, v.ends_at, 'scheduled'::event_status, v.category, 'marigold', 'standard', false, 0,
-  'Oasis Mexican Kitchen & Bar', 'all_ages', false, false,
+  'Oasis Mexican Kitchen & Bar', 'all_ages', true, false,
   'tickeri', v.source_event_id, v.source_url, now()
 from (values
   ('tickeri:hkfw1xqjh0p0', 'hello-kitty-halloween-paint-sip', 'Hello Kitty Halloween Paint & Sip', 'A Hello Kitty Halloween paint & sip — canvas, paints and an instructor included.', '<p>🎀🎃 <strong>HELLO KITTY HALLOWEEN PAINT &amp; SIP</strong> 🎃🎀</p><p>Sunday, September 27th at 6PM at Oasis Mexican Kitchen &amp; Bar.</p><p>🎨 Canvas, paints and instructor included</p><p>🍹 Food &amp; beverage purchase required.</p><p>🌮 Full food &amp; cocktail menu available throughout the event.</p><p>💳 20% gratuity will be added to all Paint &amp; Sip guest checks.</p><p>📍 1250 E 9th St, Lockport, IL 60441</p><p>🎟️ Tickets on Tickeri.</p>', timestamptz '2026-09-27T23:00:00Z', timestamptz '2026-09-28T02:00:00Z', 'paint-sip', 'hkfw1xqjh0p0', 'https://www.tickeri.com/events/hkfw1xqjh0p0/hello-kitty-halloween-paint-sip'),  -- Sun 2026-09-27
@@ -165,15 +175,26 @@ from (values
 where not exists (select 1 from public.event_occurrences e where e.id = v.id)
   and not exists (select 1 from public.event_occurrences e where e.slug = v.slug);
 
--- 3. Four finished events, no longer listed on Tickeri. Archived, not deleted.
+-- 3. Five finished events, no longer on the calendar. Archived, not deleted.
 
 update public.event_occurrences set archived_at = now(), published = false
 where archived_at is null and id in (
   'tickeri:82c16al40ueb',  -- Snoopy Paint & Sip Night, 2026-09-10
   'tickeri:i13zraxxiq01',  -- Michael Myers Paint & Brunch, 2026-09-13
   'tickeri:97wyidqsm9ln',  -- Snoopy White Sox Paint & Sip, 2026-09-13
-  'tickeri:3io85f3rne4w'   -- Comedy Show Hosted by Ruben, 2026-09-16
+  'tickeri:3io85f3rne4w',  -- Comedy Show Hosted by Ruben, 2026-09-16
+  -- Still listed when the calendar was captured on the 17th, and over by the
+  -- time it was applied. It is archived for the same reason as the other four,
+  -- not because anything about it changed.
+  'tickeri:nwn48quznb96'   -- Junior H Paint & Sip, 2026-09-17
 );
+
+-- Every night on the calendar is live. The eighteen above are published
+-- already; this states it for all twenty-three so the migration asserts the
+-- end state rather than assuming it, and so a night unpublished by hand for
+-- an earlier reason cannot quietly stay missing from the site.
+update public.event_occurrences set published = true
+where source = 'tickeri' and archived_at is null and published = false;
 
 -- One presentation correction: "Grinch Paint & Sip" was filed as nightlife, so
 -- it was missing from the Paint & Sip filter on /events. It is a paint & sip.
