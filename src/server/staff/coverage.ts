@@ -69,6 +69,33 @@ export async function openShiftRequest(db: Db, employeeId: string, input: { shif
   });
 }
 
+/**
+ * Picking up an open shift. It becomes a claimed request rather than a
+ * straight reassignment, so a manager still approves it and the trail reads
+ * the same as any other coverage change.
+ */
+export async function claimOpenShift(db: Db, employeeId: string, shiftId: string): Promise<Row> {
+  const shift = await getShift(db, shiftId);
+  if (!shift) throw new Error('That shift no longer exists.');
+  if (shift.employeeId) throw new Error('That shift is no longer open.');
+  if (shift.status !== 'published') throw new Error('That shift is not published.');
+  if (Date.parse(shift.startsAt) < Date.now()) throw new Error('That shift has already started.');
+  const existing = await db.list<Row>('shift_requests', { where: { shift_id: shiftId } });
+  if (existing.some((row) => row.status === 'open' || row.status === 'claimed')) {
+    throw new Error('Someone already asked for this shift. A manager will decide.');
+  }
+  return db.insert<Row>('shift_requests', {
+    shift_id: shiftId,
+    kind: 'cover',
+    requested_by: employeeId,
+    claimed_by: employeeId,
+    claimed_at: new Date().toISOString(),
+    status: 'claimed',
+    note: 'Picked up an open shift',
+    created_at: new Date().toISOString(),
+  });
+}
+
 export async function claimShiftRequest(db: Db, employeeId: string, requestId: string): Promise<Row> {
   const row = await db.get<Row>('shift_requests', requestId);
   if (!row || row.status !== 'open') throw new Error('That shift has already been taken.');

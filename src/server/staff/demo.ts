@@ -294,10 +294,7 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
     nightShift('open-sat-server', null, 'server', 5, 17 * 60, 150);
     if (offset === 0) nightShift('dani-first', 'dani', 'host', 5, 16 * 60, 22 * 60, { note: 'First shift — shadow Maria until 7.' });
   }
-  // Last week's attendance, so the record has something in it.
-  for (const row of shifts) {
-    if (String(row.id).includes('last') || !String(row.starts_at).startsWith(addDays(monday, -7).slice(0, 7))) continue;
-  }
+  // Last week's shifts get attendance, so the record has something in it.
   const lastWeek = shifts.filter((row) => String(row.starts_at) < at(monday, 0));
   for (const row of lastWeek) {
     if (!row.employee_id) continue;

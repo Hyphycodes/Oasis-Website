@@ -28,7 +28,7 @@ import { saveWeeklyAvailability, listAvailabilityFor } from './availability';
 import { listEmployees, getEmployee } from './employees';
 import { listNotes } from './notes';
 import { deriveOpsRole } from './permissions';
-import { claimShiftRequest, decideShiftRequest, openShiftRequest } from './coverage';
+import { claimOpenShift, claimShiftRequest, decideShiftRequest, openShiftRequest } from './coverage';
 import { feedFor } from './announcements';
 
 const manager: Staff = { id: 'local-manager', email: 'manager@oasis.local', name: 'Alex', role: 'admin', sections: [], active: true, source: 'local' };
@@ -128,6 +128,25 @@ describe('coverage', () => {
     const moved = (await listShiftViews(db, { from: '2026-10-31T00:00:00Z', to: '2026-11-02T00:00:00Z' })).find((view) => view.id === shift.id);
     expect(moved?.employeeId).toBe(DEMO_EMPLOYEES.maria);
     expect((await shiftHistory(db, shift.id))[0]?.reason).toMatch(/coverage approved/);
+  });
+});
+
+describe('open shifts', () => {
+  it('picking one up becomes a claimed request, and approving it assigns the shift', async () => {
+    const open = await createShift(db, { locationId: '0a515000-0000-4000-8000-000000000001', employeeId: null, positionId: 'bartender', date: '2026-11-07', startMinutes: 17 * 60, endMinutes: 1 * 60, eventId: null, note: null, status: 'published' }, TZ, manager);
+    const request = await claimOpenShift(db, DEMO_EMPLOYEES.maria, open.id);
+    expect(request.status).toBe('claimed');
+    expect(request.claimed_by).toBe(DEMO_EMPLOYEES.maria);
+    // Two people cannot both be waiting on the same open shift.
+    await expect(claimOpenShift(db, DEMO_EMPLOYEES.carlos, open.id)).rejects.toThrow(/already asked/);
+    await decideShiftRequest(db, String(request.id), 'approved', null, manager);
+    const after = (await listShiftViews(db, { from: '2026-11-07T00:00:00Z', to: '2026-11-09T00:00:00Z' })).find((view) => view.id === open.id);
+    expect(after?.employeeId).toBe(DEMO_EMPLOYEES.maria);
+  });
+
+  it('refuses a shift that already has someone on it', async () => {
+    const taken = await createShift(db, { locationId: '0a515000-0000-4000-8000-000000000001', employeeId: DEMO_EMPLOYEES.carlos, positionId: 'bartender', date: '2026-11-14', startMinutes: 17 * 60, endMinutes: 1 * 60, eventId: null, note: null, status: 'published' }, TZ, manager);
+    await expect(claimOpenShift(db, DEMO_EMPLOYEES.maria, taken.id)).rejects.toThrow(/no longer open/);
   });
 });
 

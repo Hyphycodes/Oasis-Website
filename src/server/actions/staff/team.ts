@@ -111,7 +111,7 @@ export async function saveEmployee(_prev: ActionState, form: FormData): Promise<
     const { input, error } = employeeInputFrom(form, context.location.id);
     if (error) return fail(error);
     if (before.id === context.employee?.id && input.status === 'inactive') return fail('You cannot deactivate yourself.');
-    const row = await updateEmployeeManagement(db, id, input);
+    await updateEmployeeManagement(db, id, input);
     const after = (await getEmployee(db, id))!;
     await provisionRequirements(elevated, after);
     await recordOpsAudit(context.staff, before.status !== after.status ? `employee.${after.status}` : 'employee.edited', 'employee', id, { before: { status: before.status, positions: before.positionIds, email: before.email }, after: { status: after.status, positions: after.positionIds, email: after.email } });
@@ -122,7 +122,6 @@ export async function saveEmployee(_prev: ActionState, form: FormData): Promise<
     if (before.status === 'inactive' && after.status !== 'inactive' && after.userId && isSupabaseConfigured()) {
       await getServiceClient()?.from('profiles').update({ active: true }).eq('user_id', after.userId);
     }
-    void row;
     return savedOps(after.status === 'inactive' ? `${after.displayName} deactivated. They can no longer sign in to the staff app.` : 'Saved.');
   });
 }
@@ -150,11 +149,14 @@ export async function changeAccess(_prev: ActionState, form: FormData): Promise<
     const role = text(form, 'role');
     if (!['owner', 'admin', 'staff'].includes(role)) return fail('Pick Employee, Manager or Owner.');
     if (employee.userId === context.staff.id && role !== 'owner') return fail('You cannot remove your own owner access.');
-    if (!isSupabaseConfigured()) {
-      await db.update('profiles', employee.userId, { role }).catch(() => undefined);
-    } else {
-      const { error } = await (await import('@/lib/supabase/server')).getSessionClient().then((client) => client!.from('profiles').update({ role }).eq('user_id', employee.userId!));
-      if (error) return fail(error.message.includes('policy') || error.message.includes('permission') ? 'Only the owner can change what an account is allowed to do.' : error.message);
+    // `db` carries the signed-in person's session, so migration 0003's
+    // profiles_owner_write is what actually decides this — not the capability
+    // check above, which only keeps the button off a manager's screen.
+    try {
+      await db.update('profiles', employee.userId, { role });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return fail(/policy|permission|42501/i.test(message) ? 'Only the owner can change what an account is allowed to do.' : message);
     }
     await recordOpsAudit(context.staff, 'access.changed', 'employee', employee.id, { before: { role: employee.accessRole }, after: { role } });
     return savedOps(`${employee.displayName} is now ${role === 'owner' ? 'an Owner' : role === 'admin' ? 'a Manager' : 'an Employee'}.`);

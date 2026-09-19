@@ -395,9 +395,22 @@ A policy can say *whether* you may update a row, not *which columns*. Five
 | `shifts_guard_employee` | `clock_in_at`, `clock_out_at`, `break_minutes` |
 | `tasks_guard_employee` | `status`, `completed_at` |
 
-All five are revoked from `anon` and `authenticated`: a trigger fires without
-checking the caller's `EXECUTE` privilege, so revoking costs nothing and removes
-six endpoints that should never have been reachable.
+Each guard lets two callers straight through. A manager, obviously. And the
+**service role**, which has no `auth.uid()` — that is the server acting after
+its own capability check (grading a quiz against the manager-only answer key,
+linking a new sign-in to an employee row, fanning out notifications), and it
+already bypasses RLS entirely, so refusing it there would protect nothing and
+break those writes. An anonymous caller never reaches a guard at all: no policy
+on any of these tables grants `anon` a row in the first place.
+
+All five functions are revoked from `anon` and `authenticated`: a trigger fires
+without checking the caller's `EXECUTE` privilege, so revoking costs nothing and
+removes five endpoints that should never have been reachable.
+
+One case the guard has to *allow* rather than refuse: an **open shift** has no
+owner to give up, so picking one up is an insert where `requested_by` and
+`claimed_by` are both you, and the trigger forces it to `claimed` so a manager
+still approves it.
 
 ### Files
 

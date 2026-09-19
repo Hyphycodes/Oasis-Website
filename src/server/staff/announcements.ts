@@ -66,7 +66,7 @@ export async function feedFor(db: Db, employee: EmployeeSummary, now = new Date(
 }
 
 /** Every announcement, with acknowledgement counts, for a manager. */
-export async function listAllAnnouncements(db: Db, now = new Date()): Promise<StaffAnnouncement[]> {
+export async function listAllAnnouncements(db: Db): Promise<StaffAnnouncement[]> {
   const [rows, reads, employees] = await Promise.all([db.list<Row>('staff_announcements', { orderBy: 'created_at', desc: true }), db.list<Row>('staff_announcement_reads'), listEmployees(db)]);
   const events = await eventSummaries(db, rows.map((row) => row.event_id as string | null).filter((id): id is string => Boolean(id)));
   return Promise.all(
@@ -77,7 +77,7 @@ export async function listAllAnnouncements(db: Db, now = new Date()): Promise<St
         const acknowledged = reads.filter((read) => read.announcement_id === row.id && (row.requires_ack ? read.acknowledged_at : read.read_at)).length;
         return toAnnouncement(db, row, undefined, { total: audience.length, acknowledged }, row.event_id ? (events.get(String(row.event_id))?.title ?? null) : null);
       }),
-  ).then((list) => list.map((entry) => ({ ...entry, publishedAt: entry.publishedAt && isLive({ published_at: entry.publishedAt, expires_at: entry.expiresAt }, now) ? entry.publishedAt : entry.publishedAt })));
+  );
 }
 
 export async function audienceFor(db: Db, row: Row): Promise<EmployeeSummary[]> {

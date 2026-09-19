@@ -18,6 +18,9 @@
 --   9. a contractor account (no employee row) sees no employee data
 --  10. a manager (profiles.role = admin) cannot promote themselves to owner
 --  11. an employee cannot read incidents, contractors or bookings
+--  12. an employee can pick up an OPEN shift, and only for themselves
+--  13. the service role (no auth.uid()) passes the column guards, which is
+--      how the server grades a quiz and links a new sign-in
 --
 -- The tests impersonate users by setting the JWT claims Supabase sets, then
 -- switching to the `authenticated` role, which is exactly what PostgREST
@@ -161,6 +164,21 @@ begin
   select count(*) into n from public.availability_rules where employee_id = '00000000-0000-4000-8000-00000000e003';
   assert n = 0, 'Carlos can read Maria''s availability';
 
+  -- 12. an open shift can be picked up, and only for yourself
+  insert into public.shifts (id, location_id, employee_id, position_id, starts_at, ends_at, status, published_at)
+  values ('00000000-0000-4000-8000-00000000b001', '0a515000-0000-4000-8000-000000000001', null, 'bartender', now() + interval '7 days', now() + interval '7 days 6 hours', 'published', now());
+  begin
+    insert into public.shift_requests (shift_id, kind, requested_by, claimed_by, status)
+    values ('00000000-0000-4000-8000-00000000b001', 'cover', '00000000-0000-4000-8000-00000000e003', '00000000-0000-4000-8000-00000000e003', 'claimed');
+    ok := false;
+  exception when insufficient_privilege then ok := true;
+  end;
+  assert ok, 'Carlos picked up an open shift on Maria''s behalf';
+  insert into public.shift_requests (shift_id, kind, requested_by, claimed_by, status)
+  values ('00000000-0000-4000-8000-00000000b001', 'cover', '00000000-0000-4000-8000-00000000e002', '00000000-0000-4000-8000-00000000e002', 'claimed');
+  select count(*) into n from public.shift_requests where shift_id = '00000000-0000-4000-8000-00000000b001' and status = 'claimed';
+  assert n = 1, 'Carlos could not pick up an open shift';
+
   -- 11. no incidents, contractors, bookings
   select count(*) into n from public.incidents;
   assert n = 0, 'Carlos can read incidents';
@@ -168,6 +186,23 @@ begin
   assert n = 0, 'Carlos can read contractors';
 
   perform pg_temp.reset();
+end $$;
+
+-- ------------------------------------------- as the server (no auth.uid) --
+
+-- The service role has no JWT, so auth.uid() is null. Every column guard must
+-- let it through: this is how the server grades a quiz against the answer key
+-- and links a new sign-in to an employee row.
+do $$
+declare n int;
+begin
+  assert auth.uid() is null, 'This block is supposed to run without a JWT';
+  update public.employees set user_id = user_id, status = 'active' where id = '00000000-0000-4000-8000-00000000e002';
+  update public.employee_requirements set status = 'complete', verified_at = now()
+   where employee_id = '00000000-0000-4000-8000-00000000e003';
+  select count(*) into n from public.employee_requirements
+   where employee_id = '00000000-0000-4000-8000-00000000e003' and status = 'complete';
+  assert n = 1, 'The server could not verify a document';
 end $$;
 
 -- ------------------------------------------------- as an inactive Carlos --

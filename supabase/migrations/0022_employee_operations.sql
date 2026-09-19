@@ -770,7 +770,14 @@ declare
   after_locked  jsonb;
   col text;
 begin
-  if public.is_manager() then
+  -- The service role has no auth.uid(). That is the server acting after its
+  -- own capability check — grading a quiz against the answer key, linking a
+  -- new sign-in, fanning out notifications — and it already bypasses RLS
+  -- entirely, so refusing it here protects nothing and breaks those writes.
+  -- These guards exist to constrain an AUTHENTICATED EMPLOYEE, and an
+  -- anonymous caller never reaches them: no policy on any of these tables
+  -- grants `anon` a row in the first place.
+  if auth.uid() is null or public.is_manager() then
     return new;
   end if;
   if old.id is distinct from public.current_employee_id() then
@@ -808,7 +815,14 @@ declare
   after_locked  jsonb;
   col text;
 begin
-  if public.is_manager() then
+  -- The service role has no auth.uid(). That is the server acting after its
+  -- own capability check — grading a quiz against the answer key, linking a
+  -- new sign-in, fanning out notifications — and it already bypasses RLS
+  -- entirely, so refusing it here protects nothing and breaks those writes.
+  -- These guards exist to constrain an AUTHENTICATED EMPLOYEE, and an
+  -- anonymous caller never reaches them: no policy on any of these tables
+  -- grants `anon` a row in the first place.
+  if auth.uid() is null or public.is_manager() then
     return new;
   end if;
   if (to_jsonb(old) ->> owner_column) is distinct from public.current_employee_id()::text then
@@ -835,7 +849,14 @@ security definer
 set search_path = public
 as $$
 begin
-  if public.is_manager() then
+  -- The service role has no auth.uid(). That is the server acting after its
+  -- own capability check — grading a quiz against the answer key, linking a
+  -- new sign-in, fanning out notifications — and it already bypasses RLS
+  -- entirely, so refusing it here protects nothing and breaks those writes.
+  -- These guards exist to constrain an AUTHENTICATED EMPLOYEE, and an
+  -- anonymous caller never reaches them: no policy on any of these tables
+  -- grants `anon` a row in the first place.
+  if auth.uid() is null or public.is_manager() then
     return new;
   end if;
   if tg_op = 'INSERT' then
@@ -877,11 +898,29 @@ declare
   me uuid := public.current_employee_id();
   owner uuid;
 begin
-  if public.is_manager() then
+  -- The service role has no auth.uid(). That is the server acting after its
+  -- own capability check — grading a quiz against the answer key, linking a
+  -- new sign-in, fanning out notifications — and it already bypasses RLS
+  -- entirely, so refusing it here protects nothing and breaks those writes.
+  -- These guards exist to constrain an AUTHENTICATED EMPLOYEE, and an
+  -- anonymous caller never reaches them: no policy on any of these tables
+  -- grants `anon` a row in the first place.
+  if auth.uid() is null or public.is_manager() then
     return new;
   end if;
   if tg_op = 'INSERT' then
     select employee_id into owner from public.shifts where id = new.shift_id;
+    -- An OPEN shift has no owner to give it up. Asking for one is a claim on
+    -- your own behalf, and a manager still approves it.
+    if owner is null then
+      if new.requested_by is distinct from me or new.claimed_by is distinct from me then
+        raise exception 'You can only pick up an open shift for yourself.' using errcode = '42501';
+      end if;
+      new.status := 'claimed';
+      new.decided_by := null;
+      new.decided_at := null;
+      return new;
+    end if;
     if owner is distinct from me or new.requested_by is distinct from me then
       raise exception 'You can only offer your own shift.' using errcode = '42501';
     end if;
@@ -922,7 +961,14 @@ as $$
 declare
   rt_kind text;
 begin
-  if public.is_manager() then
+  -- The service role has no auth.uid(). That is the server acting after its
+  -- own capability check — grading a quiz against the answer key, linking a
+  -- new sign-in, fanning out notifications — and it already bypasses RLS
+  -- entirely, so refusing it here protects nothing and breaks those writes.
+  -- These guards exist to constrain an AUTHENTICATED EMPLOYEE, and an
+  -- anonymous caller never reaches them: no policy on any of these tables
+  -- grants `anon` a row in the first place.
+  if auth.uid() is null or public.is_manager() then
     return new;
   end if;
   if old.employee_id is distinct from public.current_employee_id() then

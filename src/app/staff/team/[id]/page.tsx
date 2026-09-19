@@ -38,7 +38,6 @@ export default async function EmployeePage({ params, searchParams }: { params: P
   const tab = (['overview', 'schedule', 'availability', 'training', 'documents', 'onboarding', 'activity', 'notes'].includes(tabParam ?? '') ? tabParam : 'overview') as Tab;
   const positions = await listPositions(db);
   const positionName = (positionId: string) => positions.find((position) => position.id === positionId)?.name ?? positionId;
-  const timezone = context.location.timezone;
   const now = new Date();
   const canNotes = contextCan(context, 'notes.manage');
 
@@ -114,7 +113,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
           </>
         ) : null}
 
-        {tab === 'schedule' ? <ScheduleTab employeeId={employee.id} timezone={timezone} db={db} now={now} /> : null}
+        {tab === 'schedule' ? <ScheduleTab employeeId={employee.id} db={db} now={now} /> : null}
 
         {tab === 'availability' ? <AvailabilityTab employeeId={employee.id} db={db} /> : null}
 
@@ -134,13 +133,12 @@ export default async function EmployeePage({ params, searchParams }: { params: P
 
 type Db = Parameters<typeof listShiftViews>[0];
 
-async function ScheduleTab({ employeeId, timezone, db, now }: { employeeId: string; timezone: string; db: Db; now: Date }) {
+async function ScheduleTab({ employeeId, db, now }: { employeeId: string; db: Db; now: Date }) {
   const [upcoming, past, timeOff] = await Promise.all([
     listShiftViews(db, { from: now.toISOString(), to: new Date(now.getTime() + 28 * 86_400_000).toISOString(), employeeId, includeDrafts: true }, { withWarnings: true }),
     listShiftViews(db, { from: new Date(now.getTime() - 28 * 86_400_000).toISOString(), to: now.toISOString(), employeeId, includeCancelled: true }),
     listTimeOff(db, { employeeId }),
   ]);
-  void timezone;
   return (
     <>
       <Section title="Coming up" count={upcoming.length}>

@@ -5,9 +5,10 @@ import { addDays, formatDayShort, formatShiftRange, minutesFromClock, weekOf, zo
 import { recordOpsAudit } from '@/server/staff/audit';
 import { withEmailDetails } from '@/server/staff/emails';
 import { notify } from '@/server/staff/notifications';
+import { claimOpenShift } from '@/server/staff/coverage';
 import { clockIn, clockOut, copyWeek, correctAttendance, createShift, getShift, getShiftView, listShifts, publishWeek, repeatShift, setShiftStatus, updateShift, type ShiftInput } from '@/server/staff/schedule';
 import { resolveLocation, locationMap } from '@/server/staff/locations';
-import { bool, fail, integer, isoDate, optional, runOps, savedOps, text, type ActionState } from './shared';
+import { fail, integer, isoDate, optional, runOps, savedOps, text, type ActionState } from './shared';
 
 function shiftInputFrom(form: FormData): { input: ShiftInput; error: string | null } {
   const date = isoDate(optional(form, 'date'));
@@ -204,16 +205,7 @@ export async function pickUpOpenShift(_prev: ActionState, form: FormData): Promi
     const shift = await getShift(db, text(form, 'id'));
     if (!shift || shift.employeeId || shift.status !== 'published') return fail('That shift is no longer open.');
     if (!employee.positionIds.includes(shift.positionId)) return fail('That shift is for a position you are not set up for.');
-    // The pick-up is a coverage request so a manager still approves it.
-    const { openShiftRequest } = await import('@/server/staff/coverage');
-    const { opsElevatedDb } = await import('@/server/staff/db');
-    const elevated = opsElevatedDb();
-    if (!elevated) return fail('The staff system is not connected.');
-    // An open shift has no owner to "give up"; record it as a claimed cover request from the house.
-    const existing = await elevated.list('shift_requests', { where: { shift_id: shift.id } });
-    if (existing.some((row) => row.status === 'open' || row.status === 'claimed')) return fail('Someone already asked for this shift. A manager will decide.');
-    void openShiftRequest;
-    await elevated.insert('shift_requests', { shift_id: shift.id, kind: 'cover', requested_by: employee.id, claimed_by: employee.id, claimed_at: new Date().toISOString(), status: 'claimed', note: 'Picked up an open shift', created_at: new Date().toISOString() });
+    await claimOpenShift(db, employee.id, shift.id);
     return savedOps('Asked for it. A manager will confirm and it will show on your schedule.');
   });
 }
@@ -229,8 +221,4 @@ export async function updateShiftStatus(_prev: ActionState, form: FormData): Pro
     if (status === 'cancelled' && before.status === 'published') await tellEmployee('shift_cancelled', id, null);
     return savedOps(status === 'published' ? 'Published.' : status === 'cancelled' ? 'Cancelled.' : 'Back to draft.');
   });
-}
-
-export async function moveWeekTo(form: FormData): Promise<string> {
-  return bool(form, 'next') ? 'next' : 'previous';
 }
