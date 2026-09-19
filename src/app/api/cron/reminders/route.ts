@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getTicketingClient } from '@/server/ticketing/db';
 import { emailService } from '@/server/email/service';
+import { emailSwitches } from '@/server/email/settings';
+import type { EmailSwitchId } from '@/emails/registry';
 import { opsElevatedDb } from '@/server/staff/db';
 import { listEmployees } from '@/server/staff/employees';
 import { sweepExpiringDocuments } from '@/server/staff/expiry';
@@ -16,11 +18,13 @@ export const dynamic = 'force-dynamic';
  * "see you tonight". Reading the database every hour is how a cancellation
  * silences the rest of the sequence for free.
  *
- * Only the day-before reminder is ON. The other two are written, wired and
- * disabled: turning one on is `enabled: true` here, once the owner asks for
- * it. That is deliberate — an unasked-for email costs more goodwill than it
- * earns, and the sender reputation of a brand-new domain is not worth
- * spending on a "thanks for coming".
+ * Which stages run is the owner's, not a developer's: each one has a switch
+ * on Emails in the admin, and this route reads them at the top of every
+ * pass. The day-before reminder ships on; "tonight" and "thanks for coming"
+ * ship off, because an unasked-for email costs more goodwill than it earns
+ * and the sender reputation of a young domain is not worth spending on one.
+ * A switch that cannot be read counts as on, so a settings outage delays
+ * nobody's reminder.
  *
  * The same route also runs the ONE staff job that needs a clock: telling an
  * employee their certificate expires in thirty days. Everything else about
@@ -32,16 +36,17 @@ export const dynamic = 'force-dynamic';
 interface Stage {
   /** Matches the email_log type, which is also how a repeat is prevented. */
   id: 'reminder' | 'tonight' | 'thanks';
-  enabled: boolean;
+  /** The switch in `email_settings` that decides whether this pass runs at all. */
+  switchId: EmailSwitchId;
   /** Hours from now: events starting inside this window are in scope. Negative = already happened. */
   window: [number, number];
   label: string;
 }
 
 const STAGES: Stage[] = [
-  { id: 'reminder', enabled: true, window: [23, 25], label: 'the day before' },
-  { id: 'tonight', enabled: false, window: [3, 5], label: 'a few hours before doors' },
-  { id: 'thanks', enabled: false, window: [-36, -12], label: 'the morning after' },
+  { id: 'reminder', switchId: 'event_reminder', window: [23, 25], label: 'the day before' },
+  { id: 'tonight', switchId: 'event_reminder_tonight', window: [3, 5], label: 'a few hours before doors' },
+  { id: 'thanks', switchId: 'thanks_for_coming', window: [-36, -12], label: 'the morning after' },
 ];
 
 const MAX_PER_RUN = 200;
@@ -74,9 +79,10 @@ export async function GET(request: NextRequest) {
   if (!client) return NextResponse.json({ ok: false, message: 'Ticketing is not configured.' }, { status: 503 });
 
   const results: Record<string, number> = {};
+  const switches = await emailSwitches();
 
   for (const stage of STAGES) {
-    if (!stage.enabled) continue;
+    if (!switches[stage.switchId]) continue;
 
     const from = new Date(Date.now() + stage.window[0] * 3_600_000).toISOString();
     const to = new Date(Date.now() + stage.window[1] * 3_600_000).toISOString();

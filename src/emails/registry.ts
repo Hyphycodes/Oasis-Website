@@ -8,6 +8,11 @@
  * `logType` is what lands in `email_log.type`. `trigger` is the honest
  * state of the wiring — a template that exists but nothing sends yet says
  * so here, where the owner can see it, rather than looking finished.
+ *
+ * `EMAIL_SWITCHES`, below, is the short list of emails the owner may turn
+ * on and off from the admin. Everything not on that list has no switch on
+ * purpose: a ticket, a refund, an event change and a sign-in link are owed
+ * to somebody, so the code never offers to withhold them.
  */
 
 export type TemplateId =
@@ -97,11 +102,11 @@ export const EMAIL_TEMPLATES: TemplateInfo[] = [
     category: 'transactional',
     logType: 'reminder',
     needsEvent: true,
-    trigger: 'Hourly cron, 23–25 hours before the event starts, once per order. A “tonight” variant exists and is switched off.',
+    trigger: 'Hourly cron, 23–25 hours before the event starts, once per order. A second “tonight” pass, a few hours before doors, has its own switch and ships off.',
     wiring: 'live',
     variants: [
       { id: 'tomorrow', label: 'Tomorrow' },
-      { id: 'tonight', label: 'Tonight (stage off)' },
+      { id: 'tonight', label: 'Tonight' },
     ],
   },
   {
@@ -153,8 +158,8 @@ export const EMAIL_TEMPLATES: TemplateInfo[] = [
     category: 'transactional',
     logType: 'thanks',
     needsEvent: true,
-    trigger: 'A cron stage that is built and switched off (src/app/api/cron/reminders/route.ts).',
-    wiring: 'off',
+    trigger: 'The hourly cron, the morning after an event, once per order — when the switch on this screen is on. It ships off.',
+    wiring: 'live',
   },
   {
     id: 'staff_invitation',
@@ -282,6 +287,95 @@ const STAFF_OPS_TEMPLATES: TemplateInfo[] = [
 ];
 
 EMAIL_TEMPLATES.push(...STAFF_OPS_TEMPLATES);
+
+/**
+ * The emails the owner may switch on and off, and nothing else.
+ *
+ * An id here is a row in `email_settings`. Most are a template; the two
+ * reminder passes are one template sent at two different times, so they get
+ * a switch each — "tomorrow" is the one that has always been on and
+ * "tonight" is the one nobody has asked for yet.
+ *
+ * Absence is the rule, not an oversight. A ticket confirmation, a resend, a
+ * refund, an event change, a staff invitation and the four account emails
+ * have no switch: they answer something a person did, and an owner who
+ * wants them to stop wants a different setting (guest delivery, in the
+ * environment) rather than a toggle that quietly drops receipts.
+ */
+export type EmailSwitchId =
+  | 'event_reminder'
+  | 'event_reminder_tonight'
+  | 'thanks_for_coming'
+  | 'staff_welcome'
+  | 'schedule_published'
+  | 'shift_changed'
+  | 'time_off_decision'
+  | 'training_required'
+  | 'document_expiring'
+  | 'event_assignment';
+
+export interface EmailSwitch {
+  id: EmailSwitchId;
+  template: TemplateId;
+  /** Which version of the template this switch governs, where there are versions. */
+  variant: string | null;
+  /** What it is called on the switch itself. */
+  label: string;
+  /** What being on actually causes. One sentence. */
+  detail: string;
+  /** How it ships, and what a missing `email_settings` row means. */
+  defaultOn: boolean;
+}
+
+export const EMAIL_SWITCHES: EmailSwitch[] = [
+  {
+    id: 'event_reminder',
+    template: 'event_reminder',
+    variant: 'tomorrow',
+    label: 'The day before',
+    detail: 'Every ticket holder is reminded 23–25 hours before doors.',
+    defaultOn: true,
+  },
+  {
+    id: 'event_reminder_tonight',
+    template: 'event_reminder',
+    variant: 'tonight',
+    label: 'A few hours before doors',
+    detail: 'A second reminder on the day itself. Off unless you want two.',
+    defaultOn: false,
+  },
+  {
+    id: 'thanks_for_coming',
+    template: 'thanks_for_coming',
+    variant: null,
+    label: 'The morning after',
+    detail: 'One thank you and a link to what is on next, 12–36 hours after the event.',
+    defaultOn: false,
+  },
+  { id: 'staff_welcome', template: 'staff_welcome', variant: null, label: 'Welcome to the team', detail: 'A new employee is emailed their onboarding checklist.', defaultOn: true },
+  { id: 'schedule_published', template: 'schedule_published', variant: null, label: 'Schedule published', detail: 'Everyone with shifts is emailed when a week is published.', defaultOn: true },
+  { id: 'shift_changed', template: 'shift_changed', variant: null, label: 'Shift changed', detail: 'The employee is emailed when a published shift moves or is cancelled.', defaultOn: true },
+  { id: 'time_off_decision', template: 'time_off_decision', variant: null, label: 'Time-off decision', detail: 'The employee is emailed when a request is approved or denied.', defaultOn: true },
+  { id: 'training_required', template: 'training_required', variant: null, label: 'Training assigned', detail: 'The employee is emailed when a module is assigned or re-required.', defaultOn: true },
+  { id: 'document_expiring', template: 'document_expiring', variant: null, label: 'Document expiring', detail: 'The employee is emailed thirty days before a certificate lapses.', defaultOn: true },
+  { id: 'event_assignment', template: 'event_assignment', variant: null, label: 'Event assignment', detail: 'The employee is emailed when they are put on an event.', defaultOn: true },
+];
+
+export const EMAIL_SWITCH_DEFAULTS: Record<EmailSwitchId, boolean> = Object.fromEntries(
+  EMAIL_SWITCHES.map((entry) => [entry.id, entry.defaultOn]),
+) as Record<EmailSwitchId, boolean>;
+
+/** The switch governing one template, or one version of it. Null means there is none. */
+export function switchFor(template: string, variant?: string | null): EmailSwitch | null {
+  const candidates = EMAIL_SWITCHES.filter((entry) => entry.template === template);
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1 && candidates[0]!.variant === null) return candidates[0]!;
+  return candidates.find((entry) => entry.variant === (variant || candidates[0]!.variant)) ?? candidates[0]!;
+}
+
+export function isEmailSwitchId(value: string): value is EmailSwitchId {
+  return EMAIL_SWITCHES.some((entry) => entry.id === value);
+}
 
 export function templateInfo(id: string): TemplateInfo | null {
   return EMAIL_TEMPLATES.find((template) => template.id === id) ?? null;

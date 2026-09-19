@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 process.env.TICKET_SIGNING_SECRET = 'test-signing-secret-that-is-long-enough-32';
 
 import * as f from '@/emails/fixtures';
-import type { EmailLogType } from '@/emails/registry';
+import type { EmailLogType, EmailSwitchId } from '@/emails/registry';
 import type { OrderRecord } from '@/server/ticketing/orders';
 import type { EmailConfig } from './config';
 import type { EmailLogEntry, EmailStore } from './log';
@@ -50,7 +50,10 @@ const order: OrderRecord = {
   ],
 };
 
-function harness(overrides: Partial<EmailConfig> = {}, options: { transport?: boolean; orders?: OrderRecord[] } = {}) {
+function harness(
+  overrides: Partial<EmailConfig> = {},
+  options: { transport?: boolean; orders?: OrderRecord[]; switches?: Partial<Record<EmailSwitchId, boolean>> } = {},
+) {
   const sent: EmailMessage[] = [];
   const logged: EmailLogEntry[] = [];
   const config: EmailConfig = {
@@ -107,6 +110,7 @@ function harness(overrides: Partial<EmailConfig> = {}, options: { transport?: bo
       attachments: tickets.map((ticket, index) => ({ filename: `${ticket.code}.png`, content: Buffer.from('png'), contentType: 'image/png', contentId: `qr${index + 1}` })),
     }),
     signingConfigured: () => true,
+    ...(options.switches ? { switches: async () => options.switches! } : {}),
     log: () => {},
   };
   return { service: createEmailService(deps), sent, logged, config };
@@ -274,5 +278,34 @@ describe('reminders and previews', () => {
     expect((await service.sendOwnerAlert('Chargeback', 'Details')).status).toBe('sent');
     expect(sent[0]!.to).toBe('owner@example.com');
     expect(sent[0]!.subject).toBe('[Oasis tickets] Chargeback');
+  });
+});
+
+describe('the switches', () => {
+  it('sends the optional emails when nothing has been switched', async () => {
+    const { service } = harness();
+    const result = await service.sendStaffNotice('shift_changed', f.shiftChanged);
+    expect(result.status).toBe('sent');
+  });
+
+  it('withholds a staff notice the owner has switched off, and says so', async () => {
+    const { service, sent, logged } = harness({}, { switches: { shift_changed: false } });
+    const result = await service.sendStaffNotice('shift_changed', f.shiftChanged);
+    expect(result.status).toBe('skipped');
+    expect(result.reason).toContain('switched off');
+    expect(sent).toHaveLength(0);
+    // Nothing was attempted, so nothing pretends to be an attempt in the log.
+    expect(logged).toHaveLength(0);
+  });
+
+  it('switches the two reminder passes independently', async () => {
+    const { service } = harness({}, { switches: { event_reminder: true, event_reminder_tonight: false } });
+    expect((await service.sendEventReminder('order-1', 'tonight')).status).toBe('skipped');
+    expect((await service.sendEventReminder('order-1', 'tomorrow')).status).toBe('sent');
+  });
+
+  it('never offers to withhold a ticket: the confirmation has no switch to consult', async () => {
+    const { service } = harness({}, { switches: { thanks_for_coming: false, event_reminder: false } });
+    expect((await service.sendTicketConfirmation('order-1')).status).toBe('sent');
   });
 });

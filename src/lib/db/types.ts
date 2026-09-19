@@ -83,6 +83,7 @@ export const PRIMARY_KEY: Record<string, string> = {
   scans: 'id',
   processed_stripe_events: 'id',
   email_log: 'id',
+  email_settings: 'template_id',
   rate_limits: 'key',
   // Employee operations (migration 0022).
   locations: 'id',

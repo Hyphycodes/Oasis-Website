@@ -78,13 +78,16 @@ src/server/email/                   the service — server only
 ├── data.ts                         order / event / ticket records → template props
 ├── service.ts                      emailService.send…(), the guard, idempotency, previews, tests
 ├── auth-hook.ts                    Supabase auth event → which template, which link
+├── settings.ts                     which optional emails are switched on
 └── webhook-signature.ts            Standard Webhooks (Svix) signature check
 
 src/app/api/webhooks/resend         delivery events in
 src/app/api/webhooks/supabase-auth  Supabase asks us to send an auth email
-src/app/admin/communications        the admin screen, its preview route, its actions
-src/app/admin/communications/gallery  every template at once, in the admin
+src/app/admin/emails                Emails in the nav: every template, with its switch
+src/app/admin/emails/sending        status, preview & test, the one manual send, the log
+src/app/admin/emails/preview        the rendered email both screens frame
 supabase/migrations/0018_…          the widened email_log
+supabase/migrations/0024_…          email_settings: the on/off switches
 ```
 
 The rule that keeps this maintainable: **templates never import from
@@ -180,25 +183,55 @@ emails; thanks for coming. Add a scenario by adding a file there.
 Preview artwork loads from the live deployment
 (`PREVIEW_ORIGIN` in `fixtures.ts`), so the flyers really show.
 
-In the admin, **Events → Emails** previews any template against a **real
-event** (artwork, name, date, time, venue) with a stand-in guest and order,
-at phone or desktop width, and can send that exact preview to one address as
-a test.
+In the admin, **Emails** is its own section in the nav, with two screens.
 
-**Events → Emails → See every email** (`/admin/communications/gallery`) is
-the same renderer as a wall: every template and every version of the ones
-that have versions, drawn small, with its subject line, filtered by audience
-and optionally shown as a test send. Click one for it full size, with ← →
-through the rest. It needs no terminal, so it is the one to reach for after
-changing the header, the footer or the palette; `email:dev` is still where
-the awkward scenarios above live.
+**Emails → All emails** (`/admin/emails`) is the same renderer as a wall:
+every template and every version of the ones that have versions, drawn
+small, with its subject line, filtered by audience and optionally shown as a
+test send. Click one for it full size, with ← → through the rest. It needs
+no terminal, so it is the one to reach for after changing the header, the
+footer or the palette; `email:dev` is still where the awkward scenarios
+above live. Each tile also carries its switch — see below.
+
+**Emails → Sending & log** (`/admin/emails/sending`) previews one template
+against a **real event** (artwork, name, date, time, venue) with a stand-in
+guest and order, sends that exact preview to one address as a test, makes
+the one manual send there is, and lists what went out.
+
+---
+
+## Switching an email on or off
+
+Ten emails have a switch, on their tile in **Emails**; a Manager or the
+Owner may flip it. Each one writes a row in `email_settings`, which the
+service and the hourly cron read at send time — so a switch takes effect on
+the next pass, not on the next deployment.
+
+| Switch | Ships |
+|---|---|
+| Event reminder — the day before | **On** |
+| Event reminder — a few hours before doors | Off |
+| Thanks for coming — the morning after | Off |
+| The seven staff operations emails | **On** |
+
+Everything else says **Always on** and has no switch at all: a ticket
+confirmation, a resend, a refund, an event change, a staff invitation and
+the four account emails answer something a person just did, and there is no
+version of this admin that quietly withholds a receipt or a sign-in link.
+Stopping *all* guest email is a different control — `EMAIL_DELIVERY_ENABLED`
+in the environment, shown on Sending & log.
+
+Three fallbacks make the switch safe: a missing row means the shipped
+default, a `email_settings` that cannot be read means the shipped default,
+and a read that throws means on. A settings outage can never be the reason
+somebody's reminder did not arrive.
 
 ---
 
 ## Sending a test email
 
 1. Sign in to the admin as a Manager or the Owner.
-2. Events → **Emails** → *Preview & test*.
+2. **Emails → Sending & log** → *Preview & test*.
 3. Pick the email, the version, the event. The frame is the real rendering.
 4. Enter the address (yours by default) → **Send test email**.
 
@@ -416,6 +449,8 @@ purpose instead — an accidental edit should not email a room).
 5. A preview file in `src/emails/previews/`.
 6. The log type in the 0018 check constraint (a new migration).
 7. A `send…` method on the service that decides the audience.
+8. If it is optional, a line in `EMAIL_SWITCHES` and a `switchedOn` check in
+   that method. If somebody is owed it, deliberately neither.
 
 ---
 

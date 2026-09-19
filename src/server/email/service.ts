@@ -2,7 +2,7 @@ import 'server-only';
 
 import { INLINE_TICKET_LIMIT } from '@/emails/components/TicketCard';
 import * as fixtures from '@/emails/fixtures';
-import { EMAIL_TEMPLATES, type EmailLogType, type TemplateId, templateInfo } from '@/emails/registry';
+import { EMAIL_SWITCH_DEFAULTS, EMAIL_TEMPLATES, type EmailLogType, type EmailSwitchId, type TemplateId, templateInfo } from '@/emails/registry';
 import { renderEmail, type TemplateProps } from '@/emails/render';
 import type { EmailBrand, EmailEvent, EmailTicket, EventUpdateKind, RenderedEmail, StaffEmailProps, StaffInvitationProps, TicketDirection } from '@/emails/types';
 import { isSigningConfigured } from '@/lib/ticketing/tokens';
@@ -12,6 +12,7 @@ import { planAuthEmail, type AuthHookPayload } from './auth-hook';
 import { emailConfig, isEmailAddress, type EmailConfig } from './config';
 import { attachFixtureQrs, customerFromOrder, liveTickets, loadBrand, loadEmailEvent, orderToEmail, ticketsToEmail } from './data';
 import { emailStore, type EmailStore } from './log';
+import { emailSwitches } from './settings';
 import { resendTransport, type EmailAttachment, type EmailTransport } from './transport';
 
 /**
@@ -59,6 +60,12 @@ export interface EmailServiceDeps {
   listPaidOrders: (eventId: string, statuses: string[]) => Promise<OrderRecord[]>;
   buildTickets: typeof ticketsToEmail;
   signingConfigured: () => boolean;
+  /**
+   * Which optional emails the owner has switched on. Optional, and
+   * everything is on when it is absent, so a test double stays short and a
+   * settings read that fails can never withhold an email.
+   */
+  switches?: () => Promise<Partial<Record<EmailSwitchId, boolean>>>;
   log: (message: string) => void;
 }
 
@@ -83,6 +90,24 @@ function skipped(reason: string, to: string | null = null): SendResult {
 const REFUND_STATUS_TITLE = { processing: 'processing', completed: 'completed' } as const;
 
 export function createEmailService(deps: EmailServiceDeps) {
+  /**
+   * Is this optional email switched on?
+   *
+   * Only the ids in `EMAIL_SWITCHES` ever reach here — a ticket, a refund,
+   * an event change and a sign-in link have no switch to consult. Anything
+   * unreadable is treated as on, so the answer to "why did the reminder not
+   * arrive" is never a settings table nobody could see.
+   */
+  async function switchedOn(id: EmailSwitchId): Promise<boolean> {
+    if (!deps.switches) return true;
+    try {
+      const state = await deps.switches();
+      return state[id] ?? EMAIL_SWITCH_DEFAULTS[id] ?? true;
+    } catch {
+      return true;
+    }
+  }
+
   async function record(entry: Parameters<EmailStore['log']>[0]): Promise<void> {
     try {
       await deps.store()?.log(entry);
@@ -220,6 +245,9 @@ export function createEmailService(deps: EmailServiceDeps) {
     /** The day before ("tomorrow") or hours before ("tonight"). The cron decides which and when. */
     async sendEventReminder(orderId: string, timing: 'tomorrow' | 'tonight' = 'tomorrow'): Promise<SendResult> {
       const type: EmailLogType = timing === 'tonight' ? 'tonight' : 'reminder';
+      if (!(await switchedOn(timing === 'tonight' ? 'event_reminder_tonight' : 'event_reminder'))) {
+        return skipped(`The ${timing === 'tonight' ? 'day-of' : 'day-before'} reminder is switched off in the admin.`);
+      }
       const context = await orderContext(orderId);
       if (context.error) {
         await record({ type, orderId, to: context.order?.customerEmail ?? null, status: 'skipped', error: context.error, template: 'event_reminder' });
@@ -304,8 +332,9 @@ export function createEmailService(deps: EmailServiceDeps) {
 
     sendEventUpdateForOrder,
 
-    /** Built and off by default: the cron stage that would call it is disabled. */
+    /** Wired, and switched off until somebody turns it on in Emails. */
     async sendThanksForComing(orderId: string, reviewUrl: string | null = null): Promise<SendResult> {
+      if (!(await switchedOn('thanks_for_coming'))) return skipped('“Thanks for coming” is switched off in the admin.');
       const context = await orderContext(orderId, { qr: 'none' });
       if (context.error) return skipped(context.error, context.order?.customerEmail ?? null);
       const rendered = await renderEmail('thanks_for_coming', { brand: context.brand, customer: context.customer, event: context.event, reviewUrl });
@@ -330,6 +359,7 @@ export function createEmailService(deps: EmailServiceDeps) {
       input: Omit<StaffEmailProps, 'brand'>,
       options: { refId?: string } = {},
     ): Promise<SendResult> {
+      if (!(await switchedOn(templateId))) return skipped(`That staff email is switched off in the admin.`, input.email);
       const brand = await deps.loadBrand();
       const rendered = await renderEmail(templateId, { ...input, brand });
       const info = templateInfo(templateId)!;
@@ -501,6 +531,7 @@ export const defaultEmailServiceDeps: EmailServiceDeps = {
   listPaidOrders,
   buildTickets: ticketsToEmail,
   signingConfigured: isSigningConfigured,
+  switches: emailSwitches,
   log: (message) => console.warn(`[email] ${message}`),
 };
 

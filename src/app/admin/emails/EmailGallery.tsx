@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { Label, Select } from '@/components/admin/ui';
-import type { EmailCategory, TemplateInfo } from '@/emails/registry';
-import type { EventOption } from '../CommunicationsPanel';
+import { switchFor, type EmailCategory, type EmailSwitch, type EmailSwitchId, type TemplateInfo } from '@/emails/registry';
+import { setEmailSwitch } from '@/server/actions/communications';
+import type { EventOption } from './sending/CommunicationsPanel';
 
 /**
  * Every email, on one wall.
@@ -13,7 +14,7 @@ import type { EventOption } from '../CommunicationsPanel';
  * hubs — so a change to the header, the footer or the palette can be seen
  * across eighteen templates without clicking eighteen times.
  *
- * Each tile is the real email: the same `/admin/communications/preview`
+ * Each tile is the real email: the same `/admin/emails/preview`
  * render the test send uses, fetched once and held in an iframe at email
  * width, scaled down. Nothing is rendered until it scrolls near the
  * viewport, and no more than three render at a time, because each tile is a
@@ -31,6 +32,8 @@ interface Entry {
   template: TemplateInfo;
   variantId: string;
   variantLabel: string | null;
+  /** The switch that governs this tile, where there is one. */
+  toggle: EmailSwitch | null;
 }
 
 interface Rendered {
@@ -49,6 +52,7 @@ function galleryEntries(templates: TemplateInfo[]): Entry[] {
       template,
       variantId: variant.id,
       variantLabel: variant.label || null,
+      toggle: switchFor(template.id, variant.id),
     }));
   });
 }
@@ -60,7 +64,7 @@ function previewUrl(entry: Entry, eventId: string, test: boolean): string {
     event: entry.template.needsEvent ? eventId : '',
   });
   if (test) params.set('test', '1');
-  return `/admin/communications/preview?${params.toString()}`;
+  return `/admin/emails/preview?${params.toString()}`;
 }
 
 /**
@@ -133,10 +137,16 @@ export function EmailGallery({
   templates,
   events,
   defaultTicketDirection,
+  switches,
+  canSwitch,
 }: {
   templates: TemplateInfo[];
   events: EventOption[];
   defaultTicketDirection: string;
+  /** Which optional emails are on, as the database has them right now. */
+  switches: Record<EmailSwitchId, boolean>;
+  /** Whether this person may change them. Everyone else sees the state, read-only. */
+  canSwitch: boolean;
 }) {
   const [category, setCategory] = useState<'all' | EmailCategory>('all');
   const [eventId, setEventId] = useState<string>(events[0]?.id ?? '');
@@ -211,7 +221,16 @@ export function EmailGallery({
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(17rem,1fr))]">
         {shown.map((entry) => {
           const url = previewUrl(entry, eventId, test);
-          return <GalleryTile key={`${entry.key}:${url}`} entry={entry} url={url} onOpen={() => setOpenKey(entry.key)} />;
+          return (
+            <GalleryTile
+              key={`${entry.key}:${url}`}
+              entry={entry}
+              url={url}
+              on={entry.toggle ? (switches[entry.toggle.id] ?? entry.toggle.defaultOn) : null}
+              canSwitch={canSwitch}
+              onOpen={() => setOpenKey(entry.key)}
+            />
+          );
         })}
       </div>
 
@@ -235,7 +254,7 @@ function eventLabel(event: EventOption): string {
 }
 
 /** The email itself, small, with its name and subject line underneath. */
-function GalleryTile({ entry, url, onOpen }: { entry: Entry; url: string; onOpen: () => void }) {
+function GalleryTile({ entry, url, on, canSwitch, onOpen }: { entry: Entry; url: string; on: boolean | null; canSwitch: boolean; onOpen: () => void }) {
   const [rendered, setRendered] = useState<Rendered | null>(() => cache.get(url) ?? null);
   const [near, setNear] = useState(() => cache.has(url));
   const [scale, setScale] = useState(TILE_HEIGHT / FRAME_WIDTH);
@@ -310,13 +329,16 @@ function GalleryTile({ entry, url, onOpen }: { entry: Entry; url: string; onOpen
       <div className="flex flex-1 flex-col gap-1 p-3.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-[0.9375rem] font-semibold leading-snug text-brown">{name}</h3>
-          <Wiring wiring={entry.template.wiring} />
+          {entry.toggle ? null : <Wiring wiring={entry.template.wiring} />}
         </div>
         {entry.variantLabel ? <p className="text-[0.8125rem] font-semibold text-clay">{entry.variantLabel}</p> : null}
         <p className="line-clamp-2 text-[0.8125rem] leading-relaxed text-brown-soft">
           {rendered?.subject ? <span className="text-brown">{rendered.subject}</span> : entry.template.description}
         </p>
-        <p className="mt-auto pt-2 text-[0.75rem] uppercase tracking-[0.06em] text-brown-soft">{CATEGORY_LABEL[entry.template.category]}</p>
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <p className="text-[0.75rem] uppercase tracking-[0.06em] text-brown-soft">{CATEGORY_LABEL[entry.template.category]}</p>
+          {entry.toggle && on !== null ? <SwitchControl entry={entry.toggle} on={on} canSwitch={canSwitch} /> : <AlwaysOn wiring={entry.template.wiring} />}
+        </div>
       </div>
     </article>
   );
@@ -460,4 +482,73 @@ function Wiring({ wiring }: { wiring: TemplateInfo['wiring'] }) {
     off: ['border-warning/50 bg-warning/10 text-warning', 'Built, off'],
   }[wiring];
   return <span className={`inline-flex shrink-0 items-center rounded-(--radius-sm) border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] ${style[0]}`}>{style[1]}</span>;
+}
+
+/**
+ * The on/off switch for one optional email.
+ *
+ * It flips immediately and puts itself back if the server refuses, because
+ * the alternative — a spinner on a checkbox — reads as broken on a phone
+ * behind the bar. The sentence underneath says what being on actually
+ * causes, so nobody has to remember what "Schedule published" means.
+ */
+function SwitchControl({ entry, on, canSwitch }: { entry: EmailSwitch; on: boolean; canSwitch: boolean }) {
+  const [state, setState] = useState(on);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  if (!canSwitch) {
+    return (
+      <span className={`inline-flex shrink-0 items-center rounded-(--radius-sm) border px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.06em] ${state ? 'border-success/40 bg-success/10 text-success' : 'border-brown/30 bg-brown/8 text-brown-soft'}`}>
+        {state ? 'On' : 'Off'}
+      </span>
+    );
+  }
+
+  function flip() {
+    const next = !state;
+    setState(next);
+    setProblem(null);
+    start(async () => {
+      const data = new FormData();
+      data.set('id', entry.id);
+      data.set('on', String(next));
+      const result = await setEmailSwitch({ ok: true, message: '' }, data);
+      if (!result.ok) {
+        setState(!next);
+        setProblem(result.message);
+      }
+    });
+  }
+
+  return (
+    <span className="flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={state}
+        aria-label={`${entry.label}: ${entry.detail}`}
+        title={entry.detail}
+        disabled={pending}
+        onClick={flip}
+        className="group inline-flex min-h-11 items-center gap-2 text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-brown-soft"
+      >
+        <span className={state ? 'text-success' : 'text-brown-soft'}>{state ? 'On' : 'Off'}</span>
+        <span className={`relative inline-block h-5 w-9 rounded-full transition-colors duration-150 ${state ? 'bg-success/70' : 'bg-brown/25'} ${pending ? 'opacity-60' : ''}`}>
+          <span className={`absolute top-0.5 size-4 rounded-full bg-linen shadow-sm transition-all duration-150 ${state ? 'left-[1.125rem]' : 'left-0.5'}`} />
+        </span>
+      </button>
+      {problem ? <span className="max-w-[12rem] text-right text-[0.6875rem] leading-snug text-danger">{problem}</span> : null}
+    </span>
+  );
+}
+
+/** What the tiles without a switch say instead: this one is not optional. */
+function AlwaysOn({ wiring }: { wiring: TemplateInfo['wiring'] }) {
+  if (wiring === 'template') return <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-brown-soft">Not sent yet</span>;
+  return (
+    <span className="text-[0.6875rem] uppercase tracking-[0.06em] text-brown-soft" title="Somebody is owed this one — a ticket, a refund, a change or a sign-in link — so it has no switch.">
+      Always on
+    </span>
+  );
 }

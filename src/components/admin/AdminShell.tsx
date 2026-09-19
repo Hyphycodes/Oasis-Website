@@ -10,10 +10,14 @@ import { Notice } from './ui';
 /**
  * The admin shell.
  *
- * Six sections — Events, Menu, Hubs, Look, Visit, Team — and every earlier screen
- * still within two taps: the door lives under Events, photos and the seasonal
- * look under Look, pages and enquiries under Visit. The owner's name and the
- * way out to the website sit on the right, quietly.
+ * Seven sections — Events, Emails, Menu, Hubs, Look, Visit, Team — and every
+ * earlier screen still within two taps: the door lives under Events, photos and
+ * the seasonal look under Look, pages and enquiries under Visit. The owner's
+ * name and the way out to the website sit on the right, quietly.
+ *
+ * Emails earned its own tab rather than a screen under Events: it is where
+ * every template is looked at and where the optional ones are switched on and
+ * off, and none of that is about a particular event.
  *
  * Everything a screen shares sits here rather than being repeated on each
  * page: the way back up a level, the link out to the real website, and the
@@ -26,12 +30,21 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
     label: 'Events',
     icon: 'events',
     section: 'events',
-    also: ['/admin/scan', '/admin/customers', '/admin/communications'],
+    also: ['/admin/scan', '/admin/customers'],
     screens: [
       { href: '/admin/events', label: 'Events' },
       { href: '/admin/door', label: 'Door' },
       { href: '/admin/customers', label: 'Customers' },
-      { href: '/admin/communications', label: 'Emails' },
+    ],
+  },
+  {
+    href: '/admin/emails',
+    label: 'Emails',
+    icon: 'emails',
+    section: 'events',
+    screens: [
+      { href: '/admin/emails', label: 'All emails' },
+      { href: '/admin/emails/sending', label: 'Sending & log' },
     ],
   },
   { href: '/admin/menu', label: 'Menu', icon: 'menu', section: 'menu' },

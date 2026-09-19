@@ -49,7 +49,7 @@ export function PreviewAndTest({
   const template = useMemo(() => templates.find((entry) => entry.id === templateId) ?? templates[0]!, [templates, templateId]);
   const variants = template.variants ?? [];
   const activeVariant = variants.some((entry) => entry.id === variant) ? variant : (variants[0]?.id ?? '');
-  const src = `/admin/communications/preview?template=${encodeURIComponent(template.id)}&variant=${encodeURIComponent(activeVariant)}&event=${encodeURIComponent(template.needsEvent ? eventId : '')}&n=${nonce}`;
+  const src = `/admin/emails/preview?template=${encodeURIComponent(template.id)}&variant=${encodeURIComponent(activeVariant)}&event=${encodeURIComponent(template.needsEvent ? eventId : '')}&n=${nonce}`;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">

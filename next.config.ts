@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       { source: '/event-details/:slug', destination: '/events/:slug', permanent: true },
+      // Emails became its own admin section; these were its addresses for a day.
+      { source: '/admin/communications', destination: '/admin/emails/sending', permanent: false },
+      { source: '/admin/communications/gallery', destination: '/admin/emails', permanent: false },
+      { source: '/admin/communications/preview', destination: '/admin/emails/preview', permanent: false },
     ];
   },
 

@@ -8,10 +8,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /admin/communications/preview?template=…&variant=…&event=…
+ * GET /admin/emails/preview?template=…&variant=…&event=…
  *
- * The rendered email, as HTML, for the iframe on the Communications
- * screen. Real event data, fixture people, and the QR attachments the real
+ * The rendered email, as HTML, for the frames on the Emails
+ * screens. Real event data, fixture people, and the QR attachments the real
  * send would carry are inlined as data URLs so the preview shows them.
  * Staff only; never indexed; never sends anything.
  */

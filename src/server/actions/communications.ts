@@ -1,15 +1,19 @@
 'use server';
 
 import { z } from 'zod';
-import { EMAIL_TEMPLATES, isTemplateId, templateInfo } from '@/emails/registry';
+import { EMAIL_SWITCHES, EMAIL_TEMPLATES, isEmailSwitchId, isTemplateId, templateInfo } from '@/emails/registry';
 import { isEmailAddress } from '@/server/email/config';
 import { emailService } from '@/server/email/service';
 import { getStaff, staffCan } from '@/server/auth';
-import type { ActionState } from './shared';
+import { setEmailSwitch as writeEmailSwitch } from '@/server/email/settings';
+import { done, run, type ActionState } from './shared';
 
 /**
- * The two things a manager can do from Communications.
+ * The three things a manager can do from Emails.
  *
+ *   setEmailSwitch   turn one of the optional emails on or off. Only the
+ *                    ids in EMAIL_SWITCHES exist; a ticket or a sign-in
+ *                    link has no switch to reach.
  *   sendTestEmail    one template, one real event, one typed address, marked
  *                    TEST. Needs only the mailer.
  *   sendEventUpdate  one change, to the ticket holders of ONE event, after
@@ -69,4 +73,31 @@ export async function sendEventUpdate(_prev: ActionState, formData: FormData): P
 
 export async function listTemplates() {
   return EMAIL_TEMPLATES;
+}
+
+const switchSchema = z.object({
+  id: z.string().refine(isEmailSwitchId, 'Unknown email.'),
+  on: z.enum(['true', 'false']),
+});
+
+/**
+ * Turn one optional email on or off.
+ *
+ * Writing goes through the same harness as every other admin change, so the
+ * capability is checked before a database handle exists and the row-level
+ * policy on `email_settings` applies on top of it. Nothing is revalidated:
+ * the switch is read by the cron and the service at send time, and the one
+ * screen that shows it re-renders itself.
+ */
+export async function setEmailSwitch(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run('content.publish', async ({ db, staff }) => {
+    const parsed = switchSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Could not change that email.' };
+    const entry = EMAIL_SWITCHES.find((item) => item.id === parsed.data.id)!;
+    const on = parsed.data.on === 'true';
+    // `updated_by` references auth.users, so only a real Supabase identity
+    // may fill it — the local and open-admin identities are not in that table.
+    await writeEmailSwitch(db, entry.id, on, staff.source === 'supabase' ? staff.id : null);
+    return done(on ? `${entry.label} is on. ${entry.detail}` : `${entry.label} is off. Nothing will be sent for it.`);
+  });
 }

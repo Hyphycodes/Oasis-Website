@@ -20,6 +20,7 @@ export type NavIconName =
   | 'look'
   | 'visit'
   | 'team'
+  | 'emails'
   | 'hubs';
 
 const PATHS: Record<NavIconName, string[]> = {
@@ -47,6 +48,8 @@ const PATHS: Record<NavIconName, string[]> = {
     'M9.5 11a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6z', 'M3.5 20c0-3.2 2.7-5.3 6-5.3s6 2.1 6 5.3',
     'M16.8 8.8a2.4 2.4 0 1 0 0-4.8', 'M17.6 20c0-2.5-.8-4.2-2.2-5.2',
   ],
+  // An envelope: what the site sends.
+  emails: ['M3.5 6h17v12h-17z', 'M3.5 7 12 13l8.5-6'],
   hubs: ['M7 7h10v10H7z', 'M4 4h4', 'M16 4h4v4', 'M20 16v4h-4', 'M8 20H4v-4', 'M10 10h4v4h-4z'],
 };
 

@@ -14,12 +14,12 @@ import { EventUpdateForm, PreviewAndTest } from './CommunicationsPanel';
 export const dynamic = 'force-dynamic';
 
 /**
- * Communications: every email the site sends, what sends it, whether it
- * can be sent right now, a preview against a real event, a test to one
- * address, and the log of what actually went out.
+ * Sending & log: whether email can go out at all, one preview against a
+ * real event, a test to one address, the one operational send a manager
+ * legitimately needs, and what actually went out.
  *
- * Templates stay in code. This screen is for looking, testing and the one
- * operational send (an event update) that a manager legitimately needs.
+ * The wall of templates and the on/off switches live next door on Emails.
+ * This screen is the working end: configuration, a test, a send, a record.
  */
 export default async function CommunicationsPage() {
   const staff = await getStaff();
@@ -27,7 +27,7 @@ export default async function CommunicationsPage() {
   const local = isLocalDb();
   if (!canOpen({ role: staff.role, sections: staff.sections }, 'events')) {
     return (
-      <AdminShell staff={staff} local={local} title="Emails">
+      <AdminShell staff={staff} local={local} title="Sending &amp; log">
         <NoAccess what="emails" />
       </AdminShell>
     );
@@ -42,9 +42,10 @@ export default async function CommunicationsPage() {
     <AdminShell
       staff={staff}
       local={local}
-      title="Emails"
-      description="What guests and staff receive from Oasis: tickets, reminders, refunds, changes, invitations. Preview any of them against a real event and send yourself a test."
-      actions={<LinkButton href="/admin/communications/gallery">See every email</LinkButton>}
+      title="Sending &amp; log"
+      description="Whether Oasis can send email at all, a test to one address, the one send a manager makes on purpose, and everything that has gone out."
+      backTo={{ href: '/admin/emails', label: 'Emails' }}
+      actions={<LinkButton href="/admin/emails">See every email</LinkButton>}
     >
       <div className="grid gap-5">
         <Card title="Status">
@@ -83,7 +84,7 @@ export default async function CommunicationsPage() {
           </Card>
         ) : null}
 
-        <Card title="Every email the site sends" action={<LinkButton href="/admin/communications/gallery" variant="quiet">See them all side by side →</LinkButton>}>
+        <Card title="Every email the site sends" action={<LinkButton href="/admin/emails" variant="quiet">See them all, and their switches →</LinkButton>}>
           <ul className="divide-y divide-brown/10">
             {EMAIL_TEMPLATES.map((template) => (
               <li key={template.id} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto] sm:items-start">
@@ -97,7 +98,7 @@ export default async function CommunicationsPage() {
             ))}
           </ul>
           <p className="mt-4 text-[0.8125rem] leading-relaxed text-brown-soft">
-            Designs live in code (<code>src/emails/</code>). <a href="/admin/communications/gallery" className="text-clay underline underline-offset-4">The gallery</a> draws all of them at once; <code>npm run email:dev</code> adds the awkward scenarios. docs/email-system.md explains the rest.
+            Designs live in code (<code>src/emails/</code>). <a href="/admin/emails" className="text-clay underline underline-offset-4">Emails</a> draws all of them at once and holds the switches; <code>npm run email:dev</code> adds the awkward scenarios. docs/email-system.md explains the rest.
           </p>
         </Card>
 
