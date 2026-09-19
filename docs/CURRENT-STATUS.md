@@ -99,7 +99,7 @@ the employee app and the manager surfaces. Full architecture in
 | **Contractors** | DJs, instructors, photographers; rates, W-9 status, bookings, deposits and payment state. |
 | **Announcements & notifications** | Targeted by location and position, optional acknowledgement with who-has-read; an in-app notification centre with a pluggable channel abstraction. |
 | **Incidents & manager notes** | Manager-only, with no employee policy at all. |
-| **Emails** | Seven staff templates through the existing React Email design system and Resend service. |
+| **Emails** | Seven staff templates through the existing React Email design system and Resend service. The one that needs a clock — a certificate lapsing in thirty days — runs in the existing hourly cron. |
 | **Audit** | Every management action on staff data, with before and after. |
 | **Tests** | 181 new tests: the capability matrix cell by cell, scheduling conflicts, zoned time, and the domain workflows. Plus `supabase/tests/employee-operations-rls.sql`, which proves the access rules against real RLS. |
 
@@ -136,10 +136,7 @@ In rough order of value.
    domain is verified and one real ticket has been bought and received.
 5. **Custom SMTP in Supabase**, so staff invitations reach mailboxes outside the
    project team.
-6. **A document-expiry cron.** The dashboard computes expiry correctly on read;
-   the thirty-day *email* wants an hourly pass, next to the existing reminder
-   cron in `src/app/api/cron/reminders/route.ts`.
-7. **Wallet passes** (Apple and Google) — the biggest "this feels expensive"
+6. **Wallet passes** (Apple and Google) — the biggest "this feels expensive"
    upgrade to ticketing, and it removes email-search-at-the-door.
 
 ---

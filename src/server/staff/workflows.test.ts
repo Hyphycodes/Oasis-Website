@@ -30,6 +30,7 @@ import { listNotes } from './notes';
 import { deriveOpsRole } from './permissions';
 import { claimOpenShift, claimShiftRequest, decideShiftRequest, openShiftRequest } from './coverage';
 import { feedFor } from './announcements';
+import { sweepExpiringDocuments } from './expiry';
 
 const manager: Staff = { id: 'local-manager', email: 'manager@oasis.local', name: 'Alex', role: 'admin', sections: [], active: true, source: 'local' };
 const TZ = 'America/Chicago';
@@ -242,6 +243,32 @@ describe('availability and profile boundaries', () => {
     // The employee summary and detail carry no note fields at all.
     const carlos = (await getEmployee(db, DEMO_EMPLOYEES.carlos))!;
     expect(JSON.stringify(carlos)).not.toMatch(/double-scan/);
+  });
+});
+
+describe('the document expiry sweep', () => {
+  it('warns about a certificate inside thirty days, and only once', async () => {
+    const ids = (await listEmployees(db)).map((employee) => employee.id);
+    // Carlos's BASSET expires in 20 days in the demo week.
+    const first = await sweepExpiringDocuments(db, ids, '2026-10-07');
+    expect(first.told).toBe(1);
+    const told = await db.list<Row>('staff_notifications', { where: { employee_id: DEMO_EMPLOYEES.carlos, kind: 'document_expiring' } });
+    expect(told).toHaveLength(1);
+    expect(String(told[0]!.title)).toMatch(/BASSET/);
+
+    // A second run the next day says nothing.
+    const second = await sweepExpiringDocuments(db, ids, '2026-10-08');
+    expect(second.told).toBe(0);
+  });
+
+  it('says nothing about a document that has already lapsed, or one far off', async () => {
+    const ids = (await listEmployees(db)).map((employee) => employee.id);
+    await sweepExpiringDocuments(db, ids, '2026-10-07');
+    const all = await db.list<Row>('staff_notifications', { where: { kind: 'document_expiring' } });
+    // Maria's food handler expired 105 days ago and Carlos's food handler is
+    // 795 days out; neither is a warning.
+    expect(all.some((row) => String(row.employee_id) === DEMO_EMPLOYEES.maria)).toBe(false);
+    expect(all.every((row) => !String(row.title).match(/Food handler/))).toBe(true);
   });
 });
 

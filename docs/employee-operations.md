@@ -510,12 +510,22 @@ else:
 | `shift_changed` / `shift_cancelled` | Shift changed | A published shift moves, is cancelled, or coverage is approved |
 | `time_off_decided` | Time-off decision | A manager decides |
 | `training_assigned` | Training assigned | A module is assigned or re-required |
-| `document_expiring` | Document expiring | Thirty days out |
+| `document_expiring` | Document expiring | Thirty days out, from the hourly cron |
 | `event_assignment` | Event assignment | Someone is put on an event |
 
 Everything else — a task assigned, an announcement posted, a swap claimed, a
 document verified — stays in the app. An employee can turn their own email off in
 their profile; in-app always arrives.
+
+**One clock.** Everything about requirements is computed when somebody looks —
+a certificate whose expiry has passed reads as expired with no job keeping it
+honest. The exception is telling an employee *thirty days early*, because nobody
+looks at a bar card a month out. `sweepExpiringDocuments()` runs inside the
+existing `/api/cron/reminders` route, says it once per document per renewal
+(enforced against `staff_notifications`, so a replayed cron is harmless), and
+is wrapped so a staff job can never fail the ticket reminders beside it. On a
+database without migration 0022 it finds nothing and the route behaves exactly
+as it did before.
 
 **Staff email is `audience: 'staff'`**, so `EMAIL_DELIVERY_ENABLED` — the guest
 switch — does not gate it. Sign-in and schedule notices have to work before Oasis
