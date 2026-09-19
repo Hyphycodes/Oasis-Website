@@ -131,10 +131,32 @@ export function StaffBottomBar({ items, more }: { items: StaffNavItem[]; more: S
 
 export function StaffTopNav({ items, more }: { items: StaffNavItem[]; more: StaffMoreItem[] }) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const panel = useRef<HTMLLIElement>(null);
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (panel.current && !panel.current.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  const moreActive = more.some((item) => inside(pathname, item));
+
   return (
     <nav aria-label="Staff app" className="hidden lg:block">
       <ul className="flex items-center gap-1">
-        {[...items, ...more.map((item) => ({ ...item, also: [] as string[] }))].map((item) => {
+        {items.map((item) => {
           const active = inside(pathname, item);
           return (
             <li key={item.href}>
@@ -144,12 +166,46 @@ export function StaffTopNav({ items, more }: { items: StaffNavItem[]; more: Staf
                 className={`relative inline-flex min-h-11 items-center gap-1.5 px-3 text-[0.9375rem] font-semibold transition-colors ${active ? 'text-night-text' : 'text-night-text/70 hover:text-night-text'}`}
               >
                 {item.label}
-                {'badge' in item && item.badge ? <span className="min-w-4 rounded-full bg-coral px-1 text-center text-[0.625rem] font-bold leading-4 text-on-orange">{item.badge}</span> : null}
+                {item.badge ? <span className="min-w-4 rounded-full bg-coral px-1 text-center text-[0.625rem] font-bold leading-4 text-on-orange">{item.badge}</span> : null}
                 {active ? <span aria-hidden="true" className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-amber" /> : null}
               </Link>
             </li>
           );
         })}
+        {more.length > 0 ? (
+          <li ref={panel} className="relative">
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              aria-expanded={open}
+              className={`relative inline-flex min-h-11 items-center gap-1 px-3 text-[0.9375rem] font-semibold transition-colors ${open || moreActive ? 'text-night-text' : 'text-night-text/70 hover:text-night-text'}`}
+            >
+              Manage
+              <StaffIcon name="chevron" className={`size-[14px] transition-transform ${open ? '-rotate-90' : 'rotate-90'}`} />
+              {moreActive ? <span aria-hidden="true" className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-amber" /> : null}
+            </button>
+            {open ? (
+              <div className="absolute right-0 top-full z-50 mt-2 w-[26rem] max-w-[90vw] rounded-(--radius-md) border border-night-text/12 bg-teal p-2 shadow-xl">
+                <ul className="grid grid-cols-2 gap-1">
+                  {more.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex min-h-12 items-center gap-2.5 rounded-(--radius-sm) px-3 text-[0.9375rem] font-semibold ${inside(pathname, item) ? 'bg-night-text/10 text-amber' : 'text-night-text/85 hover:bg-night-text/8'}`}
+                      >
+                        <StaffIcon name={item.icon} className="size-[18px] shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block truncate">{item.label}</span>
+                          {item.hint ? <span className="block truncate text-[0.75rem] font-normal text-night-text/55">{item.hint}</span> : null}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </li>
+        ) : null}
       </ul>
     </nav>
   );

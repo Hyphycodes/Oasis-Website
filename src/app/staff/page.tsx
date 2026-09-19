@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ShiftHero, ShiftRow } from '@/components/staff/ShiftCard';
 import { StaffShell } from '@/components/staff/StaffShell';
-import { Button, Empty, Pill, Progress, Row, Section } from '@/components/staff/ui';
+import { Button, Empty, Pill, Progress, Row, Section, Stat } from '@/components/staff/ui';
 import { formatClockShort, formatDayShort, formatRelative } from '@/lib/staff/time';
 import { staffHome } from '@/server/staff/home';
 import { isDenied, staffPage } from './_lib';
@@ -163,7 +163,15 @@ export default async function StaffHomePage() {
         ) : null}
 
         {context.isManager ? (
-          <Section title="Manage">
+          <Section title="Manage" action={<Link href="/staff/operations" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">Full dashboard</Link>}>
+            {home.managerToday ? (
+              <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Stat value={home.managerToday.scheduled} label="scheduled today" href={`/staff/operations/schedule`} />
+                <Stat value={home.managerToday.events} label={home.managerToday.events === 1 ? 'event tonight' : 'events tonight'} href="/staff/events" />
+                <Stat value={home.managerToday.openShifts} label="open shifts" href="/staff/operations/schedule" tone={home.managerToday.openShifts ? 'warn' : undefined} />
+                <Stat value={home.managerToday.overdueTasks} label="overdue tasks" href="/staff/operations/tasks" tone={home.managerToday.overdueTasks ? 'warn' : undefined} />
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button href="/staff/operations" variant="primary">Today’s operations</Button>
               <Button href="/staff/team">Team</Button>

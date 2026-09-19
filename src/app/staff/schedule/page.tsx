@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { ShiftRow } from '@/components/staff/ShiftCard';
+import { CalendarMonth, CalendarWeek, ShiftChip } from '@/components/staff/Calendar';
 import { StaffShell } from '@/components/staff/StaffShell';
-import { Button, Chips, Empty, Screen, Section } from '@/components/staff/ui';
+import { Button, Chips, Empty, Screen } from '@/components/staff/ui';
 import { addDays, formatDate, weekOf, zonedDate, zonedInstant } from '@/lib/staff/time';
 import { listShiftViews } from '@/server/staff/schedule';
 import { listTimeOff } from '@/server/staff/timeoff';
@@ -59,27 +59,32 @@ export default async function MySchedulePage({ searchParams }: { searchParams: P
         />
         {!employee ? <Empty title="No schedule of your own." detail="You are signed in as a manager without an employee profile." /> : null}
         {employee && !hasAny ? <Empty title={monthView ? 'No shifts this month.' : 'No shifts this week.'} detail="You’re off — enjoy it." /> : null}
-        {employee ? (
-          <div className="grid gap-3">
-            {days.map((day) => {
+        {employee && hasAny && monthView ? (
+          <CalendarMonth weeks={[0, 1, 2, 3, 4].map((week) => days.slice(week * 7, week * 7 + 7))} today={today}>
+            {(day) => {
               const mine = byDay.get(day) ?? [];
               const off = timeOff.find((request) => day >= request.startsOn && day <= request.endsOn);
-              if (monthView && mine.length === 0 && !off) return null;
+              if (mine.length === 0) return off ? <span className="text-[0.6875rem] text-brown-soft">Off</span> : null;
               return (
-                <Section key={day} title={`${day === today ? 'Today · ' : ''}${formatDate(day)}`}>
-                  {mine.length === 0 ? (
-                    <p className="px-1 text-[0.875rem] text-brown-soft">{off ? 'Time off (approved)' : 'Off'}</p>
-                  ) : (
-                    <div className="staff-panel px-4">
-                      {mine.map((shift) => (
-                        <ShiftRow key={shift.id} shift={shift} href={`/staff/schedule/shift/${shift.id}`} showDate={false} />
-                      ))}
-                    </div>
-                  )}
-                </Section>
+                <>
+                  {mine.slice(0, 2).map((shift) => (
+                    <ShiftChip key={shift.id} shift={shift} href={`/staff/schedule/shift/${shift.id}`} label={shift.positionName} />
+                  ))}
+                  {mine.length > 2 ? <span className="text-[0.6875rem] text-brown-soft">+{mine.length - 2} more</span> : null}
+                </>
               );
-            })}
-          </div>
+            }}
+          </CalendarMonth>
+        ) : null}
+        {employee && hasAny && !monthView ? (
+          <CalendarWeek days={days} today={today}>
+            {(day) => {
+              const mine = byDay.get(day) ?? [];
+              const off = timeOff.find((request) => day >= request.startsOn && day <= request.endsOn);
+              if (mine.length === 0) return <p className="text-[0.8125rem] text-brown-soft">{off ? 'Time off (approved)' : 'Off'}</p>;
+              return mine.map((shift) => <ShiftChip key={shift.id} shift={shift} href={`/staff/schedule/shift/${shift.id}`} label={shift.positionName} />);
+            }}
+          </CalendarWeek>
         ) : null}
         <p className="text-[0.8125rem] text-brown-soft">
           Need a day? <Link href="/staff/time-off" className="font-semibold text-brown underline underline-offset-4">Request time off</Link> or <Link href="/staff/availability" className="font-semibold text-brown underline underline-offset-4">update your availability</Link>.

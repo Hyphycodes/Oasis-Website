@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { CalendarWeek, ShiftChip } from '@/components/staff/Calendar';
 import { OneTap } from '@/components/staff/forms';
 import { ShiftRow } from '@/components/staff/ShiftCard';
 import { StaffShell } from '@/components/staff/StaffShell';
-import { Button, Chips, Empty, Pill, Screen, Section } from '@/components/staff/ui';
+import { Button, Chips, Empty, Screen, Section } from '@/components/staff/ui';
 import { addDays, formatDate, weekOf, zonedDate, zonedInstant } from '@/lib/staff/time';
 import { copySchedule, publishSchedule } from '@/server/actions/staff/schedule';
 import { listEmployees } from '@/server/staff/employees';
@@ -124,30 +125,23 @@ export default async function ScheduleBuilderPage({ searchParams }: { searchPara
             })}
           </div>
         ) : (
-          <div className="grid gap-4">
-            {days.map((day) => {
+          <CalendarWeek days={days} today={today}>
+            {(day) => {
               const mine = shifts.filter((shift) => zonedDate(shift.startsAt, timezone) === day);
               const off = timeOff.filter((request) => day >= request.startsOn && day <= request.endsOn);
               return (
-                <Section key={day} title={`${day === today ? 'Today · ' : ''}${formatDate(day)}`} count={mine.length} action={<Link href={`/staff/operations/schedule/new?date=${day}&location=${location.id}`} className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">+ Shift</Link>}>
-                  {off.length > 0 ? (
-                    <p className="mb-1 flex flex-wrap gap-1.5 text-[0.8125rem] text-brown-soft">
-                      Off: {off.map((request) => <Pill key={request.id}>{request.employeeName}</Pill>)}
-                    </p>
-                  ) : null}
-                  {mine.length === 0 ? (
-                    <p className="text-[0.875rem] text-brown-soft">Nobody scheduled.</p>
-                  ) : (
-                    <div className="staff-panel px-4">
-                      {mine.map((shift) => (
-                        <ShiftRow key={shift.id} shift={shift} href={`/staff/operations/schedule/shift/${shift.id}`} showEmployee showDate={false} />
-                      ))}
-                    </div>
-                  )}
-                </Section>
+                <>
+                  {mine.map((shift) => (
+                    <ShiftChip key={shift.id} shift={shift} href={`/staff/operations/schedule/shift/${shift.id}`} label={shift.employeeName ?? 'Open'} />
+                  ))}
+                  {off.length > 0 ? <p className="text-[0.6875rem] leading-snug text-brown-soft">Off: {off.map((request) => request.employeeName).join(', ')}</p> : null}
+                  <Link href={`/staff/operations/schedule/new?date=${day}&location=${location.id}`} className="mt-auto text-[0.6875rem] font-semibold text-brown-soft underline underline-offset-4">
+                    + Shift
+                  </Link>
+                </>
               );
-            })}
-          </div>
+            }}
+          </CalendarWeek>
         )}
         <p className="text-[0.8125rem] text-brown-soft">
           Week of {formatDate(weekStart, 'short')} · <Link href={`/staff/operations/schedule?${query}`} className="underline underline-offset-4">link to this view</Link>

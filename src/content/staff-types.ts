@@ -204,6 +204,27 @@ export type TrainingSectionKind = 'text' | 'video' | 'image' | 'checklist' | 'li
 export type QuestionKind = 'multiple_choice' | 'true_false' | 'multi_select';
 export type TrainingStatus = 'assigned' | 'in_progress' | 'completed' | 'expired';
 
+/** A module's `category` is stored as free text, but every module editor picks from this fixed list. */
+export const TRAINING_CATEGORY_ORDER = ['general', 'guest_experience', 'operations', 'bar', 'door', 'events', 'kitchen', 'safety', 'policy'] as const;
+export type TrainingCategory = (typeof TRAINING_CATEGORY_ORDER)[number];
+
+export const TRAINING_CATEGORY_LABEL: Record<TrainingCategory, string> = {
+  general: 'General',
+  guest_experience: 'Guest experience',
+  operations: 'Operations',
+  bar: 'Bar',
+  door: 'Door',
+  events: 'Events',
+  kitchen: 'Kitchen',
+  safety: 'Safety',
+  policy: 'Policy',
+};
+
+/** A module's category as a display label, even if it holds a value outside the fixed list. */
+export function trainingCategoryLabel(category: string): string {
+  return TRAINING_CATEGORY_LABEL[category as TrainingCategory] ?? category.replace(/_/g, ' ');
+}
+
 export interface TrainingModuleSummary {
   id: string;
   slug: string;

@@ -1,5 +1,6 @@
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Button, Chips, Empty, Pill, Row, Screen, Section } from '@/components/staff/ui';
+import { TRAINING_CATEGORY_ORDER, trainingCategoryLabel } from '@/content/staff-types';
 import { formatDate } from '@/lib/staff/time';
 import { listAssignments, listModules, outstanding } from '@/server/staff/training';
 import { isDenied, staffPage } from '../_lib';
@@ -31,17 +32,25 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
           ]}
         />
         {show === 'library' ? (
-          <Section title="Everything else">
-            {library.length === 0 ? (
+          library.length === 0 ? (
+            <Section title="Everything else">
               <Empty title="Nothing else to read." detail="Every published module is already on your list." />
-            ) : (
-              <div className="staff-panel px-4">
-                {library.map((module) => (
-                  <Row key={module.id} href={`/staff/training/${module.id}`} title={module.title} detail={module.description ?? undefined} meta={module.estimatedMinutes ? `About ${module.estimatedMinutes} min${module.hasQuiz ? ' · quiz' : ''}` : module.hasQuiz ? 'Quiz' : undefined} />
-                ))}
-              </div>
-            )}
-          </Section>
+            </Section>
+          ) : (
+            [...TRAINING_CATEGORY_ORDER, ...Array.from(new Set(library.map((module) => module.category))).filter((category) => !(TRAINING_CATEGORY_ORDER as readonly string[]).includes(category))].map((category) => {
+              const inCategory = library.filter((module) => module.category === category);
+              if (inCategory.length === 0) return null;
+              return (
+                <Section key={category} title={trainingCategoryLabel(category)} count={inCategory.length}>
+                  <div className="staff-panel px-4">
+                    {inCategory.map((module) => (
+                      <Row key={module.id} href={`/staff/training/${module.id}`} title={module.title} detail={module.description ?? undefined} meta={module.estimatedMinutes ? `About ${module.estimatedMinutes} min${module.hasQuiz ? ' · quiz' : ''}` : module.hasQuiz ? 'Quiz' : undefined} />
+                    ))}
+                  </div>
+                </Section>
+              );
+            })
+          )
         ) : list.length === 0 ? (
           <Empty title={show === 'done' ? 'Nothing completed yet.' : 'No required training.'} detail={show === 'done' ? undefined : 'You’re all caught up.'} />
         ) : (

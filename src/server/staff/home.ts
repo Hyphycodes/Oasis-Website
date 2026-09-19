@@ -39,6 +39,8 @@ export interface StaffHome {
   unreadNotifications: number;
   /** Shifts changed since the employee's last visit are surfaced as notifications; this is the count. */
   scheduleChanged: boolean;
+  /** A manager's snapshot of their home location, today — cheap enough for the home screen, not the full dashboard. */
+  managerToday: { scheduled: number; openShifts: number; events: number; overdueTasks: number } | null;
 }
 
 export async function staffHome(db: Db, context: StaffContext, now = new Date()): Promise<StaffHome> {
@@ -51,7 +53,7 @@ export async function staffHome(db: Db, context: StaffContext, now = new Date())
   const dayEnd = zonedInstant(addDays(today, 1), 0, timezone);
   const horizon = zonedInstant(addDays(today, 14), 0, timezone);
 
-  const [myShifts, events, tasks, announcements, training, checklists, openShifts, coverage, onboarding, unread] = await Promise.all([
+  const [myShifts, events, tasks, announcements, training, checklists, openShifts, coverage, onboarding, unread, scheduledToday, locationOpenTasks] = await Promise.all([
     employee ? listShiftViews(db, { from: dayStart, to: horizon, employeeId: employee.id }) : Promise.resolve([] as ShiftView[]),
     listEventsBetween(db, dayStart, dayEnd, context.location.id),
     employee ? listTasks(db, { assignedTo: employee.id, open: true }, now) : Promise.resolve([] as Task[]),
@@ -62,6 +64,8 @@ export async function staffHome(db: Db, context: StaffContext, now = new Date())
     employee ? listShiftRequests(db, { status: ['open', 'claimed'] }) : Promise.resolve([] as ShiftRequest[]),
     employee && !employee.onboardingCompletedAt ? onboardingFor(db, employee.id, { today }) : Promise.resolve(null),
     employee ? unreadCount(db, employee.id) : Promise.resolve(0),
+    context.isManager ? listShiftViews(db, { from: dayStart, to: dayEnd, locationId: context.location.id }) : Promise.resolve([] as ShiftView[]),
+    context.isManager ? listTasks(db, { locationId: context.location.id, open: true }, now) : Promise.resolve([] as Task[]),
   ]);
 
   const sales = await getSalesSummaries(events.map((event) => event.id));
@@ -89,5 +93,6 @@ export async function staffHome(db: Db, context: StaffContext, now = new Date())
     onboarding: onboarding ? { total: onboarding.total, complete: onboarding.complete, stage: onboarding.stage } : null,
     unreadNotifications: unread,
     scheduleChanged: false,
+    managerToday: context.isManager ? { scheduled: scheduledToday.length, openShifts: openShifts.length, events: events.length, overdueTasks: locationOpenTasks.filter((task) => task.overdue).length } : null,
   };
 }

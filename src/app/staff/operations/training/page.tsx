@@ -1,5 +1,6 @@
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Back, Button, Empty, Pill, Row, Screen, Section } from '@/components/staff/ui';
+import { TRAINING_CATEGORY_ORDER, trainingCategoryLabel } from '@/content/staff-types';
 import { listAssignments, listModules, outstanding } from '@/server/staff/training';
 import { isDenied, staffPage } from '../../_lib';
 
@@ -25,31 +26,41 @@ export default async function AcademyPage() {
             </div>
           </Section>
         ) : null}
-        <Section title="Modules" count={modules.length}>
-          {modules.length === 0 ? <Empty title="No modules yet." detail="Create the first one — Welcome to Oasis is a good start." /> : (
-            <div className="staff-panel px-4">
-              {modules.map((lesson) => {
-                const mine = assignments.filter((assignment) => assignment.moduleId === lesson.id);
-                const cleared = mine.filter((assignment) => assignment.status === 'completed' && !assignment.outdated).length;
-                return (
-                  <Row
-                    key={lesson.id}
-                    href={`/staff/operations/training/${lesson.id}`}
-                    title={lesson.title}
-                    detail={`${lesson.category.replace('_', ' ')} · v${lesson.version}${lesson.hasQuiz ? ` · quiz, pass ${lesson.passingScore}%` : ''}${lesson.appliesToPositions.length ? ` · ${lesson.appliesToPositions.join(', ')}` : ''}`}
-                    meta={mine.length ? `${cleared} of ${mine.length} cleared` : 'Not assigned to anyone'}
-                    trailing={
-                      <span className="flex gap-1">
-                        {lesson.required ? <Pill tone="accent">Required</Pill> : null}
-                        {lesson.status !== 'published' ? <Pill tone={lesson.status === 'draft' ? 'neutral' : 'bad'}>{lesson.status}</Pill> : null}
-                      </span>
-                    }
-                  />
-                );
-              })}
-            </div>
-          )}
-        </Section>
+        {modules.length === 0 ? (
+          <Section title="Modules">
+            <Empty title="No modules yet." detail="Create the first one — Welcome to Oasis is a good start." />
+          </Section>
+        ) : (
+          [...TRAINING_CATEGORY_ORDER, ...Array.from(new Set(modules.map((lesson) => lesson.category))).filter((category) => !(TRAINING_CATEGORY_ORDER as readonly string[]).includes(category))].map((category) => {
+            const inCategory = modules.filter((lesson) => lesson.category === category);
+            if (inCategory.length === 0) return null;
+            return (
+              <Section key={category} title={trainingCategoryLabel(category)} count={inCategory.length}>
+                <div className="staff-panel px-4">
+                  {inCategory.map((lesson) => {
+                    const mine = assignments.filter((assignment) => assignment.moduleId === lesson.id);
+                    const cleared = mine.filter((assignment) => assignment.status === 'completed' && !assignment.outdated).length;
+                    return (
+                      <Row
+                        key={lesson.id}
+                        href={`/staff/operations/training/${lesson.id}`}
+                        title={lesson.title}
+                        detail={`v${lesson.version}${lesson.hasQuiz ? ` · quiz, pass ${lesson.passingScore}%` : ''}${lesson.appliesToPositions.length ? ` · ${lesson.appliesToPositions.join(', ')}` : ''}`}
+                        meta={mine.length ? `${cleared} of ${mine.length} cleared` : 'Not assigned to anyone'}
+                        trailing={
+                          <span className="flex gap-1">
+                            {lesson.required ? <Pill tone="accent">Required</Pill> : null}
+                            {lesson.status !== 'published' ? <Pill tone={lesson.status === 'draft' ? 'neutral' : 'bad'}>{lesson.status}</Pill> : null}
+                          </span>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </Section>
+            );
+          })
+        )}
       </Screen>
     </StaffShell>
   );

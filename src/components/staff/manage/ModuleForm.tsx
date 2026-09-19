@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import type { LocationSummary, Position } from '@/content/staff-types';
+import { TRAINING_CATEGORY_LABEL, TRAINING_CATEGORY_ORDER } from '@/content/staff-types';
 import type { ModuleInput } from '@/server/staff/training';
 import { saveTrainingModule } from '@/server/actions/staff/training';
 import { ActionForm, CheckGroup, Checkbox, Field, Fieldset, Select, SubmitButton, TextArea, TextInput } from '@/components/staff/forms';
-
-const CATEGORIES = ['general', 'guest_experience', 'operations', 'bar', 'door', 'events', 'kitchen', 'safety', 'policy'];
 
 /**
  * A module editor that works without a page builder: sections in order,
@@ -34,9 +33,9 @@ export function ModuleForm({ id, initial, positions, locations }: { id: string |
         </div>
         <Field id="category" label="Category">
           <Select id="category" name="category" defaultValue={initial?.category ?? 'general'}>
-            {CATEGORIES.map((category) => (
+            {TRAINING_CATEGORY_ORDER.map((category) => (
               <option key={category} value={category}>
-                {category.replace('_', ' ')}
+                {TRAINING_CATEGORY_LABEL[category]}
               </option>
             ))}
           </Select>
