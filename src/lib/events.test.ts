@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { eventSeries as houseSeries } from '@/content/events';
+import { eventSeries as houseSeries, oneTimeEvents } from '@/content/events';
+import importedFlyers from '@/content/imported-flyers.json';
 // Generic paid-series fixtures retain override and ticket-generation coverage.
 const eventSeries = houseSeries.map(series => ({ ...series, ticketPolicy: 'required' as const, priceCents: 1000 }));
 import type { EventSeries } from '@/content/types';
@@ -10,6 +11,7 @@ import {
   ineligibleReason,
   nextEvent,
   nextPerSeries,
+  occurrenceFromSeed,
   ticketUrlForOccurrence,
   venueIsoDate,
   type EventInput,
@@ -494,5 +496,55 @@ describe('free house nights', () => {
       expect(result.ticketUrl).toBeNull();
       expect(result.presentation.priceText).toBe('Free entry · No tickets needed');
     }
+  });
+});
+
+
+/**
+ * The bug this guards against was invisible on the page that suffered it.
+ *
+ * importedFlyer() in src/server/content/event-art.ts will only show an event's
+ * official flyer when the start instant recorded beside that flyer EXACTLY
+ * equals the event's own start — deliberately, so that artwork printed with a
+ * date cannot outlive a reschedule. The consequence is that a start time which
+ * is merely an hour out does not look wrong: the event still lists, still sells,
+ * and simply loses its photo, with nothing anywhere saying why. Ten events were
+ * in that state before 0019.
+ *
+ * So the seeded calendar and the flyer index have to agree to the minute, and
+ * that agreement is asserted rather than assumed.
+ */
+describe('seeded one-time events keep their official flyers', () => {
+  const index = importedFlyers as Record<string, { startsAt: string; path: string }>;
+
+  it('every seeded event resolves to the exact instant its flyer was filed under', () => {
+    const checked = oneTimeEvents.filter((seed) => index[seed.sourceEventId]);
+    // A guard that silently checks nothing is worse than no guard.
+    expect(checked.length).toBe(oneTimeEvents.length);
+
+    for (const seed of checked) {
+      const occurrence = occurrenceFromSeed(seed);
+      expect(
+        Date.parse(occurrence.startsAt),
+        `${seed.title} (${seed.sourceEventId}) would lose its flyer: seeded ${occurrence.startsAt}, flyer filed at ${index[seed.sourceEventId]!.startsAt}`,
+      ).toBe(Date.parse(index[seed.sourceEventId]!.startsAt));
+    }
+  });
+
+  it('gives every event a finish after its start, across the November DST change', () => {
+    for (const seed of oneTimeEvents) {
+      const occurrence = occurrenceFromSeed(seed);
+      expect(
+        Date.parse(occurrence.endsAt!) > Date.parse(occurrence.startsAt),
+        `${seed.title} ends at or before it starts`,
+      ).toBe(true);
+    }
+  });
+
+  it('carries no event twice and no slug twice', () => {
+    const ids = oneTimeEvents.map((seed) => seed.sourceEventId);
+    const slugs = oneTimeEvents.map((seed) => seed.slug);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 });

@@ -202,21 +202,41 @@ The parser is `src/server/events/tickeri.ts` (pure, 13 tests over saved fixtures
 
 ### What is currently imported
 
-Three events were verified against their own Tickeri event pages and are seeded in
-`src/content/events.ts`, so they work with no database at all:
+The whole published calendar is seeded in `src/content/events.ts` and applied to the database by
+`supabase/migrations/0019_tickeri_calendar_correction.sql` — 23 nights from 19 September to
+12 November 2026, each keyed to its Tickeri id, with its official flyer already in the repo under
+`public/events/imported/<tickeri id>.jpg` and indexed by `src/content/imported-flyers.json`.
 
-| Event | Date | Tickeri id |
-|---|---|---|
-| Snoopy Paint & Sip Night | 10 Sep 2026 | `82c16al40ueb` |
-| Junior H Paint & Sip | 17 Sep 2026 | `nwn48quznb96` |
-| Scream Paint & Sip | 8 Oct 2026 | `xvt4t4jbzvwf` |
+Five of those nights are inserted as **drafts** (`published = false`, `ticketing_enabled = false`):
+El Alfa (2 Oct), Bad Bunny (4 Oct), Drake (11 Oct) and the two extra Hello Kitty Halloween seatings
+(27 Sep, 15 Oct). Their flyers, titles, times and ticket links are known; their tier prices are not,
+so their button sends the guest to Tickeri and a staff member publishes once they have checked the
+detail. Everything else is published with the prices migration 0013 read off Tickeri.
 
-**The rest of the calendar arrives by pressing "Check Tickeri now" on the deployed site.** It was
-not seeded by hand because this build environment cannot reach tickeri.com — its egress proxy
-refuses the domain — and inventing dates for events like Michael Myers Paint & Brunch, Selena,
-Thriller or Día de los Muertos would have put wrong dates on a restaurant's website. The import
-path is built, tested and documented instead; on Vercel it has ordinary outbound network access
-and will bring the full calendar in, flyers included.
+Keeping it current afterwards is still **"Check Tickeri now"** on the deployed site, which reads the
+organizer page directly. This build environment cannot reach tickeri.com — its egress proxy refuses
+the domain — so nothing here is read live from a sandbox; the calendar above comes from the capture
+already committed to the repo, cross-checked against the times each event states in its own
+description.
+
+### A wrong start time takes the photo away, silently
+
+This is the trap worth knowing about, because the page that suffers it does not look broken.
+
+`importedFlyer()` in `src/server/content/event-art.ts` will only show an event's official flyer when
+the start instant recorded beside that flyer **exactly** equals the event's own start. That is
+deliberate: artwork printed with a date must not outlive a reschedule. The side effect is that a
+start time which is merely an hour out does not surface as an error — the event still lists, still
+sells, and simply renders with no photograph, with nothing saying why.
+
+Ten events were in exactly that state before 0019: every brunch read 12:00 instead of 11:00 and both
+late nights read 22:00 instead of 21:00, so ten event pages had quietly lost their flyers. Six of
+those ten state their own time in their own description ("Saturday, September 19th at 11AM",
+"from 11AM–4PM", "9PM – 2AM") and all six agreed with the flyer capture rather than with the table.
+
+`src/lib/events.test.ts` now asserts that every seeded event resolves to the exact instant its flyer
+was filed under, and names the event in the failure message. A start time cannot drift out of
+agreement again without a test going red.
 
 ---
 
