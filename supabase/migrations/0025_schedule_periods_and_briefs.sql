@@ -100,7 +100,7 @@ as $$
 $$;
 
 comment on function public.current_contractor_id is
-  'The caller''s own contractors row, or null. The contractor equivalent of current_employee_id(); nothing else in the staff system opens up for them.';
+  'The caller''s own contractors row, or null. The contractor equivalent of current_employee_id(); nothing else in the staff system opens up for them. EXECUTE is deliberately NOT revoked: the two policies below call it, and a policy that calls a function the caller may not execute fails for that caller. Supabase''s linter flags it for the same reason it flags current_employee_id() and is_manager() — see migration 0016 for why those five stay. Called as anon, auth.uid() is null and it returns null, so the exposure is a function that tells you nothing.';
 
 -- ------------------------------------------------------------------ RLS -----
 
