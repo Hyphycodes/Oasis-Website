@@ -205,10 +205,12 @@ export interface AccountEmailProps {
 }
 
 /**
- * The staff operations emails share one shape: a headline, a sentence, a
- * few labelled details (when, where, what position), an optional note in
- * the manager's own words, and one button into the staff app. Seven
- * templates, one component, distinct subjects — see src/emails/templates/staff.
+ * The notice shape: a headline, a sentence, a few labelled details, an
+ * optional note in somebody's own words, and one button.
+ *
+ * Seven staff operations emails use it (src/emails/templates/staff), and so do
+ * the three hiring and talent notices, which is why `footerReason` exists —
+ * an applicant is not on the staff rota and must not be told they are.
  */
 export interface StaffEmailProps {
   brand: EmailBrand;
@@ -221,6 +223,8 @@ export interface StaffEmailProps {
   note: string | null;
   actionUrl: string;
   actionLabel: string;
+  /** Why this person is receiving it. Staff emails leave it unset. */
+  footerReason?: string;
   test?: boolean;
 }
 

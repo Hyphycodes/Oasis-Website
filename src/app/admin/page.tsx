@@ -12,6 +12,8 @@ import { formatEventDateCompact, formatPrice, formatTimeRangeCompact } from '@/l
 import { getOpenState } from '@/lib/hours';
 import { getStaff } from '@/server/auth';
 import { getAttention, housekeepingSentence } from '@/server/content/attention';
+import { countNewApplications } from '@/server/content/hiring';
+import { countNewTalent } from '@/server/content/talent';
 import { getEditableEvents } from '@/server/content/events';
 import { getEventAvailability } from '@/server/ticketing/availability';
 import { isTicketingConfigured } from '@/server/ticketing/db';
@@ -35,11 +37,13 @@ export default async function AdminHome() {
 
   const now = new Date();
   const db = getReadDb();
-  const [settings, events, attention, inquiries] = await Promise.all([
+  const [settings, events, attention, inquiries, newApplicants, newTalent] = await Promise.all([
     getSiteSettings(),
     db ? getEditableEvents(db) : { series: [], occurrences: [] },
     db ? getAttention(db, now) : [],
     db ? db.list<Row>('inquiries', { where: { status: 'new' } }) : [],
+    db ? countNewApplications(db) : 0,
+    db ? countNewTalent(db) : 0,
   ]);
 
   const upcoming = getUpcomingEvents(events, now).filter((event) => event.seriesSlug === null);
@@ -67,7 +71,30 @@ export default async function AdminHome() {
   // The only things that get a band: what costs money right now.
   const problems = moneyProblems(upcoming, summaries, now, nextAvailability?.tiers.length ?? null);
   const housekeeping = housekeepingSentence(attention.filter((entry) => entry.kind !== 'tickets'));
-  const waiting = inquiries.length;
+
+  // One line, not three badges. Each item is somebody waiting on a reply, and
+  // anything with nobody waiting says nothing at all. Labels are written in
+  // lower case and the first one is capitalised where it is rendered, because
+  // which item comes first depends on what happens to be waiting.
+  const waiting: { href: string; label: string }[] = [];
+  if (inquiries.length > 0) {
+    waiting.push({
+      href: '/admin/inquiries',
+      label: inquiries.length === 1 ? 'one new enquiry' : `${inquiries.length} new enquiries`,
+    });
+  }
+  if (newApplicants > 0) {
+    waiting.push({
+      href: '/admin/hiring',
+      label: newApplicants === 1 ? 'one job application' : `${newApplicants} job applications`,
+    });
+  }
+  if (newTalent > 0) {
+    waiting.push({
+      href: '/admin/talent',
+      label: newTalent === 1 ? 'one talent submission' : `${newTalent} talent submissions`,
+    });
+  }
 
   return (
     <AdminShell staff={staff} local={isLocalDb()} title={`${greeting}${name}.`} description={stateLine}>
@@ -110,11 +137,16 @@ export default async function AdminHome() {
         <TaskLink href="/admin/link-hubs" icon="hubs" title="Link hubs" />
         <TaskLink href="/admin/media?upload=1" icon="photos" title="Add a photo or video" />
       </div>
-      {waiting > 0 ? (
+      {waiting.length > 0 ? (
         <p className="mt-3 text-[0.9375rem] text-brown-soft">
-          <Link href="/admin/inquiries" className="font-semibold text-brown underline underline-offset-4">
-            {waiting === 1 ? 'One new enquiry' : `${waiting} new enquiries`}
-          </Link>{' '}
+          {waiting.map((entry, index) => (
+            <span key={entry.href}>
+              {index > 0 ? (index === waiting.length - 1 ? ' and ' : ', ') : ''}
+              <Link href={entry.href} className="font-semibold text-brown underline underline-offset-4">
+                {index === 0 ? entry.label[0]!.toUpperCase() + entry.label.slice(1) : entry.label}
+              </Link>
+            </span>
+          ))}{' '}
           to read.
         </p>
       ) : null}

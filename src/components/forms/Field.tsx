@@ -62,6 +62,9 @@ export function TextField({
   placeholder,
   min,
   max,
+  // `inputMode` is what actually changes the keyboard on a phone: `type="tel"`
+  // alone leaves some browsers on the full QWERTY.
+  inputMode,
   ...props
 }: BaseProps & {
   type?: string;
@@ -69,6 +72,7 @@ export function TextField({
   placeholder?: string;
   min?: string | number;
   max?: string | number;
+  inputMode?: 'text' | 'tel' | 'email' | 'url' | 'numeric';
 }) {
   return (
     <Wrapper {...props}>
@@ -79,6 +83,7 @@ export function TextField({
         required={props.required}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        inputMode={inputMode}
         min={min}
         max={max}
         aria-invalid={props.error ? true : undefined}
@@ -112,21 +117,28 @@ export function TextArea({
 
 export function SelectField({
   options,
+  defaultValue,
+  placeholder = 'Choose one',
   ...props
-}: BaseProps & { options: { value: string; label: string }[] }) {
+}: BaseProps & {
+  options: { value: string; label: string }[];
+  /** Preselects a choice — a role somebody pressed Apply on, say. */
+  defaultValue?: string;
+  placeholder?: string;
+}) {
   return (
     <Wrapper {...props}>
       <select
         id={props.name}
         name={props.name}
         required={props.required}
-        defaultValue=""
+        defaultValue={defaultValue ?? ''}
         aria-invalid={props.error ? true : undefined}
         aria-describedby={described(props.name, props.hint, props.error)}
         className={CONTROL}
       >
         <option value="" disabled>
-          Choose one
+          {placeholder}
         </option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>

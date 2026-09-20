@@ -1,5 +1,5 @@
 /**
- * The five named website screens.
+ * The named website screens.
  *
  * This is the whole "Website" section: a fixed list of the real pages, each
  * opening the sections that page actually has. It is not a Pages collection and
@@ -25,11 +25,23 @@ export const PAGES = [
     route: '/private-events',
     hint: 'Celebrations copy and enquiry choices',
   },
-  { slug: 'visit', label: 'Visit & contact', route: '/visit', hint: 'Heading and directions copy' },
+  { slug: 'visit', label: 'Visit', route: '/visit', hint: 'Heading and directions copy' },
+  {
+    slug: 'contact',
+    label: 'Contact',
+    route: '/contact',
+    hint: 'The heading above visit, work and create',
+  },
   {
     slug: 'careers',
-    label: 'Careers',
+    label: 'Work at Oasis',
     route: '/careers',
-    hint: 'Recruitment copy, perks, positions',
+    hint: 'Recruitment copy and perks. Openings are in People → Job openings.',
+  },
+  {
+    slug: 'talent',
+    label: 'Create with Oasis',
+    route: '/talent',
+    hint: 'The invitation to local DJs, artists and performers',
   },
 ];

@@ -130,7 +130,7 @@ export async function Footer() {
             <Link href="/legal/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
               Privacy
             </Link>
-            <Link href="/visit" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            <Link href="/contact" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
               Contact
             </Link>
           </div>

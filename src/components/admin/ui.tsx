@@ -99,7 +99,10 @@ export function Tabs({
   items: { href: string; label: string; active: boolean; count?: number }[];
 }) {
   return (
-    <nav aria-label={label} className="-mx-1">
+    // `min-w-0`: the list below scrolls sideways, but without this the
+    // scroll container still reports its max-content width to a grid or flex
+    // parent and takes the whole screen wider than the phone.
+    <nav aria-label={label} className="-mx-1 min-w-0">
       <ul className="flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => (
           <li key={item.href}>

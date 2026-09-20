@@ -9,6 +9,7 @@ import type { Row } from '@/lib/db/types';
 import { stableUuid } from '@/lib/stable-uuid';
 import { THEMES } from '@/themes/registry';
 import { REFERENCE_LOCATIONS, REFERENCE_POSITIONS, REFERENCE_REQUIREMENT_TYPES } from '@/content/staff-reference';
+import { REFERENCE_JOB_OPENINGS } from '@/content/careers';
 
 /**
  * The single content mapping.
@@ -356,7 +357,9 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
     ['catering', pageCopy.catering],
     ['private-events', pageCopy.privateEvents],
     ['visit', pageCopy.visit],
+    ['contact', pageCopy.contact],
     ['careers', pageCopy.careers],
+    ['talent', pageCopy.talent],
   ];
 
   openers.forEach(([page, copy], index) => {
@@ -413,25 +416,11 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
 
   // The safe editable option lists. Locked-down form mechanics — validation,
   // spam protection, delivery — are deliberately NOT here.
+  // Positions used to be a list here. They are rows in `job_openings` now
+  // (migration 0026), because a position people can apply for has a
+  // description, a location and an on/off switch — none of which a list of
+  // strings can carry. See src/content/careers.ts.
   put('page_lists', [
-    {
-      id: 'careers:positions',
-      page: 'careers',
-      key: 'positions',
-      label: 'Positions people can apply for',
-      items: [
-        'Server',
-        'Bartender',
-        'Host',
-        'Line cook',
-        'Prep cook',
-        'Dishwasher',
-        'Busser',
-        'Something else',
-      ],
-      draft: null,
-      archived_at: null,
-    },
     {
       id: 'careers:perks',
       page: 'careers',
@@ -506,6 +495,10 @@ export function buildRecords(): { tables: Tables; report: MigrationReport } {
   put('locations', REFERENCE_LOCATIONS);
   put('positions', REFERENCE_POSITIONS);
   put('requirement_types', REFERENCE_REQUIREMENT_TYPES);
+  // The standard restaurant roles, every one of them inactive. They are here
+  // so the owner switches a role on rather than typing it in; nothing is
+  // public until they do. See src/content/careers.ts.
+  put('job_openings', REFERENCE_JOB_OPENINGS);
 
   return { tables, report: { counts, transformed, skipped, invalid } };
 }

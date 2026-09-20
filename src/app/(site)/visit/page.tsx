@@ -1,63 +1,83 @@
-import { ThemeWorld, ThemePhotoGuest } from '@/components/theme/ThemeWorld';
 import type { Metadata } from 'next';
-import { getSiteSettings } from '@/content/resolve';
-import { getPageCopy } from '@/server/content/pages';
 import { Asset } from '@/components/media/Asset';
 import { Band, Frame } from '@/components/primitives/Band';
 import { ExternalButtonLink, ExternalTextLink } from '@/components/primitives/Button';
 import { Display, Eyebrow } from '@/components/primitives/Type';
+import { ThemePhotoGuest, ThemeWorld } from '@/components/theme/ThemeWorld';
+import { LocationCard } from '@/components/visit/LocationCard';
+import { MoreWays } from '@/components/visit/MoreWays';
 import { pageCopy, seo } from '@/content/pages';
-
-import { formatPhoneHref } from '@/lib/format';
-import { getOpenState, groupHours } from '@/lib/hours';
+import { getSiteSettings } from '@/content/resolve';
 import { buildMetadata } from '@/lib/seo';
+import { buildVisitLocations } from '@/lib/visit';
+import { getPageCopy } from '@/server/content/pages';
 
 export const metadata: Metadata = buildMetadata({ ...seo.visit!, path: '/visit' });
 
 // Hourly — the open/closed state changes through the day.
 export const revalidate = 3600;
 
+/**
+ * Visit.
+ *
+ * The full version of what /contact previews: the same address card, the same
+ * directions chooser and the same hours — one component, so the two pages
+ * cannot disagree — and then everything a guest wants once they have decided
+ * to come. Booking and ordering, the room itself, and where to follow us.
+ *
+ * There is still no interactive map embed. It would load a third-party script
+ * and cost a network round trip before the guest has shown any intent;
+ * "Get directions" opens the real map, in their own app, when they want it.
+ */
 export default async function VisitPage() {
   // Address, phone and links come from settings, so an edit in the admin
   // reaches every page rather than only the ones somebody remembered. The
   // heading comes from the page record, so the control in the admin does
   // something — the address underneath it is still single-sourced.
   const [site, copy] = await Promise.all([getSiteSettings(), getPageCopy('visit')]);
-  const groups = groupHours(site.hours.value);
-  const state = getOpenState(site.hours.value, site.temporaryClosures, new Date(), site.timeZone);
+  const locations = buildVisitLocations(site);
 
   return (
     <>
       <Band surface="sand" size="sm">
         <Frame wide>
-          <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
-            <div className="lg:col-span-6">
-              <Eyebrow>{copy.eyebrow ?? pageCopy.visit.eyebrow}</Eyebrow>
-              <Display as="h1" size="lg" className="mt-4 text-brown">
-                {copy.heading}
-              </Display>
-              <p className="tabular mt-4 text-[length:var(--text-body-lg)] font-semibold leading-snug text-brown">
-                {site.street}
-                <br />
-                {site.locality}, {site.region} {site.postalCode}
-              </p>
-              <p className="measure-lead mt-4 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
-                {copy.body ?? pageCopy.visit.body}
-              </p>
+          <Eyebrow>{copy.eyebrow ?? pageCopy.visit.eyebrow}</Eyebrow>
+          <Display as="h1" size="lg" className="mt-3 max-w-[16ch] text-brown">
+            {copy.heading}
+          </Display>
+          <p className="measure-lead mt-4 text-[length:var(--text-body-lg)] leading-relaxed text-brown">
+            {copy.body ?? pageCopy.visit.body}
+          </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <ExternalButtonLink href={site.directionsUrl} destination="Google Maps" size="lg">
-                  Get directions
-                </ExternalButtonLink>
-                <a
-                  href={formatPhoneHref(site.phone.value)}
-                  className="tabular inline-flex min-h-11 items-center justify-center rounded-(--radius-md) border border-brown/25 px-7 py-3.5 font-semibold text-brown transition-colors hover:bg-brown/8"
-                >
-                  {site.phone.value}
-                </a>
-              </div>
+          <div className="mt-10">
+            {locations.map((location) => (
+              <LocationCard
+                key={location.id}
+                location={location}
+                priority
+                showName={locations.length > 1}
+              />
+            ))}
+          </div>
 
-              <div className="mt-10 flex flex-wrap gap-3">
+          {site.hours.provisional ? (
+            <p className="measure mt-8 text-[0.875rem] leading-relaxed text-brown">
+              Kitchen and bar hours can shift on holidays and event nights — call ahead if you are
+              making a special trip.
+            </p>
+          ) : null}
+        </Frame>
+      </Band>
+
+      <Band surface="cream">
+        <Frame wide>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-5">
+              <Eyebrow>Book a table</Eyebrow>
+              <h2 className="display mt-4 text-[clamp(1.5rem,2.4vw,1.875rem)] text-brown">
+                Reserve, or take it with you.
+              </h2>
+              <div className="mt-6 flex flex-wrap gap-3">
                 <ExternalButtonLink href={site.reservationUrl} destination="Toast reservations">
                   Reserve a table
                 </ExternalButtonLink>
@@ -69,62 +89,6 @@ export default async function VisitPage() {
                   Order online
                 </ExternalButtonLink>
               </div>
-            </div>
-
-            <div className="lg:col-span-5 lg:col-start-8">
-              <Asset
-                id="exteriorSign"
-                className="aspect-4/3 w-full"
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                priority
-              />
-              {/* No interactive map embed: it would load a third-party script and
-                  cost a network round trip before the guest has shown any intent.
-                  "Get directions" opens the real map when they actually want it. */}
-            </div>
-          </div>
-        </Frame>
-      </Band>
-
-      <Band surface="cream">
-        <Frame wide>
-          <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
-            <div className="lg:col-span-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <Eyebrow>Hours</Eyebrow>
-                <span
-                  className={`inline-flex items-center gap-1.5 text-[0.75rem] font-semibold ${
-                    state.open ? 'text-success' : 'text-brown-soft'
-                  }`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`inline-block size-1.5 rounded-full ${
-                      state.open ? 'bg-success' : 'bg-brown-soft'
-                    }`}
-                  />
-                  {state.label}
-                </span>
-              </div>
-
-              <dl className="mt-6 border-t border-brown/15">
-                {groups.map((group) => (
-                  <div
-                    key={group.label}
-                    className="flex justify-between gap-6 border-b border-brown/15 py-3.5"
-                  >
-                    <dt className="text-brown-soft">{group.label}</dt>
-                    <dd className="tabular font-medium text-brown">{group.value}</dd>
-                  </div>
-                ))}
-              </dl>
-
-              {site.hours.provisional ? (
-                <p className="measure mt-4 text-[0.8125rem] leading-relaxed text-brown-soft">
-                  Kitchen and bar hours can shift on holidays and event nights — call ahead if you
-                  are making a special trip.
-                </p>
-              ) : null}
             </div>
 
             <div className="lg:col-span-3 lg:col-start-7">
@@ -144,12 +108,6 @@ export default async function VisitPage() {
                 >
                   Open in Google Maps
                 </ExternalTextLink>
-                <a
-                  href={formatPhoneHref(site.phone.value)}
-                  className="tabular inline-flex min-h-11 items-center text-brown underline underline-offset-4"
-                >
-                  {site.phone.value}
-                </a>
               </div>
             </div>
 
@@ -197,6 +155,8 @@ export default async function VisitPage() {
           </div>
         </Frame>
       </Band>
+
+      <MoreWays current="visit" />
       <ThemeWorld scene="welcome" />
     </>
   );

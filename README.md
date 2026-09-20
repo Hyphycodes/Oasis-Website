@@ -60,13 +60,16 @@ src/
 │   ├── layout/          header, mobile drawer, footer, announcement bar
 │   ├── primitives/      Band, Frame, Button, Display, Reveal, PageHeader
 │   ├── media/           Asset, AssetVideo, Placeholder — registry-driven
-│   ├── menu/ events/ home/ forms/ admin/ staff/
+│   ├── visit/           LocationCard, DirectionsButton — one Oasis, mapped over a list
+│   ├── menu/ events/ home/ careers/ forms/ admin/ staff/
 ├── emails/              React Email design system: components, templates, previews, fixtures
 ├── content/             ← THE SOURCE OF TRUTH
 │   ├── site.ts          hours, address, phone, links, socials
 │   ├── menu.ts          83 items across 3 menus
 │   ├── events.ts        recurring series (no dates — see below)
 │   ├── catering.ts      packages and trays
+│   ├── careers.ts       job openings and applicant statuses (every role ships OFF)
+│   ├── talent.ts        the disciplines local talent picks from
 │   ├── pages.ts         section copy and per-page SEO
 │   ├── assets.ts        media registry
 │   └── resolve.ts       Supabase-with-static-fallback resolver
@@ -134,6 +137,7 @@ Untouched masters live in `media-originals/`, which is git-ignored and never ser
 | [`docs/MAINTENANCE.md`](./docs/MAINTENANCE.md) · [`LAUNCH-CHECKLIST.md`](./docs/LAUNCH-CHECKLIST.md) · [`BACKUP-AND-RECOVERY.md`](./docs/BACKUP-AND-RECOVERY.md) | Operations |
 | [`docs/ticketing.md`](./docs/ticketing.md) · [`stripe-setup.md`](./docs/stripe-setup.md) · [`runbook.md`](./docs/runbook.md) · [`roadmap.md`](./docs/roadmap.md) | In-house ticketing: schema, checkout, delivery, the door, the admin, and what comes next |
 | [`docs/email-system.md`](./docs/email-system.md) | **Email and communications**: React Email templates, the service, Resend setup, the delivery switch, the admin Emails screen |
+| [`docs/hiring-and-talent.md`](./docs/hiring-and-talent.md) | **Contact, hiring and local talent**: `/contact`, `/careers`, `/talent`, the private upload bucket, and the People section in the admin |
 
 ---
 

@@ -21,7 +21,8 @@ export type NavIconName =
   | 'visit'
   | 'team'
   | 'emails'
-  | 'hubs';
+  | 'hubs'
+  | 'people';
 
 const PATHS: Record<NavIconName, string[]> = {
   home: ['M3.5 10.5 12 3.5l8.5 7', 'M5.8 9.5V20h12.4V9.5'],
@@ -50,6 +51,12 @@ const PATHS: Record<NavIconName, string[]> = {
   ],
   // An envelope: what the site sends.
   emails: ['M3.5 6h17v12h-17z', 'M3.5 7 12 13l8.5-6'],
+  // A hand raised: the people who write in wanting to work here or play here.
+  people: [
+    'M12 11.2a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2z',
+    'M4.5 20.5c0-3.6 3.2-6 7.5-6s7.5 2.4 7.5 6',
+    'M19 4.5v4', 'M17 6.5h4',
+  ],
   hubs: ['M7 7h10v10H7z', 'M4 4h4', 'M16 4h4v4', 'M20 16v4h-4', 'M8 20H4v-4', 'M10 10h4v4h-4z'],
 };
 

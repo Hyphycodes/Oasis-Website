@@ -66,6 +66,18 @@ const NAV: (AdminNavItem & { section?: Section; ownerOnly?: boolean })[] = [
     ],
   },
   {
+    href: '/admin/hiring',
+    label: 'People',
+    icon: 'people',
+    section: 'people',
+    also: ['/admin/talent'],
+    screens: [
+      { href: '/admin/hiring', label: 'Applicants' },
+      { href: '/admin/hiring/openings', label: 'Job openings' },
+      { href: '/admin/talent', label: 'Talent' },
+    ],
+  },
+  {
     href: '/admin/settings',
     label: 'Visit',
     icon: 'visit',

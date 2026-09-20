@@ -51,7 +51,12 @@ export type Capability =
   | 'media.upload'
   /** Remove a media file permanently. */
   | 'media.delete'
-  /** Read and update enquiries. */
+  /**
+   * Read and update anything somebody sent in: enquiries, job applications,
+   * talent submissions. One capability rather than three, because they are
+   * the same job — an inbox a manager works through — and three would be
+   * three places to forget.
+   */
   | 'inquiries.manage'
   /** Change address, hours, phone, ordering and reservation links. */
   | 'settings.manage'
@@ -88,7 +93,7 @@ const MATRIX: Record<Role, Capability[]> = {
 };
 
 /** Admin sections a Contributor can be restricted to. Empty means all of them. */
-export const SECTIONS = ['menu', 'events', 'hubs', 'website', 'media', 'settings'] as const;
+export const SECTIONS = ['menu', 'events', 'hubs', 'website', 'media', 'people', 'settings'] as const;
 export type Section = (typeof SECTIONS)[number];
 
 export interface Actor {

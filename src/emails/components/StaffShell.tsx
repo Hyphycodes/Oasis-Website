@@ -17,13 +17,13 @@ import { PrimaryButton } from './PrimaryButton';
  * other things and wants the time before the prose.
  */
 export function StaffShell({ eyebrow, props }: { eyebrow: string; props: StaffEmailProps }) {
-  const { brand, name, headline, intro, details, note, actionUrl, actionLabel, email, test } = props;
+  const { brand, name, headline, intro, details, note, actionUrl, actionLabel, email, footerReason, test } = props;
   const surface = 'light';
   const palette = PALETTE.light;
   const body = { margin: 0, fontFamily: FONTS.sans, fontSize: 16, lineHeight: '24px', color: palette.text } as const;
   const first = firstNameOf(name);
   return (
-    <OasisEmailLayout preview={`${headline} ${intro}`.slice(0, 140)} surface={surface} brand={brand} test={test} footerReason={`Sent to ${email} because it is the email on your ${brand.shortName} staff profile.`}>
+    <OasisEmailLayout preview={`${headline} ${intro}`.slice(0, 140)} surface={surface} brand={brand} test={test} footerReason={footerReason ?? `Sent to ${email} because it is the email on your ${brand.shortName} staff profile.`}>
       <OasisHeader brand={brand} surface={surface} eyebrow={eyebrow} />
       <Block className="o-gutter" style={{ padding: `8px ${GUTTER}px 4px` }}>
         {first ? <Text style={{ ...body, color: palette.muted }}>Hi {first},</Text> : null}

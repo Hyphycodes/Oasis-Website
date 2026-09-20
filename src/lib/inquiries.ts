@@ -60,17 +60,19 @@ export const privateEventSchema = z.object({
   contactPreference: z.enum(['email', 'phone', 'text']),
 });
 
-export const careersSchema = z.object({
-  ...base,
-  position: z.string().trim().min(1, 'Choose a position.').max(120),
-  availability: z.string().trim().min(2, 'Tell us the days and times you can work.').max(1000),
-});
-
-export const SCHEMAS = {
+/**
+ * Two forms, not three.
+ *
+ * `careers` is still an `InquiryType` because the database enum has it and
+ * applications sent through the old form are business records that must keep
+ * rendering in the admin's Enquiries inbox. Nothing produces a new one: a job
+ * application now has its own table, its own statuses and its own screen. See
+ * `src/lib/submissions.ts` and migration 0026.
+ */
+export const SCHEMAS: Partial<Record<InquiryType, z.ZodTypeAny>> = {
   catering: cateringSchema,
   'private-event': privateEventSchema,
-  careers: careersSchema,
-} satisfies Record<InquiryType, z.ZodTypeAny>;
+};
 
 export type InquiryResult =
   | { ok: true; reference: string; stored: 'database' }

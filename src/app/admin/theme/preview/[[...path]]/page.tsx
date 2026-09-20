@@ -6,7 +6,9 @@ import CateringPage from '@/app/(site)/catering/page';
 import EventsPage from '@/app/(site)/events/page';
 import MenuPage from '@/app/(site)/menu/page';
 import HomePage from '@/app/(site)/page';
+import ContactPage from '@/app/(site)/contact/page';
 import PrivateEventsPage from '@/app/(site)/private-events/page';
+import TalentPage from '@/app/(site)/talent/page';
 import VisitPage from '@/app/(site)/visit/page';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { getReadDb } from '@/lib/db';
@@ -40,7 +42,10 @@ const PAGES: { key: string; label: string; Page: () => Promise<React.ReactNode> 
   { key: 'catering', label: 'Catering', Page: CateringPage },
   { key: 'private-events', label: 'Private events', Page: PrivateEventsPage },
   { key: 'visit', label: 'Visit', Page: VisitPage },
-  { key: 'careers', label: 'Careers', Page: CareersPage },
+  { key: 'contact', label: 'Contact', Page: ContactPage },
+  // Careers reads searchParams to preselect a role; the preview has none.
+  { key: 'careers', label: 'Work at Oasis', Page: () => CareersPage({ searchParams: Promise.resolve({}) }) },
+  { key: 'talent', label: 'Create with Oasis', Page: TalentPage },
 ];
 
 export default async function ThemePreviewPage({

@@ -124,6 +124,10 @@ export const PRIMARY_KEY: Record<string, string> = {
   ops_audit_log: 'id',
   // The schedule week and the night brief (migration 0025).
   event_briefs: 'event_id',
+  // Hiring and local talent (migration 0026).
+  job_openings: 'id',
+  job_applications: 'id',
+  talent_submissions: 'id',
   // Link Hubs (migration 0023).
   link_hub_locations: 'id',
   link_hubs: 'id',

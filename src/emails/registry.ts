@@ -33,7 +33,10 @@ export type TemplateId =
   | 'time_off_decision'
   | 'training_required'
   | 'document_expiring'
-  | 'event_assignment';
+  | 'event_assignment'
+  | 'application_received'
+  | 'talent_received'
+  | 'submission_alert';
 
 export type EmailLogType =
   | 'confirmation'
@@ -56,7 +59,10 @@ export type EmailLogType =
   | 'time_off_decision'
   | 'training_required'
   | 'document_expiring'
-  | 'event_assignment';
+  | 'event_assignment'
+  | 'application_received'
+  | 'talent_received'
+  | 'submission_alert';
 
 export type EmailCategory = 'transactional' | 'account' | 'staff';
 
@@ -286,7 +292,49 @@ const STAFF_OPS_TEMPLATES: TemplateInfo[] = [
   },
 ];
 
-EMAIL_TEMPLATES.push(...STAFF_OPS_TEMPLATES);
+/**
+ * Hiring and local talent (migration 0026).
+ *
+ * Two confirmations and one internal notice. The confirmations answer
+ * something a person just did, so they have no switch — the same rule that
+ * keeps a ticket receipt un-withholdable. The internal notice is the optional
+ * one, because whether Oasis wants an email every time somebody writes in is
+ * genuinely a preference.
+ */
+const PEOPLE_TEMPLATES: TemplateInfo[] = [
+  {
+    id: 'application_received',
+    name: 'Application received',
+    description: 'To somebody who applied for a job: we have it, and a person will read it.',
+    category: 'transactional',
+    logType: 'application_received',
+    needsEvent: false,
+    trigger: 'Somebody sends the form on /careers or /contact.',
+    wiring: 'live',
+  },
+  {
+    id: 'talent_received',
+    name: 'Talent submission received',
+    description: 'To a DJ, painter or performer who sent their work: we will look, and reach out if it fits.',
+    category: 'transactional',
+    logType: 'talent_received',
+    needsEvent: false,
+    trigger: 'Somebody sends the form on /talent or /contact.',
+    wiring: 'live',
+  },
+  {
+    id: 'submission_alert',
+    name: 'Somebody wrote in',
+    description: 'The internal nudge, to the alert address, when an application or a talent submission arrives.',
+    category: 'staff',
+    logType: 'submission_alert',
+    needsEvent: false,
+    trigger: 'Every application and talent submission, to OWNER_ALERT_EMAIL, while the switch on this screen is on.',
+    wiring: 'live',
+  },
+];
+
+EMAIL_TEMPLATES.push(...STAFF_OPS_TEMPLATES, ...PEOPLE_TEMPLATES);
 
 /**
  * The emails the owner may switch on and off, and nothing else.
@@ -312,7 +360,8 @@ export type EmailSwitchId =
   | 'time_off_decision'
   | 'training_required'
   | 'document_expiring'
-  | 'event_assignment';
+  | 'event_assignment'
+  | 'submission_alert';
 
 export interface EmailSwitch {
   id: EmailSwitchId;
@@ -359,6 +408,7 @@ export const EMAIL_SWITCHES: EmailSwitch[] = [
   { id: 'training_required', template: 'training_required', variant: null, label: 'Training assigned', detail: 'The employee is emailed when a module is assigned or re-required.', defaultOn: true },
   { id: 'document_expiring', template: 'document_expiring', variant: null, label: 'Document expiring', detail: 'The employee is emailed thirty days before a certificate lapses.', defaultOn: true },
   { id: 'event_assignment', template: 'event_assignment', variant: null, label: 'Event assignment', detail: 'The employee is emailed when they are put on an event.', defaultOn: true },
+  { id: 'submission_alert', template: 'submission_alert', variant: null, label: 'Somebody wrote in', detail: 'The alert address is emailed when a job application or a talent submission arrives.', defaultOn: true },
 ];
 
 export const EMAIL_SWITCH_DEFAULTS: Record<EmailSwitchId, boolean> = Object.fromEntries(

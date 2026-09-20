@@ -13,8 +13,15 @@ export interface NavItem {
  * three menus now live inside `/menu` as in-page tabs, so the nav does not need
  * to expose them at all.
  *
- * Private Events and Careers stay discoverable from page content, the mobile
- * drawer and the footer. They do not justify a desktop dropdown.
+ * Private Events, Contact, Careers and Talent stay discoverable from page
+ * content, the mobile drawer and the footer. They do not justify a desktop
+ * dropdown.
+ *
+ * `Visit` stays the primary item rather than `Contact`: somebody tapping the
+ * top of a restaurant's website is trying to come and eat, and "Visit" says
+ * that in a way "Contact" does not. /contact is the page that gathers all
+ * three reasons to write in, and it is one tap away from the drawer, the
+ * footer and the foot of every page in that family.
  */
 export const primaryNav: NavItem[] = [
   { label: 'Menu', href: '/menu' },
@@ -26,5 +33,7 @@ export const primaryNav: NavItem[] = [
 /** Mobile drawer and footer only — never the desktop bar. */
 export const secondaryNav: NavItem[] = [
   { label: 'Private events', href: '/private-events' },
-  { label: 'Join our team', href: '/careers' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Work at Oasis', href: '/careers' },
+  { label: 'Create with Oasis', href: '/talent' },
 ];

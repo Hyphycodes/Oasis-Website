@@ -197,7 +197,7 @@ export const assets = {
     ratio: '3:2',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage experience grid'],
+    usage: ['Homepage experience grid', '/careers'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',
@@ -213,7 +213,7 @@ export const assets = {
     ratio: '1:1',
     focal: '50% 40%',
     status: 'temp-wix',
-    usage: ['Homepage food & bar section'],
+    usage: ['Homepage food & bar section', '/talent'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',
@@ -283,7 +283,7 @@ export const assets = {
     ratio: '3:2',
     focal: '50% 55%',
     status: 'temp-wix',
-    usage: ['Homepage arrival', '/visit'],
+    usage: ['Homepage arrival', '/visit', '/talent'],
     source: { url: 'Frame from the Oasis brand reel (see heroVideo)', retrieved: '2026-08-14' },
     maxBytes: 200_000,
   },
@@ -296,7 +296,7 @@ export const assets = {
     ratio: '4:5',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['Homepage food & bar section', '/menu#cocktails'],
+    usage: ['Homepage food & bar section', '/menu#cocktails', '/talent'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',
@@ -392,7 +392,7 @@ export const assets = {
     ratio: '3:2',
     focal: '50% 50%',
     status: 'temp-wix',
-    usage: ['/careers'],
+    usage: ['/careers', '/contact'],
     source: {
       url: 'Frame from the Oasis brand reel (see heroVideo)',
       retrieved: '2026-08-14',

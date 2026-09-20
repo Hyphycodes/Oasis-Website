@@ -398,6 +398,77 @@ export function createEmailService(deps: EmailServiceDeps) {
       return deliver({ audience: 'staff', type: info.logType, template: built.templateId, to: input.to, rendered, eventId: input.eventId ?? null, attachments: built.attachments, isTest: true, refId: `test-${built.templateId}-${Date.now()}` });
     },
 
+    /**
+     * "We have your application." Guest audience, so it waits behind the
+     * delivery switch like every other guest email — and the form reads the
+     * result rather than promising an email that never left.
+     */
+    async sendApplicationReceived(input: { name: string; email: string; position: string; reference: string }): Promise<SendResult> {
+      const brand = await deps.loadBrand();
+      const rendered = await renderEmail('application_received', {
+        brand,
+        name: input.name,
+        email: input.email,
+        headline: 'We have your application.',
+        intro: `Thanks for putting your name in. Somebody at ${brand.shortName} reads every one of these, and we will get in touch if it looks like a fit. If you would rather talk to a person, call us on ${brand.phone}.`,
+        details: [
+          { label: 'Applied for', value: input.position },
+          { label: 'Reference', value: input.reference },
+        ],
+        note: null,
+        actionUrl: brand.eventsUrl,
+        actionLabel: 'See what is on at Oasis',
+        footerReason: `Sent to ${input.email} because an application was sent from ${brand.siteUrl}/careers.`,
+      });
+      return deliver({ audience: 'guest', type: 'application_received', template: 'application_received', to: input.email, rendered, refId: `application-${input.reference}` });
+    },
+
+    /** "We got your work." Guest audience, same rules. */
+    async sendTalentReceived(input: { name: string; email: string; pitch: string; reference: string }): Promise<SendResult> {
+      const brand = await deps.loadBrand();
+      const rendered = await renderEmail('talent_received', {
+        brand,
+        name: input.name,
+        email: input.email,
+        headline: 'We got it.',
+        intro: `Thanks for showing us what you do. We will have a proper look and reach out if something feels like a fit — a night, a wall, a set, whatever suits. No news does not mean no: we keep everybody on this list.`,
+        details: [
+          { label: 'You sent', value: input.pitch },
+          { label: 'Reference', value: input.reference },
+        ],
+        note: null,
+        actionUrl: brand.eventsUrl,
+        actionLabel: 'See what is on at Oasis',
+        footerReason: `Sent to ${input.email} because you sent your work through ${brand.siteUrl}/talent.`,
+      });
+      return deliver({ audience: 'guest', type: 'talent_received', template: 'talent_received', to: input.email, rendered, refId: `talent-${input.reference}` });
+    },
+
+    /**
+     * The internal nudge, to the alert address. Internal audience, so it is
+     * not held behind the guest switch — the whole point is that the owner
+     * finds out before the person does.
+     */
+    async sendSubmissionAlert(input: { kind: 'application' | 'talent'; headline: string; facts: [string, string][] }): Promise<SendResult> {
+      if (!(await switchedOn('submission_alert'))) return skipped('The "somebody wrote in" email is switched off in the admin.');
+      const to = deps.config().ownerAlertEmail;
+      const brand = await deps.loadBrand();
+      const hiring = input.kind === 'application';
+      const rendered = await renderEmail('submission_alert', {
+        brand,
+        name: null,
+        email: to ?? '',
+        headline: hiring ? 'Somebody applied for a job.' : 'Somebody sent their work.',
+        intro: input.headline,
+        details: input.facts.map(([label, value]) => ({ label, value })),
+        note: null,
+        actionUrl: `${brand.siteUrl}${hiring ? '/admin/hiring' : '/admin/talent'}`,
+        actionLabel: hiring ? 'Open applicants' : 'Open the talent book',
+        footerReason: 'Sent to the Oasis alert address. Turn it off in Emails.',
+      });
+      return deliver({ audience: 'internal', type: 'submission_alert', template: 'submission_alert', to, rendered, refId: `submission-${input.kind}-${Date.now()}` });
+    },
+
     /** A plain note to the owner. Internal audience. */
     async sendOwnerAlert(subject: string, body: string): Promise<SendResult> {
       const to = deps.config().ownerAlertEmail;
@@ -496,6 +567,12 @@ async function buildTemplateProps(
       return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.documentExpiring, brand, test } };
     case 'event_assignment':
       return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.eventAssignment, brand, test } };
+    case 'application_received':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.applicationReceived, brand, test } };
+    case 'talent_received':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.talentReceived, brand, test } };
+    case 'submission_alert':
+      return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.submissionAlert, brand, actionUrl: `${brand.siteUrl}/admin/talent`, test } };
     case 'staff_invitation':
       return { templateId: input.templateId, event: null, attachments: [], props: { ...fixtures.staffInvitation, brand, acceptUrl: `${brand.siteUrl}/auth/activate`, test } };
     case 'magic_link':
@@ -553,6 +630,9 @@ export const emailService = {
   sendThanksForComing: (...args: Parameters<ReturnType<typeof createEmailService>['sendThanksForComing']>) => getEmailService().sendThanksForComing(...args),
   sendStaffInvitation: (...args: Parameters<ReturnType<typeof createEmailService>['sendStaffInvitation']>) => getEmailService().sendStaffInvitation(...args),
   sendStaffNotice: (...args: Parameters<ReturnType<typeof createEmailService>['sendStaffNotice']>) => getEmailService().sendStaffNotice(...args),
+  sendApplicationReceived: (...args: Parameters<ReturnType<typeof createEmailService>['sendApplicationReceived']>) => getEmailService().sendApplicationReceived(...args),
+  sendTalentReceived: (...args: Parameters<ReturnType<typeof createEmailService>['sendTalentReceived']>) => getEmailService().sendTalentReceived(...args),
+  sendSubmissionAlert: (...args: Parameters<ReturnType<typeof createEmailService>['sendSubmissionAlert']>) => getEmailService().sendSubmissionAlert(...args),
   sendAuthEmail: (...args: Parameters<ReturnType<typeof createEmailService>['sendAuthEmail']>) => getEmailService().sendAuthEmail(...args),
   renderPreview: (...args: Parameters<ReturnType<typeof createEmailService>['renderPreview']>) => getEmailService().renderPreview(...args),
   sendTest: (...args: Parameters<ReturnType<typeof createEmailService>['sendTest']>) => getEmailService().sendTest(...args),

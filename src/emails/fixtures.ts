@@ -361,3 +361,58 @@ export const eventAssignment: StaffEmailProps = {
   actionUrl: `${PREVIEW_ORIGIN}/staff/schedule`,
   actionLabel: 'See the night',
 };
+
+/* ------------------------------------------------------- hiring and talent */
+
+export const applicationReceived: StaffEmailProps = {
+  brand,
+  name: 'Marisol Reyes',
+  email: 'marisol@example.com',
+  headline: 'We have your application.',
+  intro:
+    'Thanks for putting your name in. Somebody at Oasis reads every one of these, and we will get in touch if it looks like a fit. If you would rather talk to a person, call us on (815) 545-7556.',
+  details: [
+    { label: 'Applied for', value: 'Bartender' },
+    { label: 'Reference', value: 'JOB-260920-4K2P' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/events`,
+  actionLabel: 'See what is on at Oasis',
+  footerReason: 'Sent to marisol@example.com because an application was sent from the Oasis website.',
+};
+
+export const talentReceived: StaffEmailProps = {
+  brand,
+  name: 'DJ Nieve',
+  email: 'nieve@example.com',
+  headline: 'We got it.',
+  intro:
+    'Thanks for showing us what you do. We will have a proper look and reach out if something feels like a fit — a night, a wall, a set, whatever suits. No news does not mean no: we keep everybody on this list.',
+  details: [
+    { label: 'You sent', value: 'Open-format Latin sets — reggaetón, cumbia, a bit of house late.' },
+    { label: 'Reference', value: 'TAL-260920-9XQ1' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/events`,
+  actionLabel: 'See what is on at Oasis',
+  footerReason: 'Sent to nieve@example.com because you sent your work through the Oasis website.',
+};
+
+export const submissionAlert: StaffEmailProps = {
+  brand,
+  name: null,
+  email: 'owner@example.com',
+  headline: 'Somebody sent their work.',
+  intro: 'DJ Nieve — open-format Latin sets, reggaetón and cumbia',
+  details: [
+    { label: 'Does', value: 'Open-format Latin sets — reggaetón, cumbia, a bit of house late.' },
+    { label: 'Books as', value: 'dj' },
+    { label: 'Reach them', value: '(815) 555-0142 · nieve@example.com' },
+    { label: 'Links', value: 'https://www.instagram.com/djnieve/' },
+    { label: 'Photos', value: '2 attached' },
+  ],
+  note: null,
+  actionUrl: `${PREVIEW_ORIGIN}/admin/talent`,
+  actionLabel: 'Open the talent book',
+  footerReason: 'Sent to the Oasis alert address. Turn it off in Emails.',
+};

@@ -34,12 +34,12 @@ export const AFFECTED: Record<string, { routes: string[]; subtrees?: string[] }>
   events: { routes: ['/events', '/'], subtrees: ['/events'] },
   catering: { routes: ['/catering', '/'] },
   // Address, phone, hours and links appear in the footer of every page.
-  settings: { routes: ['/', '/visit', '/menu', '/catering', '/private-events', '/careers'], subtrees: ['/events'] },
+  settings: { routes: ['/', '/visit', '/contact', '/menu', '/catering', '/private-events', '/careers', '/talent'], subtrees: ['/events'] },
   home: { routes: ['/'] },
   media: { routes: [] },
   // The seasonal theme wraps every public page.
   theme: {
-    routes: ['/', '/menu', '/events', '/catering', '/private-events', '/visit', '/careers', '/legal/privacy'],
+    routes: ['/', '/menu', '/events', '/catering', '/private-events', '/visit', '/contact', '/careers', '/talent', '/legal/privacy'],
     subtrees: ['/events'],
   },
   hubs: { routes: ['/links'], subtrees: ['/go'] },

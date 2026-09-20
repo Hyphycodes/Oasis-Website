@@ -111,6 +111,40 @@ export const pageCopy = {
     body: 'Fresh Mexican flavors and a modern room in the heart of Lockport.',
   },
 
+  /**
+   * The one page that answers "how do I reach Oasis" — for a guest first, and
+   * then for the two smaller reasons somebody writes in. The guest section is
+   * the top of it and is not diluted with hiring language.
+   */
+  contact: {
+    eyebrow: 'Come see us',
+    heading: 'Visit Oasis.',
+    body: 'Come eat, drink, celebrate, and stay awhile. Here is where we are and when we are open.',
+  },
+
+  /**
+   * Below the guest section, and on its own page. Small, warm, and never a
+   * claim that Oasis is hiring — the openings themselves decide that.
+   */
+  work: {
+    eyebrow: 'Work at Oasis',
+    heading: 'Come work with us.',
+    body: 'Busy rooms, good música, staff meals, and a crew that feels like familia. Two minutes to put your name in.',
+    empty:
+      'Nothing is posted right now — but the crew changes with the seasons and we always want to meet good people. Put your name in and we will come back to you when something opens.',
+  },
+
+  /**
+   * The brand feature: a way for local people who make things to be found.
+   * Inviting, never a proposal form.
+   */
+  talent: {
+    eyebrow: 'Create with Oasis',
+    heading: 'Got something to share?',
+    body: 'DJs, painters, singers, dancers, comedians, photographers, instructors, people with an idea for a night. Show us what you do — a sentence and a link is plenty.',
+    disciplinesLead: 'People we love hearing from',
+  },
+
   careers: {
     eyebrow: 'Join the',
     heading: 'Oasis Familia',
@@ -166,9 +200,21 @@ export const seo: Record<string, PageSeo> = {
     ogAssetId: null,
   },
   careers: {
-    title: 'Join Our Team — Oasis Mexican Kitchen & Bar, Lockport IL',
+    title: 'Work at Oasis — Oasis Mexican Kitchen & Bar, Lockport IL',
     description:
-      'Now hiring at Oasis Mexican Kitchen & Bar in Lockport, IL. Flexible shifts, staff meals, and a crew that feels like familia.',
+      'Open positions at Oasis Mexican Kitchen & Bar in Lockport, IL, and a two-minute application. Flexible shifts, staff meals, and a crew that feels like familia.',
+    ogAssetId: null,
+  },
+  contact: {
+    title: 'Contact & Visit — Oasis Mexican Kitchen & Bar, Lockport IL',
+    description:
+      'Address, hours, phone and directions for Oasis Mexican Kitchen & Bar at 1250 E. 9th St., Lockport, IL — plus how to work with us and how to bring your own work to the room.',
+    ogAssetId: null,
+  },
+  talent: {
+    title: 'Create with Oasis — local DJs, artists and performers, Lockport IL',
+    description:
+      'Oasis Mexican Kitchen & Bar books local DJs, musicians, painters, dancers, comedians, photographers and instructors in Lockport, IL. Show us what you do — it takes a minute.',
     ogAssetId: null,
   },
   privacy: {

@@ -167,6 +167,39 @@ describe('the other templates', () => {
   });
 });
 
+describe('hiring and talent notices', () => {
+  it('confirms an application without promising a timeline', async () => {
+    const { subject, html, text } = await rendered('application_received', f.applicationReceived);
+    expect(subject).toBe('We got your application — Bartender');
+    expect(html).toContain('We have your application.');
+    expect(html).toContain('Bartender');
+    expect(html).toContain('JOB-260920-4K2P');
+    expect(text).toContain('JOB-260920-4K2P');
+    // An applicant is not on the staff rota and must not be told they are.
+    expect(html).not.toContain('staff profile');
+    expect(html).toContain('an application was sent from');
+    // No invented promise about when somebody will hear back.
+    expect(html).not.toMatch(/within \d+ (hours|days)/i);
+  });
+
+  it('thanks somebody for their work without promising them a night', async () => {
+    const { subject, html } = await rendered('talent_received', f.talentReceived);
+    expect(subject).toContain('We got it');
+    expect(html).toContain('We got it.');
+    expect(html).toContain('TAL-260920-9XQ1');
+    expect(html).not.toMatch(/\byou are booked\b/i);
+  });
+
+  it('gives Oasis the facts and one way in', async () => {
+    const { subject, html, text } = await rendered('submission_alert', f.submissionAlert);
+    expect(subject).toContain('New at Oasis');
+    expect(html).toContain('Somebody sent their work.');
+    expect(html).toContain('(815) 555-0142');
+    expect(html).toContain('/admin/talent');
+    expect(text).toContain('Open the talent book');
+  });
+});
+
 describe('registry', () => {
   it('every template id renders', () => {
     for (const template of EMAIL_TEMPLATES) {

@@ -26,6 +26,11 @@ const ORDER = [
   'locations',
   'positions',
   'requirement_types',
+  // `job_openings` is deliberately NOT here. This file upserts, and `active`
+  // on an opening is operational state the owner sets from the admin — a
+  // re-run would switch their live roles back off. Migration 0026 inserts the
+  // same nine rows with `on conflict do nothing`, which is the right
+  // behaviour for a table somebody edits.
 ];
 
 const JSONB_COLUMNS = new Set(['payload', 'ranges', 'items', 'config']);

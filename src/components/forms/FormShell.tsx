@@ -2,16 +2,18 @@
 
 import type { ReactNode, RefObject } from 'react';
 import { Button } from '@/components/primitives/Button';
-import type { InquiryResult } from '@/lib/inquiries';
 import { Honeypot } from './Field';
+import type { FormResult } from './useSubmission';
 
 /**
- * Chrome shared by every inquiry form: honeypot, error summary, submit button,
- * and the success panel.
+ * Chrome shared by every public form: honeypot, error summary, submit button,
+ * and the panel that appears once it worked.
  *
- * The success copy reports what ACTUALLY happened with the submission. It never
- * claims an email was sent, because no mailer is configured anywhere in this
- * project. See src/app/actions/inquiry.ts and docs/ENVIRONMENT.md.
+ * The success copy reports what ACTUALLY happened. The enquiry forms say the
+ * message is in the Oasis inbox and nothing more, because no mailer is wired
+ * to them; the hiring and talent forms pass their own copy, and only claim a
+ * confirmation email when the server says one was really sent. Neither
+ * promises anything the system did not do.
  */
 export function FormShell({
   children,
@@ -24,17 +26,26 @@ export function FormShell({
   formRef,
   statusId,
   onSubmit,
+  /** Replaces the default "we have your message" panel. */
+  success,
+  /** The small print under the button. */
+  privacyNote = 'We use your details only to reply to this enquiry.',
+  /** A file input needs an encoding the default form does not use. */
+  encType,
 }: {
   children: ReactNode;
   submitLabel: string;
   phone: string;
   pending: boolean;
-  result: InquiryResult | null;
+  result: FormResult | null;
   formError?: string;
   errorCount: number;
   formRef: RefObject<HTMLFormElement | null>;
   statusId: string;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  success?: { title: string; body: ReactNode };
+  privacyNote?: string;
+  encType?: string;
 }) {
   if (result?.ok) {
     return (
@@ -44,20 +55,23 @@ export function FormShell({
         role="status"
         className="rounded-(--radius-md) border-2 border-success bg-linen p-6"
       >
-        <p className="text-[length:var(--text-heading)] font-semibold text-brown">
-          Thanks — we have your message.
+        <p className="display text-[clamp(1.375rem,2.4vw,1.75rem)] text-brown">
+          {success?.title ?? 'Thanks — we have your message.'}
         </p>
-        <p className="measure mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">
-          It is saved in our inbox for the Oasis team.
-          If your date is soon, call us at{' '}
-          <a
-            href={`tel:+1${phone.replace(/\D/g, '')}`}
-            className="tabular text-brown underline underline-offset-4"
-          >
-            {phone}
-          </a>{' '}
-          so we can confirm right away.
-        </p>
+        <div className="measure mt-3 text-[0.9375rem] leading-relaxed text-brown-soft">
+          {success?.body ?? (
+            <p>
+              It is saved in our inbox for the Oasis team. If your date is soon, call us at{' '}
+              <a
+                href={`tel:+1${phone.replace(/\D/g, '')}`}
+                className="tabular text-brown underline underline-offset-4"
+              >
+                {phone}
+              </a>{' '}
+              so we can confirm right away.
+            </p>
+          )}
+        </div>
         <p className="tabular mt-4 text-[0.8125rem] text-brown-soft">
           Reference <span className="font-semibold text-brown">{result.reference}</span>
         </p>
@@ -68,7 +82,7 @@ export function FormShell({
   const alert = formError ?? (errorCount > 0 ? 'Please check the highlighted fields below.' : null);
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} noValidate className="relative">
+    <form ref={formRef} onSubmit={onSubmit} noValidate encType={encType} className="relative">
       <Honeypot />
 
       {alert ? (
@@ -88,9 +102,7 @@ export function FormShell({
         <Button type="submit" size="lg" disabled={pending}>
           {pending ? 'Sending…' : submitLabel}
         </Button>
-        <p className="text-[0.8125rem] text-brown-soft">
-          We use your details only to reply to this enquiry.
-        </p>
+        <p className="measure text-[0.8125rem] text-brown-soft">{privacyNote}</p>
       </div>
     </form>
   );

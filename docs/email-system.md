@@ -54,6 +54,24 @@ them.** See `docs/employee-operations.md` §Notifications and email.
 
 ---
 
+## Hiring and talent email
+
+Three more, added with the contact rebuild: **application received** and
+**talent submission received** go to the person who wrote in, and **somebody
+wrote in** goes to `OWNER_ALERT_EMAIL`. They share the same notice component
+as the staff emails, with their own footer line — an applicant is not on the
+staff rota and must not be told they are.
+
+The two confirmations are `audience: 'guest'` and have no switch, for the same
+reason a ticket receipt has none: they answer something a person just did. The
+internal alert is the optional one. **The form reads the send result**: its
+success panel only mentions a confirmation email when the service reports
+`sent`, so a site with delivery switched off never promises one.
+
+See `docs/hiring-and-talent.md`.
+
+---
+
 ## Where things live
 
 ```

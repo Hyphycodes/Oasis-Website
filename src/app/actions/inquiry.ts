@@ -1,9 +1,9 @@
 'use server';
 
 import { getReadDb, isLocalDb } from '@/lib/db';
-import { headers } from 'next/headers';
 import type { InquiryType } from '@/content/types';
 import { makeReference, SCHEMAS, type InquiryResult } from '@/lib/inquiries';
+import { rateLimited, RATE_LIMIT_MESSAGE, requestFingerprint } from '@/server/rate-limit';
 import { getServiceClient, isSupabaseConfigured } from '@/lib/supabase/server';
 
 /**
@@ -15,27 +15,9 @@ import { getServiceClient, isSupabaseConfigured } from '@/lib/supabase/server';
  *    See docs/ENVIRONMENT.md.
  */
 
-/**
- * Naive in-process rate limit. Adequate for a restaurant site on a warm instance; validation and the honeypot also apply.
- */
-const recent = new Map<string, number[]>();
-const WINDOW_MS = 10 * 60_000;
-const MAX_PER_WINDOW = 5;
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const hits = (recent.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  hits.push(now);
-  recent.set(key, hits);
-  if (recent.size > 500) {
-    for (const [k, v] of recent) if (v.every((t) => now - t >= WINDOW_MS)) recent.delete(k);
-  }
-  return hits.length > MAX_PER_WINDOW;
-}
-
 export async function submitInquiry(type: InquiryType, formData: FormData): Promise<InquiryResult> {
-  if (!Object.hasOwn(SCHEMAS, type)) return { ok: false, fieldErrors: {}, formError: 'Choose a valid inquiry form.' };
   const schema = SCHEMAS[type];
+  if (!schema) return { ok: false, fieldErrors: {}, formError: 'Choose a valid inquiry form.' };
   const raw = Object.fromEntries(formData.entries());
 
   const parsed = schema.safeParse(raw);
@@ -52,19 +34,8 @@ export async function submitInquiry(type: InquiryType, formData: FormData): Prom
     return { ok: false, fieldErrors };
   }
 
-  const headerList = await headers();
-  const fingerprint =
-    headerList.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    headerList.get('x-real-ip') ??
-    'local';
-
-  if (rateLimited(`${type}:${fingerprint}`)) {
-    return {
-      ok: false,
-      fieldErrors: {},
-      formError:
-        'We have already received several messages from you. Please call us instead so we can help right away.',
-    };
+  if (rateLimited(`${type}:${await requestFingerprint()}`)) {
+    return { ok: false, fieldErrors: {}, formError: RATE_LIMIT_MESSAGE };
   }
 
   const data = parsed.data as Record<string, unknown>;

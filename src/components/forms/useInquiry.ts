@@ -1,43 +1,16 @@
 'use client';
 
-import { useId, useRef, useState, useTransition } from 'react';
 import { submitInquiry } from '@/app/actions/inquiry';
 import type { InquiryType } from '@/content/types';
-import type { InquiryResult } from '@/lib/inquiries';
+import { useSubmission } from './useSubmission';
 
 /**
- * Shared submit behavior for every inquiry form.
+ * The catering and private-event forms.
  *
- * Lives in a hook rather than a render-prop wrapper because a function child
- * cannot cross the server/client boundary — each form is its own client
- * component and owns its fields.
+ * Everything that is not "which enquiry is this" lives in `useSubmission`,
+ * which the hiring and talent forms use too, so the double-submit guard, the
+ * offline message and the focus move cannot drift apart between them.
  */
 export function useInquiry(type: InquiryType) {
-  const [pending, startTransition] = useTransition();
-  const [result, setResult] = useState<InquiryResult | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const statusId = useId();
-
-  const errors = result && !result.ok ? result.fieldErrors : {};
-  const formError = result && !result.ok ? result.formError : undefined;
-  const succeeded = result?.ok === true;
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // Guards against a double submit and against re-sending a successful form.
-    if (pending || succeeded) return;
-
-    const formData = new FormData(event.currentTarget);
-    startTransition(async () => {
-      let next: InquiryResult;
-      try { next = await submitInquiry(type, formData); }
-      catch { next = { ok: false, fieldErrors: {}, formError: 'Could not connect. Your details are still here. Please try again or call us.' }; }
-      setResult(next);
-      if (next.ok) formRef.current?.reset();
-      // Move focus to the status so the outcome is announced, not just painted.
-      requestAnimationFrame(() => document.getElementById(statusId)?.focus());
-    });
-  }
-
-  return { pending, result, errors, formError, succeeded, formRef, statusId, onSubmit };
+  return useSubmission((formData) => submitInquiry(type, formData));
 }

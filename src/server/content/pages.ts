@@ -70,6 +70,8 @@ const STATIC_SECTIONS: Record<string, PageSection> = (() => {
     ['private-events', pageCopy.privateEvents],
     ['visit', pageCopy.visit],
     ['careers', pageCopy.careers],
+    ['contact', pageCopy.contact],
+    ['talent', pageCopy.talent],
   ];
 
   openers.forEach(([page, copy], index) => {
@@ -183,16 +185,8 @@ export async function getEditableSections(db: Db, page?: string): Promise<PageSe
 /* ----------------------------------------------------------- option lists -- */
 
 const STATIC_LISTS: Record<string, string[]> = {
-  'careers:positions': [
-    'Server',
-    'Bartender',
-    'Host',
-    'Line cook',
-    'Prep cook',
-    'Dishwasher',
-    'Busser',
-    'Something else',
-  ],
+  // Positions are not here: an opening is a row in `job_openings`, with a
+  // description and a switch, not a string in a list. See migration 0026.
   'careers:perks': [...pageCopy.careers.perks],
   'private-events:types': [
     'Birthday',

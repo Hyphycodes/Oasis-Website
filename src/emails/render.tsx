@@ -30,6 +30,9 @@ import * as TimeOffDecision from './templates/staff/TimeOffDecision';
 import * as TrainingRequired from './templates/staff/TrainingRequired';
 import * as DocumentExpiring from './templates/staff/DocumentExpiring';
 import * as EventAssignment from './templates/staff/EventAssignment';
+import * as ApplicationReceived from './templates/people/ApplicationReceived';
+import * as TalentReceived from './templates/people/TalentReceived';
+import * as SubmissionAlert from './templates/people/SubmissionAlert';
 
 /**
  * Template id → props, so a caller cannot render a refund with ticket props.
@@ -54,6 +57,9 @@ export interface TemplateProps {
   training_required: StaffEmailProps;
   document_expiring: StaffEmailProps;
   event_assignment: StaffEmailProps;
+  application_received: StaffEmailProps;
+  talent_received: StaffEmailProps;
+  submission_alert: StaffEmailProps;
 }
 
 interface TemplateModule<P> {
@@ -81,6 +87,9 @@ const MODULES: { [K in TemplateId]: TemplateModule<TemplateProps[K]> } = {
   training_required: TrainingRequired,
   document_expiring: DocumentExpiring,
   event_assignment: EventAssignment,
+  application_received: ApplicationReceived,
+  talent_received: TalentReceived,
+  submission_alert: SubmissionAlert,
 };
 
 export const TEST_SUBJECT_PREFIX = '[TEST] ';

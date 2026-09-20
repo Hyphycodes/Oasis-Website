@@ -40,7 +40,7 @@ insert into public.media_assets (asset_id, path, alt, decorative, title, kind, w
   values ('plateTorta', '/media/menu/plate-torta.jpg', 'A torta served with rice, refried beans and salsa', false, 'Plate Torta', 'image', 720, 900, '4:5', '50% 50%', null, 'temp-wix', array['Food']::text[], null, null, null)
   on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
 insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
-  values ('roomAtmosphere', '/media/home/room-atmosphere.jpg', 'The Oasis dining room, with the greenery wall and rattan pendant lights', false, 'Room Atmosphere', 'image', 720, 480, '3:2', '50% 50%', null, 'temp-wix', array['Room']::text[], null, null, null)
+  values ('roomAtmosphere', '/media/home/room-atmosphere.jpg', 'The Oasis dining room, with the greenery wall and rattan pendant lights', false, 'Room Atmosphere', 'image', 720, 480, '3:2', '50% 50%', null, 'temp-wix', array['Room', 'Team']::text[], null, null, null)
   on conflict (asset_id) do update set path = excluded.path, alt = excluded.alt, decorative = excluded.decorative, title = excluded.title, kind = excluded.kind, width = excluded.width, height = excluded.height, ratio = excluded.ratio, focal = excluded.focal, poster = excluded.poster, status = excluded.status, tags = excluded.tags, size_bytes = excluded.size_bytes, mime = excluded.mime, duration_seconds = excluded.duration_seconds;
 insert into public.media_assets (asset_id, path, alt, decorative, title, kind, width, height, ratio, focal, poster, status, tags, size_bytes, mime, duration_seconds)
   values ('bartender', '/media/home/gallery-02.jpg', 'A bartender holding a freshly made margarita', false, 'Bartender', 'image', 720, 720, '1:1', '50% 40%', null, 'temp-wix', array['Drinks', 'Team']::text[], null, null, null)
@@ -688,7 +688,13 @@ insert into public.page_sections (id, page, key, eyebrow, heading, body, visible
   values ('visit:opener', 'visit', 'opener', 'Find us', 'Come and find us.', 'Fresh Mexican flavors and a modern room in the heart of Lockport.', true, 'plain', null, null, null, 4)
   on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
 insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
-  values ('careers:opener', 'careers', 'opener', 'Join the', 'Oasis Familia', 'We are looking for passionate people to help us serve modern Mexican flavors and good vibes.', true, 'plain', null, null, null, 5)
+  values ('contact:opener', 'contact', 'opener', 'Come see us', 'Visit Oasis.', 'Come eat, drink, celebrate, and stay awhile. Here is where we are and when we are open.', true, 'plain', null, null, null, 5)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('careers:opener', 'careers', 'opener', 'Join the', 'Oasis Familia', 'We are looking for passionate people to help us serve modern Mexican flavors and good vibes.', true, 'plain', null, null, null, 6)
+  on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
+insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
+  values ('talent:opener', 'talent', 'opener', 'Create with Oasis', 'Got something to share?', 'DJs, painters, singers, dancers, comedians, photographers, instructors, people with an idea for a night. Show us what you do — a sentence and a link is plenty.', true, 'plain', null, null, null, 7)
   on conflict (id) do update set page = excluded.page, key = excluded.key, eyebrow = excluded.eyebrow, heading = excluded.heading, body = excluded.body, visible = excluded.visible, variant = excluded.variant, media_asset_id = excluded.media_asset_id, cta_label = excluded.cta_label, cta_href = excluded.cta_href, sort = excluded.sort;
 insert into public.page_sections (id, page, key, eyebrow, heading, body, visible, variant, media_asset_id, cta_label, cta_href, sort)
   values ('home:hero', 'home', 'hero', 'Lockport, Illinois', 'Good food. Good music.
@@ -715,16 +721,19 @@ insert into public.page_seo (page, title, description, og_asset_id)
   values ('visit', 'Visit — Oasis Mexican Kitchen & Bar, 1250 E. 9th St., Lockport IL', 'Hours, address, directions and phone for Oasis Mexican Kitchen & Bar at 1250 E. 9th St., Lockport, IL 60441.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
 insert into public.page_seo (page, title, description, og_asset_id)
-  values ('careers', 'Join Our Team — Oasis Mexican Kitchen & Bar, Lockport IL', 'Now hiring at Oasis Mexican Kitchen & Bar in Lockport, IL. Flexible shifts, staff meals, and a crew that feels like familia.', null)
+  values ('careers', 'Work at Oasis — Oasis Mexican Kitchen & Bar, Lockport IL', 'Open positions at Oasis Mexican Kitchen & Bar in Lockport, IL, and a two-minute application. Flexible shifts, staff meals, and a crew that feels like familia.', null)
+  on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('contact', 'Contact & Visit — Oasis Mexican Kitchen & Bar, Lockport IL', 'Address, hours, phone and directions for Oasis Mexican Kitchen & Bar at 1250 E. 9th St., Lockport, IL — plus how to work with us and how to bring your own work to the room.', null)
+  on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
+insert into public.page_seo (page, title, description, og_asset_id)
+  values ('talent', 'Create with Oasis — local DJs, artists and performers, Lockport IL', 'Oasis Mexican Kitchen & Bar books local DJs, musicians, painters, dancers, comedians, photographers and instructors in Lockport, IL. Show us what you do — it takes a minute.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
 insert into public.page_seo (page, title, description, og_asset_id)
   values ('privacy', 'Privacy — Oasis Mexican Kitchen & Bar', 'How Oasis Mexican Kitchen & Bar handles information submitted through this website.', null)
   on conflict (page) do update set title = excluded.title, description = excluded.description, og_asset_id = excluded.og_asset_id;
 
 -- page_lists
-insert into public.page_lists (id, page, key, label, items)
-  values ('careers:positions', 'careers', 'positions', 'Positions people can apply for', '["Server","Bartender","Host","Line cook","Prep cook","Dishwasher","Busser","Something else"]'::jsonb)
-  on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;
 insert into public.page_lists (id, page, key, label, items)
   values ('careers:perks', 'careers', 'perks', 'Perks listed on the careers page', '["Flexible shifts","Staff meals","Vibrant atmosphere"]'::jsonb)
   on conflict (id) do update set page = excluded.page, key = excluded.key, label = excluded.label, items = excluded.items;

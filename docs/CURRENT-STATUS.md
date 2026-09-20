@@ -4,7 +4,7 @@
 document elsewhere disagrees with this one, this one is right and the other
 needs updating.
 
-Last updated: 19 September 2026.
+Last updated: 20 September 2026.
 
 Production: <https://oasis-website-mu.vercel.app/> · Supabase project
 `yrfvnqgybbvbkwonvycw` · Vercel project `oasis-website`.
@@ -19,11 +19,23 @@ Deployed, in use, and working without further setup.
 
 | What | Where | Notes |
 |---|---|---|
-| Home, menu, events, catering, private events, visit, careers, legal | `src/app/(site)/` | Every page works with **no configuration at all** — content falls back to the typed modules in `src/content/` if Supabase is unreachable. |
+| Home, menu, events, catering, private events, visit, contact, careers, talent, legal | `src/app/(site)/` | Every page works with **no configuration at all** — content falls back to the typed modules in `src/content/` if Supabase is unreachable. |
 | The menu | `/menu` | 83 items across food, cocktails and brunch. Nine are unpriced on purpose and render "Ask your server", never `$0`. |
 | Events | `/events`, `/events/[slug]` | Recurring series carry a cadence, never a date, so a weekly night cannot display a stale one. 23 dated events on the calendar. |
 | Seasonal look | admin → Seasonal look | The Halloween / Día de los Muertos theme, with scheduling and reduced-motion support. |
 | Media | `src/content/assets.ts` | Semantic ids, committed to the repository, checked against the real pixels by `npm run assets:check`. |
+
+### Contact, hiring and local talent
+
+| What | Where | Notes |
+|---|---|---|
+| Contact | `/contact` | Visit, work, create — in that order, with one way into each. The address itself is the directions control and opens Apple Maps, Google Maps or Waze. |
+| Work at Oasis | `/careers` | Only the roles somebody switched on, and a two-minute application with an optional résumé. **Every role ships switched off**, so the page says so honestly and still takes an open application. |
+| Create with Oasis | `/talent` | A one-minute form for local DJs, artists, performers and ideas. Email *or* phone, and nothing else is required. |
+| The People section | `/admin/hiring`, `/admin/hiring/openings`, `/admin/talent` | Applicants opened in place, roles as a list of switches, and a visual talent book. "Add to the contractor roster" promotes somebody into the roster the staff app already books from. |
+| Private uploads | `applications` bucket, `/admin/files/...` | A résumé and a talent photograph are never public: the bucket is private and staff get a five-minute signed URL through a gate that checks the account first. |
+
+Full reference: [`docs/hiring-and-talent.md`](./hiring-and-talent.md).
 
 ### Ticketing, checkout and the door
 
@@ -38,8 +50,9 @@ Deployed, in use, and working without further setup.
 
 ### The admin
 
-`/admin` — events (and the door, customers, emails), menu, look (seasonal theme,
-photos), visit (hours, pages, enquiries), team. Drafts and publishing, version
+`/admin` — events (and the door, customers, emails), menu, hubs, look (seasonal
+theme, photos), people (applicants, job openings, talent), visit (hours, pages,
+enquiries), team. Drafts and publishing, version
 history and restore, archive, media upload, and a Contributor role that
 genuinely cannot publish — enforced by a database trigger, not a hidden button.
 
@@ -51,7 +64,7 @@ designated address and requires a verified identity.
 
 ### Database
 
-Migrations `0001`–`0022` are applied to the live project, confirmed 19 September
+Migrations `0001`–`0026` are applied to the live project, confirmed 20 September
 2026. Row Level Security is the authorisation boundary throughout; orders,
 tickets, holds, scans and the email log have no public policies at all.
 
