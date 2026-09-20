@@ -48,7 +48,7 @@ export function EventStaffingPanel({ staffing, employees, timezone, canStaff, co
                   {STAFFING_ROLE_LABEL[assignment.role]}: <Link href={`/staff/team/${assignment.employeeId}`} className="underline-offset-4 hover:underline">{assignment.employeeName}</Link>
                 </span>
                 <span className="block text-[0.8125rem] text-brown-soft">
-                  {assignment.shiftId ? <Link href={`/staff/operations/schedule/shift/${assignment.shiftId}`} className="underline underline-offset-4">Shift on the schedule</Link> : 'No shift'}
+                  {assignment.shiftId ? <Link href={`/staff/schedule?edit=${assignment.shiftId}`} className="underline underline-offset-4">Shift on the schedule</Link> : 'No shift'}
                   {assignment.note ? ` · ${assignment.note}` : ''}
                 </span>
                 {assignment.readiness.length > 0 ? <span className="mt-1 block text-[0.8125rem] text-warning">⚠ {assignment.readiness.join(' · ')}</span> : null}

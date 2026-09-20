@@ -87,6 +87,25 @@ export interface LocationSummary {
 /* --------------------------------------------------------------- schedule */
 
 export type ShiftStatus = 'draft' | 'published' | 'cancelled';
+
+/**
+ * A week of one location's schedule. `draft` is a manager's working copy —
+ * employees see nothing of it and are told the week is being prepared;
+ * `published` is out, and every later change tells only the person it moves.
+ */
+export type SchedulePeriodStatus = 'draft' | 'published';
+
+export interface SchedulePeriod {
+  id: string;
+  locationId: string;
+  /** The Monday, as a date in the location's own zone. */
+  weekStart: string;
+  status: SchedulePeriodStatus;
+  publishedAt: string | null;
+  /** When everyone was told. Set once; a later republish is not a broadcast. */
+  notifiedAt: string | null;
+  note: string | null;
+}
 export type AttendanceStatus = 'not_tracked' | 'on_time' | 'late' | 'absent' | 'left_early' | 'excused';
 
 export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
@@ -128,6 +147,21 @@ export interface ShiftView extends Shift {
   event: { id: string; title: string; slug: string | null; startsAt: string; doorsAt: string | null } | null;
   /** Anything a manager should know before publishing this. */
   warnings: ScheduleWarning[];
+}
+
+/**
+ * What the floor is told about a night. Operational only: the money for the
+ * same event lives behind `events.view_money` and never reaches this shape.
+ */
+export interface EventBrief {
+  eventId: string;
+  callTimeAt: string | null;
+  dressCode: string | null;
+  expectedGuests: number | null;
+  managerEmployeeId: string | null;
+  managerName: string | null;
+  staffNotes: string | null;
+  updatedAt: string | null;
 }
 
 export type ScheduleWarningKind = 'unavailable' | 'time_off' | 'overlap' | 'inactive' | 'missing_training' | 'missing_certification';
@@ -483,6 +517,8 @@ export interface Contractor {
   w9Status: 'missing' | 'requested' | 'received';
   notes: string | null;
   active: boolean;
+  /** Whether they have an account and can look up their own bookings. */
+  hasSignIn: boolean;
   upcomingBookings: number;
   pastBookings: number;
 }
@@ -493,6 +529,7 @@ export interface ContractorBooking {
   id: string;
   contractorId: string;
   contractorName: string;
+  locationId: string | null;
   eventId: string | null;
   eventTitle: string | null;
   eventStartsAt: string | null;
@@ -507,6 +544,8 @@ export interface ContractorBooking {
   paymentNote: string | null;
   paidOn: string | null;
   note: string | null;
+  /** Written for the contractor: which door, where to park, who to ask for. */
+  arrivalNote: string | null;
 }
 
 export interface EventStaffing {
@@ -607,10 +646,15 @@ export interface EmployeeNote {
 /** What an account can do operationally. Derived, never stored. */
 export type OpsRole = 'owner' | 'manager' | 'employee' | 'contractor' | 'none';
 
+/**
+ * What each role is called out loud. "Staff", not "Employee": it is what
+ * everyone at Oasis already says, and the app should not teach anyone a new
+ * word for themselves.
+ */
 export const OPS_ROLE_LABEL: Record<OpsRole, string> = {
   owner: 'Owner',
   manager: 'Manager',
-  employee: 'Employee',
+  employee: 'Staff',
   contractor: 'Contractor',
   none: 'No staff access',
 };

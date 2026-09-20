@@ -26,7 +26,9 @@ export function eventLiteFromRow(row: Row): EventSummaryLite {
   const live = liveValues(row as EditorialRow);
   return {
     id: String(row.id),
-    title: String(live.title ?? row.title ?? 'Event'),
+    // `||` and not `??`: a row saved with an empty title is the common
+    // shape here, and "" reads as a missing event rather than a nameless one.
+    title: String(live.title || row.title || 'Untitled event'),
     slug: (live.slug as string | null) ?? (row.slug as string | null) ?? null,
     startsAt: String(live.starts_at ?? row.starts_at),
     endsAt: String(live.ends_at ?? row.ends_at),

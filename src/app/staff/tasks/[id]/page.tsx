@@ -27,7 +27,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
   return (
     <StaffShell context={context} unread={unread}>
-      <Back href={context.isManager && task.assignedTo !== context.employee?.id ? '/staff/operations/tasks' : '/staff/tasks'} label="Tasks" />
+      <Back href={context.isManager && task.assignedTo !== context.employee?.id ? '/staff/operations/tasks' : '/staff'} label={context.isManager && task.assignedTo !== context.employee?.id ? 'Tasks' : 'Home'} />
       <Screen title={task.title} eyebrow={task.overdue ? 'Overdue' : task.priority !== 'normal' ? `${task.priority} priority` : undefined}>
         {task.description ? <p className="whitespace-pre-line text-[1rem] leading-relaxed text-brown">{task.description}</p> : null}
         <Facts

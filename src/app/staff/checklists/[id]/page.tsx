@@ -25,7 +25,7 @@ export default async function ChecklistRunPage({ params }: { params: Promise<{ i
 
   return (
     <StaffShell context={context} unread={unread}>
-      <Back href={context.isManager ? '/staff/operations/checklists' : '/staff/tasks'} label={context.isManager ? 'Checklists' : 'Tasks'} />
+      <Back href={context.isManager ? '/staff/operations/checklists' : '/staff'} label={context.isManager ? 'Checklists' : 'Home'} />
       <Screen title={run.title} eyebrow={`${formatDate(run.onDate)}${run.eventTitle ? ` · ${run.eventTitle}` : ''}${run.assignedEmployeeName ? ` · ${run.assignedEmployeeName}` : ''}`}>
         <div className="flex items-center gap-3">
           <div className="flex-1">

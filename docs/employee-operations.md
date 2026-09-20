@@ -8,7 +8,8 @@ service as everything else.
 
 This is the document to read before touching any of it.
 
-Migrations: `0021_staff_roles.sql`, `0022_employee_operations.sql`.
+Migrations: `0021_staff_roles.sql`, `0022_employee_operations.sql`,
+`0025_schedule_periods_and_briefs.sql`.
 
 > **Applied to the live project** (`yrfvnqgybbvbkwonvycw`), 19 September 2026.
 > `supabase/tests/employee-operations-rls.sql` was run against the live database
@@ -79,22 +80,40 @@ come from the `event_sales_summary` view the ticketing system already maintains.
 
 ## Routes
 
+The navigation is four things for an employee and five for a manager, and it is
+built from **capabilities, not role names** — an account that gains scheduling
+gains the tab in the same moment.
+
+```
+employee   Home · Schedule · Training · Profile
+manager    Home · Schedule · Team · Training · Operations
+contractor (one screen, no nav)
+```
+
+There is deliberately no "Manage" dropdown. The version this replaced hung ten
+entries off the header, which meant a bartender's app advertised nine systems
+they could not open. Those tools did not disappear — they moved behind
+**Operations**, which is a screen rather than a menu, and a screen can say how
+many documents are expiring and who is waiting on a decision.
+
 ### The employee app
 
 | Route | What it is |
 |---|---|
-| `/staff` | Home. Today's shift, tonight's event, tasks, announcements, training, what is up for grabs. |
-| `/staff/schedule` | My week, and a month view. |
+| `/staff` | **Today.** Am I working, what is on tonight, what is left on my list, has anything been announced, when am I next in. |
+| `/staff/schedule` | My week, with "being prepared" shown honestly for a week that is not out yet. |
 | `/staff/schedule/shift/[id]` | One shift: clock in and out, the event, the note, offer it up, its history. |
 | `/staff/schedule/coverage` | Shifts coworkers have offered, and open shifts nobody has. |
 | `/staff/availability` | The weekly pattern, and one-off days. |
 | `/staff/time-off` | Request, withdraw, and the decisions. |
-| `/staff/tasks` · `/staff/tasks/[id]` | My tasks, with comments. |
+| `/staff/tasks` · `/staff/tasks/[id]` | The full list, including what is finished. Not in the navigation: today's lines live on Home. |
 | `/staff/checklists/[id]` | A live checklist: tick a line, attach a photo where the line asks. |
-| `/staff/training` · `/staff/training/[id]` | The academy: read the module, take the quiz. |
+| `/staff/training` · `/staff/training/[id]` | Read the module, take the quiz. |
 | `/staff/documents` | My documents: acknowledge, upload, see what expires. |
 | `/staff/onboarding` | The checklist, each item completable in place. |
 | `/staff/profile` | Me. The fields I own; the ones a manager owns are read-only. |
+| `/staff/events` · `/staff/events/[id]` | The nights coming up, and the brief for one: doors, crowd, call time, dress, who is running it. No money. |
+| `/staff/incidents/new` | Report something. Goes to the managers; the log itself stays closed. |
 | `/staff/announcements` | The feed, with acknowledgement. |
 | `/staff/notifications` | Everything that has happened to me. |
 
@@ -102,23 +121,37 @@ come from the `event_sales_summary` view the ticketing system already maintains.
 
 | Route | What it is |
 |---|---|
-| `/staff/operations` | Today. What needs attention, per location; the owner can see all at once. |
-| `/staff/operations/schedule` | The builder: a week by day or by person, warnings on the row, publish and copy. |
-| `/staff/operations/schedule/new` · `/shift/[id]` | Create and edit a shift; correct attendance. |
+| `/staff/schedule` | **The board.** The same route an employee opens; a manager gets people down the side, days across the top, drafts, warnings, filters, publish and copy. `?edit=<id>` and `?add=<date>` open the editor as a drawer over the week. |
+| `/staff/operations` | Tonight, the decisions waiting, and the index of every other module. |
 | `/staff/operations/time-off` | Approve and deny, with what it collides with. |
-| `/staff/operations/coverage` | Approve and deny shift changes. |
+| `/staff/schedule/coverage` | Approve and deny shift changes, alongside the employee's own view of them. |
 | `/staff/team` · `/staff/team/[id]` · `/[id]/edit` · `/new` | The directory and one person, in eight sections. |
 | `/staff/operations/onboarding` | New hires: not started, in progress, ready. |
 | `/staff/operations/documents` · `/types` | Missing, expiring, expired, waiting; and what Oasis asks for. |
-| `/staff/operations/training` · `/[id]` · `/[id]/edit` · `/new` | The academy, and who is cleared. |
+| `/staff/operations/training` · `/[id]` · `/[id]/edit` · `/new` | The modules, and who is cleared. |
 | `/staff/operations/tasks` · `/new` · `/[id]/edit` | Everyone's tasks. |
 | `/staff/operations/checklists` · `/templates/…` | Today's runs, and the templates behind them. |
-| `/staff/events` · `/staff/events/[id]` | Every upcoming night and how staffed it is. |
-| `/staff/contractors` · `/[id]` · `/new` | DJs, instructors, photographers, and their bookings. |
-| `/staff/incidents` · `/[id]` · `/new` | The manager-only log. |
+| `/staff/events/[id]` | The same night, plus the staffing board, the brief editor and — only with `events.view_money` — what it has taken. |
+| `/staff/contractors` · `/[id]` · `/new` | DJs, instructors, photographers, their bookings, and the invitation that gives one a sign-in. |
+| `/staff/incidents` · `/[id]` · `/new` | The log. Reading it is manager-only; writing to it is not. |
 | `/staff/announcements/manage` · `/[id]` · `/new` | Post, and see who has read. |
 | `/staff/search` | People, phones, emails, positions, contractors, event staffing. |
 | `/staff/locations` | Owner only. Lockport, and the next one. |
+
+`/staff/operations/schedule*` and `/staff/operations/coverage` redirect to their
+new homes (`next.config.ts`), so old bookmarks and old notification links still
+land somewhere correct.
+
+### The contractor app
+
+| Route | What it is |
+|---|---|
+| `/staff/bookings` | The whole thing. Their own bookings, when to arrive, payment status, one phone number. Every other `/staff` route redirects them here. |
+
+A contractor account carries exactly one operational capability,
+`contractors.view_self`. They are not employees with fewer buttons: there is no
+schedule, no team, no training, no other bookings, and no navigation, because
+there is nowhere else to go.
 
 The admin keeps its own job — configuring the business — and gains one thing: a
 **Staffing** section on an event's page (`/admin/events/one/[id]`) that renders
@@ -240,6 +273,32 @@ they do the new one. A typo fix is just a save.
 **`shift_history`** records every change with the row before and after, so a
 reassignment is never a mystery.
 
+**`schedule_periods`** (migration 0025) — one row per `(location, week)`, with a
+status, who released it and when. The shift-level flag is right for one shift and
+wrong for a week: a manager needs to build next week privately and release the
+whole thing at once, and an employee needs to be able to tell the difference
+between *"there is nothing next week"* and *"next week is not out yet"*. Without
+the week as a thing, those two look identical, and the honest answer to the
+second is not silence.
+
+```
+no row, or status = draft      employees see nothing; the app says
+                               "Next week's schedule is being prepared."
+status = published             the week is out; published_at is when
+
+notified_at                    set the FIRST time a week goes out and never
+                               cleared. It is what stops the fan-out running
+                               twice: a manager who adds a Thursday shift on
+                               Wednesday and publishes again tells one person,
+                               not fourteen.
+```
+
+Publishing is `publishPeriod()` in `src/server/staff/periods.ts`: it flips every
+draft in the window to published, marks the week live, and hands the caller
+`firstRelease` so the action knows whether it is announcing a week or a change.
+A week is never un-published once staff have been told — `unpublishSchedule`
+refuses, and says why. Cancelling the individual shifts is the honest version.
+
 **Attendance is optional and honest.** `attendance_status` defaults to
 `not_tracked`. An employee can clock in from an hour before their shift; late is
 more than five minutes after the start, left early is more than fifteen before
@@ -272,10 +331,26 @@ their published shift for the night, so the schedule and the staffing board
 cannot disagree about who is on. `readiness` is computed: a door assignment whose
 scanner training is not complete says so, on the board, before the night.
 
+**`event_briefs`** (migration 0025) — the operational half of a night: call time,
+dress, expected guests, the manager running it, and the notes the floor needs.
+Separate from `event_occurrences` because that table carries the publish guard
+and the draft/live editorial split from 0003, and none of that applies to an
+internal note. Every employee reads it; managers write it; **no money is in the
+shape at all**, which is what lets `events.view_brief` be an employee capability.
+
 **`contractors`** and **`contractor_bookings`** — the DJ, the painter, the
 photographer: service type, usual rate, how they get paid, W-9 status, and per
-booking the agreed amount, deposit, paid amount and payment note. Operational
-tracking, one place instead of text messages. **Not payroll and not accounting.**
+booking the agreed amount, deposit, paid amount, payment note, and an
+`arrival_note` written *for* the contractor (which door, where to park, who to
+ask for) kept separate from the internal `note`. Operational tracking, one place
+instead of text messages. **Not payroll and not accounting.**
+
+`current_contractor_id()` mirrors `current_employee_id()`: a contractor with a
+sign-in resolves to their own row, reads their own bookings through two
+additional `SELECT` policies, and every other staff table stays closed to them.
+A manager gives them that sign-in from the contractor's page — deliberately a
+separate action from adding the contractor, because most DJs never need a login
+and an account nobody asked for is an account nobody closes.
 
 ### Everything else
 
@@ -312,17 +387,24 @@ returns null for an inactive or archived employee, which empties every
 policy that depends on it; and setting an employee to inactive in the UI also
 sets `profiles.active = false`, which `getStaff()` already treats as no access.
 
-The twenty-seven capabilities, and who holds them:
+The guiding rule is **transparency is not authority**: seeing who is on tonight,
+or what the event needs, is a different thing from being able to change it, so
+the read and the write are separate capabilities and the read is the one an
+employee gets.
+
+The thirty-two capabilities, and who holds them:
 
 | Capability | Owner | Manager | Employee | Contractor |
 |---|:-:|:-:|:-:|:-:|
 | `staff.view_self` | ✓ | ✓ | ✓ | |
+| `staff.view_roster` | ✓ | ✓ | ✓ | |
 | `staff.view_team` | ✓ | ✓ | | |
 | `staff.manage_team` | ✓ | ✓ | | |
 | `staff.manage_access` | ✓ | | | |
 | `schedule.view_self` | ✓ | ✓ | ✓ | |
 | `schedule.view_team` | ✓ | ✓ | | |
 | `schedule.manage` | ✓ | ✓ | | |
+| `schedule.publish` | ✓ | ✓ | | |
 | `availability.manage_self` | ✓ | ✓ | ✓ | |
 | `timeoff.request` | ✓ | ✓ | ✓ | |
 | `timeoff.approve` | ✓ | ✓ | | |
@@ -336,13 +418,46 @@ The twenty-seven capabilities, and who holds them:
 | `tasks.manage` | ✓ | ✓ | | |
 | `checklists.complete` | ✓ | ✓ | ✓ | |
 | `checklists.manage` | ✓ | ✓ | | |
+| `events.view_brief` | ✓ | ✓ | ✓ | |
 | `events.staff` | ✓ | ✓ | | |
-| `contractors.manage` | ✓ | ✓ | | |
-| `announcements.manage` | ✓ | ✓ | | |
+| `events.view_money` | ✓ | ✓ | | |
+| `incidents.report` | ✓ | ✓ | ✓ | |
 | `incidents.manage` | ✓ | ✓ | | |
+| `contractors.manage` | ✓ | ✓ | | |
+| `contractors.view_self` | | | | ✓ |
+| `announcements.manage` | ✓ | ✓ | | |
 | `notes.manage` | ✓ | ✓ | | |
 | `locations.view_all` | ✓ | | | |
 | `locations.manage` | ✓ | | | |
+| `system.preview_role` | ✓ | | | |
+
+The three pairs worth reading twice:
+
+- **`events.view_brief` / `events.view_money`.** Everyone working a night reads
+  the brief — doors, expected crowd, call time, dress, who is running it, what
+  to watch for. Only a manager sees what the night has taken, and the sales read
+  is not even *issued* for an employee: a screen cannot leak a number it was
+  never handed.
+- **`incidents.report` / `incidents.manage`.** The person who saw it writes it
+  down, because a report that has to wait for a manager is a report that never
+  gets written. They cannot then read the log — including their own entry — name
+  a coworker in it, or close one. `saveIncidentAction` narrows all of that
+  server-side, so a hand-posted form gets the same treatment.
+- **`contractors.manage` / `contractors.view_self`.** A manager sees every
+  contractor and every rate. A contractor sees their own bookings and nothing
+  else of the restaurant.
+
+### Previewing as a role
+
+`system.preview_role` is the owner's answer to "what does a bartender actually
+see?". It is **not impersonation**: nothing signs in as anybody. A cookie asks
+the capability layer to treat the session as carrying less authority, and
+`clampPreview()` can only ever move *down* the ladder
+(`none < contractor < employee < manager < owner`), so a forged cookie buys
+nothing — at worst you lock yourself out of your own tools for an hour, which
+the banner across the top undoes in one tap. The control itself is checked
+against the account's **real** role (`requireActualOps`), otherwise an owner
+previewing as an employee would no longer be allowed to stop.
 
 Every cell is asserted in `src/server/staff/permissions.test.ts`, written out
 rather than derived — a test that computes the answer the same way the code does
@@ -508,7 +623,7 @@ else:
 | Notification | Email | Raised by |
 |---|---|---|
 | `welcome` | Welcome to the team | A manager adds an employee and invites them |
-| `schedule_published` | Schedule published | Publishing a week — **one email per person, listing their shifts** |
+| `schedule_published` | Schedule published | Publishing a week — **one email per person, listing their shifts**, and only on the first release |
 | `shift_changed` / `shift_cancelled` | Shift changed | A published shift moves, is cancelled, or coverage is approved |
 | `time_off_decided` | Time-off decision | A manager decides |
 | `training_assigned` | Training assigned | A module is assigned or re-required |
@@ -516,8 +631,21 @@ else:
 | `event_assignment` | Event assignment | Someone is put on an event |
 
 Everything else — a task assigned, an announcement posted, a swap claimed, a
-document verified — stays in the app. An employee can turn their own email off in
-their profile; in-app always arrives.
+document verified, an incident reported to the managers — stays in the app. An
+employee can turn their own email off in their profile; in-app always arrives.
+
+**Restraint is the feature.** Publishing a schedule is the one action that
+reaches everyone at once, so it is the one with a guard on it: the first release
+of a week tells everybody on it, and every release after that tells only the
+people whose shifts just appeared. `src/server/actions/staff/publish.test.ts`
+asserts both, because an app that pings people for nothing stops being read.
+
+**Push plugs in here, not somewhere new.** `registerNotificationChannel()` takes
+anything with a `deliver(notification, employeeId)` method; the email channel
+registers itself on import of `src/server/staff/emails.ts` and is the worked
+example. A native iOS push channel is a second `registerNotificationChannel()`
+call and a table of device tokens — nothing that *raises* a notification knows or
+cares how it is delivered, so no calling code changes.
 
 **One clock.** Everything about requirements is computed when somebody looks —
 a certificate whose expiry has passed reads as expired with no job keeping it
@@ -586,6 +714,14 @@ says so rather than showing a dead control. A manager watches
 npm run dev                # the staff app runs with no configuration at all
 npm run seed:staff-demo    # a realistic week at Oasis, in the local database
 ```
+
+`/admin/login` offers one account per role on the local database — owner,
+manager, contributor, bartender and the paint instructor — so every screen in
+this document can be opened as the person it was designed for. The demo seeds
+**last week and this week published, and next week as a draft**, which is the
+state the draft→publish flow is actually interesting in: sign in as Carlos and
+next week says *"being prepared"*; sign in as Alex and it is a board with a
+Publish button on it.
 
 The local file-backed database seeds the demo automatically, because it is
 development-only and refused in production. It contains an owner, a manager, a
@@ -668,3 +804,14 @@ data model to change.
   about what any jurisdiction requires.
 - **Shift bidding, labour forecasting, tip pooling.** Not asked for, and each one
   wants a real conversation with the restaurant first.
+- **Drag-and-drop scheduling.** A shift has a person, a position, a time, a
+  location and sometimes an event. Dragging expresses one of those five and
+  guesses at the rest. Tapping a cell opens the drawer already filled in with
+  the day and the person, which is the same two seconds and no guessing.
+- **Un-publishing a week that staff have seen.** `unpublishSchedule` refuses and
+  says why: taking a whole week back after fourteen people have been told is
+  worse than confusing. Cancelling the individual shifts tells the right people
+  the right thing.
+- **Push notifications.** The channel seam exists and is documented above; the
+  APNs half needs an Apple developer account and a device-token table, and
+  shipping a fake one would be worse than shipping none.

@@ -308,6 +308,14 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
 
   const shift_history: Row[] = shifts.map((row, index) => ({ id: index + 1, shift_id: row.id, changed_by: null, changed_at: String(row.created_at), reason: 'created', before: null, after: row }));
 
+  // Last week and this week are out; next week is a manager's working copy,
+  // which is what an employee sees as "being prepared".
+  const schedule_periods: Row[] = [
+    { id: id('period:last'), location_id: L, week_start: addDays(monday, -7), status: 'published', published_at: addDays(monday, -10), published_by: null, notified_at: addDays(monday, -10), note: null, created_at: addDays(monday, -12), updated_at: stamp },
+    { id: id('period:this'), location_id: L, week_start: monday, status: 'published', published_at: addDays(monday, -3), published_by: null, notified_at: addDays(monday, -3), note: null, created_at: addDays(monday, -5), updated_at: stamp },
+    { id: id('period:next'), location_id: L, week_start: addDays(monday, 7), status: 'draft', published_at: null, published_by: null, notified_at: null, note: null, created_at: addDays(today, -1), updated_at: stamp },
+  ];
+
   const availability_rules: Row[] = [
     ...[0, 1, 2, 3, 4, 5, 6].map((weekday) => ({ id: id(`avail:carlos:${weekday}`), employee_id: DEMO_EMPLOYEES.carlos, weekday, available: weekday !== 1, start_minutes: weekday === 2 ? 16 * 60 : null, end_minutes: null, note: null, updated_at: stamp })),
     ...[0, 1, 2, 3, 4, 5, 6].map((weekday) => ({ id: id(`avail:maria:${weekday}`), employee_id: DEMO_EMPLOYEES.maria, weekday, available: weekday !== 3, start_minutes: null, end_minutes: weekday === 0 ? 18 * 60 : null, note: weekday === 3 ? 'Class on Wednesdays' : null, updated_at: stamp })),
@@ -363,17 +371,36 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
 
   const contractors: Row[] = [
     { id: DEMO_CONTRACTORS.jerry, name: 'Jerry Sanchez', company_name: 'DJ Jerry', phone: '(815) 555-0150', email: 'dj@example.com', service_type: 'dj', default_rate_cents: 40000, payment_method_note: 'Zelle, night of', w9_status: 'received', notes: 'Brings own controller. Needs the XLR at the DJ booth.', user_id: null, active: true, created_at: stamp, updated_at: stamp, archived_at: null },
-    { id: DEMO_CONTRACTORS.sofia, name: 'Sofia Ramirez', company_name: 'Paint with Sofia', phone: '(815) 555-0151', email: 'sofia@example.com', service_type: 'instructor', default_rate_cents: 15000, payment_method_note: 'Check', w9_status: 'requested', notes: 'Arrives an hour before. Reference painting sent the Monday before.', user_id: null, active: true, created_at: stamp, updated_at: stamp, archived_at: null },
+    { id: DEMO_CONTRACTORS.sofia, name: 'Sofia Ramirez', company_name: 'Paint with Sofia', phone: '(815) 555-0151', email: 'sofia@oasis.local', service_type: 'instructor', default_rate_cents: 15000, payment_method_note: 'Check', w9_status: 'requested', notes: 'Arrives an hour before. Reference painting sent the Monday before.', user_id: useUsers ? 'local-contractor' : null, active: true, created_at: stamp, updated_at: stamp, archived_at: null },
   ];
   const contractor_bookings: Row[] = [];
   const event_assignments: Row[] = [];
+  // Sofia's booking goes on a night that has not happened yet, so the
+  // contractor's own screen has something on it in a fresh checkout.
+  const futureEvent = oneTimeEvents.filter((event) => event.date > today).sort((a, b) => a.date.localeCompare(b.date))[0] ?? null;
   if (nextEvent) {
-    contractor_bookings.push({ id: id('booking:sofia-next'), contractor_id: DEMO_CONTRACTORS.sofia, event_id: nextEvent.id, location_id: L, role: 'instructor', starts_at: at(nextEvent.date, nextEvent.startMinutes - 60), ends_at: at(nextEvent.date, nextEvent.endMinutes), status: 'confirmed', agreed_cents: 15000, deposit_cents: 0, paid_cents: 0, payment_status: 'unpaid', payment_note: null, paid_on: null, note: null, created_by: null, created_at: stamp, updated_at: stamp });
+    contractor_bookings.push({ id: id('booking:sofia-next'), contractor_id: DEMO_CONTRACTORS.sofia, event_id: (futureEvent ?? nextEvent).id, location_id: L, role: 'instructor', starts_at: at((futureEvent ?? nextEvent).date, (futureEvent ?? nextEvent).startMinutes - 60), ends_at: at((futureEvent ?? nextEvent).date, (futureEvent ?? nextEvent).endMinutes), status: 'confirmed', agreed_cents: 15000, deposit_cents: 0, paid_cents: 0, payment_status: 'unpaid', payment_note: 'Check on the night', paid_on: null, note: 'Reference painting emailed Monday.', arrival_note: 'Park behind the building and come in the kitchen door. Ask for Alex — the artist station is set up by 5.', created_by: null, created_at: stamp, updated_at: stamp });
     const assign = (key: string, employee: keyof typeof DEMO_EMPLOYEES, role: string, shiftKey: string | null) => event_assignments.push({ id: id(`assignment-event:${key}`), event_id: nextEvent.id, employee_id: DEMO_EMPLOYEES[employee], role, shift_id: shiftKey ? id(`shift:${shiftKey}`) : null, starts_at: null, ends_at: null, note: null, status: 'confirmed', created_by: null, created_at: stamp, updated_at: stamp });
     assign('alex', 'alex', 'event_manager', null);
     assign('jose', 'jose', 'door', null);
     assign('carlos', 'carlos', 'bartender', null);
   }
+  const event_briefs: Row[] = nextEvent
+    ? [
+        {
+          event_id: nextEvent.id,
+          call_time_at: at(nextEvent.date, nextEvent.startMinutes - 90),
+          dress_code: 'All black. Closed-toe shoes.',
+          expected_guests: 180,
+          manager_employee_id: DEMO_EMPLOYEES.alex,
+          staff_notes: 'ID everyone at the door — no exceptions on a ticketed night. Bar runs two wells; the second opens at doors.',
+          updated_by: null,
+          created_at: stamp,
+          updated_at: stamp,
+        },
+      ]
+    : [];
+
   const lastEvent = oneTimeEvents.filter((event) => event.date < today).sort((a, b) => b.date.localeCompare(a.date))[0] ?? null;
   if (lastEvent) {
     contractor_bookings.push({ id: id('booking:jerry-last'), contractor_id: DEMO_CONTRACTORS.jerry, event_id: lastEvent.id, location_id: L, role: 'dj', starts_at: at(lastEvent.date, lastEvent.startMinutes), ends_at: at(lastEvent.endMinutes <= lastEvent.startMinutes ? addDays(lastEvent.date, 1) : lastEvent.date, lastEvent.endMinutes), status: 'completed', agreed_cents: 40000, deposit_cents: 10000, paid_cents: 10000, payment_status: 'deposit_paid', payment_note: 'Deposit paid by Zelle', paid_on: null, note: null, created_by: null, created_at: stamp, updated_at: stamp });
@@ -416,6 +443,7 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
     training_attempts: [],
     shifts,
     shift_history,
+    schedule_periods,
     availability_rules,
     availability_exceptions,
     time_off_requests,
@@ -428,6 +456,7 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
     contractors,
     contractor_bookings,
     event_assignments,
+    event_briefs,
     staff_announcements,
     staff_announcement_reads,
     staff_notifications,
@@ -442,8 +471,8 @@ export function buildStaffDemo(now = new Date(), options: { userIds?: boolean } 
 export const STAFF_DEMO_ORDER = [
   'employees', 'employee_positions', 'employee_locations', 'employee_notes', 'employee_requirements',
   'training_modules', 'training_sections', 'training_questions', 'training_answer_keys', 'training_assignments',
-  'shifts', 'shift_history', 'availability_rules', 'availability_exceptions', 'time_off_requests', 'shift_requests',
+  'shifts', 'shift_history', 'schedule_periods', 'availability_rules', 'availability_exceptions', 'time_off_requests', 'shift_requests',
   'tasks', 'checklist_templates', 'checklist_template_items', 'checklist_runs', 'checklist_run_items',
-  'contractors', 'contractor_bookings', 'event_assignments', 'staff_announcements', 'staff_announcement_reads',
+  'contractors', 'contractor_bookings', 'event_assignments', 'event_briefs', 'staff_announcements', 'staff_announcement_reads',
   'staff_notifications', 'incidents', 'incident_employees',
 ] as const;

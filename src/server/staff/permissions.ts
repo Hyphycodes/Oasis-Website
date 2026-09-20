@@ -17,6 +17,11 @@ import type { Role } from '@/server/permissions';
  *   contractor                → contractor
  *   anything else             → none
  *
+ * The principle the matrix encodes: TRANSPARENCY IS NOT AUTHORITY. Seeing
+ * who is on tonight, or what the event needs, is different from being able
+ * to change it — so the read and the write are separate capabilities, and
+ * the read is the one an employee gets.
+ *
  * Pure and dependency-free, and the tests assert every cell.
  */
 
@@ -24,12 +29,14 @@ export type { OpsRole };
 
 export type OpsCapability =
   | 'staff.view_self'
+  | 'staff.view_roster'
   | 'staff.view_team'
   | 'staff.manage_team'
   | 'staff.manage_access'
   | 'schedule.view_self'
   | 'schedule.view_team'
   | 'schedule.manage'
+  | 'schedule.publish'
   | 'availability.manage_self'
   | 'timeoff.request'
   | 'timeoff.approve'
@@ -43,16 +50,27 @@ export type OpsCapability =
   | 'tasks.manage'
   | 'checklists.complete'
   | 'checklists.manage'
+  | 'events.view_brief'
   | 'events.staff'
-  | 'contractors.manage'
-  | 'announcements.manage'
+  | 'events.view_money'
+  | 'incidents.report'
   | 'incidents.manage'
+  | 'contractors.manage'
+  | 'contractors.view_self'
+  | 'announcements.manage'
   | 'notes.manage'
   | 'locations.view_all'
-  | 'locations.manage';
+  | 'locations.manage'
+  | 'system.preview_role';
 
+/**
+ * An employee. Everything here is either their own, or the operational
+ * context of a night they are working — never anyone else's private record
+ * and never a number with a currency sign on it.
+ */
 const EMPLOYEE: OpsCapability[] = [
   'staff.view_self',
+  'staff.view_roster',
   'schedule.view_self',
   'availability.manage_self',
   'timeoff.request',
@@ -61,6 +79,8 @@ const EMPLOYEE: OpsCapability[] = [
   'documents.view_self',
   'tasks.view_self',
   'checklists.complete',
+  'events.view_brief',
+  'incidents.report',
 ];
 
 const MANAGER: OpsCapability[] = [
@@ -69,6 +89,7 @@ const MANAGER: OpsCapability[] = [
   'staff.manage_team',
   'schedule.view_team',
   'schedule.manage',
+  'schedule.publish',
   'timeoff.approve',
   'coverage.approve',
   'training.manage',
@@ -76,6 +97,7 @@ const MANAGER: OpsCapability[] = [
   'tasks.manage',
   'checklists.manage',
   'events.staff',
+  'events.view_money',
   'contractors.manage',
   'announcements.manage',
   'incidents.manage',
@@ -83,11 +105,11 @@ const MANAGER: OpsCapability[] = [
 ];
 
 const MATRIX: Record<OpsRole, OpsCapability[]> = {
-  owner: [...MANAGER, 'staff.manage_access', 'locations.view_all', 'locations.manage'],
+  owner: [...MANAGER, 'staff.manage_access', 'locations.view_all', 'locations.manage', 'system.preview_role'],
   manager: MANAGER,
   employee: EMPLOYEE,
-  // A contractor with a sign-in sees nothing of the employee system yet.
-  contractor: [],
+  // A contractor sees their own bookings and nothing else of the restaurant.
+  contractor: ['contractors.view_self'],
   none: [],
 };
 
@@ -115,15 +137,36 @@ export function deriveOpsRole(input: { role: Role; active: boolean; hasEmployee:
   return 'none';
 }
 
+/**
+ * How much authority a role carries, low to high.
+ *
+ * Used by the owner's "preview as" tool, which may only ever move DOWN this
+ * list. Clamping rather than substituting is what makes the preview safe:
+ * an employee who forges the cookie previews as an employee.
+ */
+const RANK: Record<OpsRole, number> = { none: 0, contractor: 1, employee: 2, manager: 3, owner: 4 };
+
+export function isPreviewableRole(value: string): value is OpsRole {
+  return value === 'employee' || value === 'manager' || value === 'contractor';
+}
+
+/** The role a preview resolves to: never more than the account actually has. */
+export function clampPreview(actual: OpsRole, preview: OpsRole | null): OpsRole {
+  if (!preview) return actual;
+  return RANK[preview] < RANK[actual] ? preview : actual;
+}
+
 /** The message a blocked person sees. Explains, never just refuses. */
 export const OPS_DENIED_MESSAGE: Record<OpsCapability, string> = {
   'staff.view_self': 'Your account is not set up as an employee yet. Ask a manager to add you to the team.',
+  'staff.view_roster': 'Your account is not set up as an employee yet.',
   'staff.view_team': 'Only a manager can see the team directory.',
   'staff.manage_team': 'Only a manager can add or change employees.',
   'staff.manage_access': 'Only the owner can change what an account is allowed to do.',
   'schedule.view_self': 'Your account is not set up as an employee yet.',
   'schedule.view_team': 'Only a manager can see the whole schedule.',
   'schedule.manage': 'Only a manager can change the schedule.',
+  'schedule.publish': 'Only a manager can publish a schedule.',
   'availability.manage_self': 'Availability belongs to the employee. A manager can see it, not change it.',
   'timeoff.request': 'Only an employee can request time off for themselves.',
   'timeoff.approve': 'Only a manager can approve or deny time off — never the person who asked.',
@@ -137,11 +180,16 @@ export const OPS_DENIED_MESSAGE: Record<OpsCapability, string> = {
   'tasks.manage': 'Only a manager can create or assign tasks.',
   'checklists.complete': 'Your account is not set up as an employee yet.',
   'checklists.manage': 'Only a manager can create checklists.',
+  'events.view_brief': 'Your account is not set up as an employee yet.',
   'events.staff': 'Only a manager can staff an event.',
+  'events.view_money': 'Ticket sales and payouts are for managers.',
+  'incidents.report': 'Your account is not set up as an employee yet.',
+  'incidents.manage': 'Only a manager can see or review incidents.',
   'contractors.manage': 'Only a manager can see contractors and bookings.',
+  'contractors.view_self': 'That booking is not yours.',
   'announcements.manage': 'Only a manager can post announcements.',
-  'incidents.manage': 'Only a manager can see or record incidents.',
   'notes.manage': 'Only a manager can see manager notes.',
   'locations.view_all': 'Only the owner sees every location at once.',
   'locations.manage': 'Only the owner can add a location.',
+  'system.preview_role': 'Only the owner can preview the app as another role.',
 };

@@ -1,5 +1,5 @@
 import { StaffShell } from '@/components/staff/StaffShell';
-import { Avatar, Chips, Empty, Facts, Pill, Row, Screen, Section } from '@/components/staff/ui';
+import { Avatar, Button, Chips, Empty, Facts, Pill, Row, Screen, Section } from '@/components/staff/ui';
 import { EMPLOYMENT_TYPE_LABEL, EMPLOYEE_STATUS_LABEL } from '@/content/staff-types';
 import { describeRule, listAvailabilityFor } from '@/server/staff/availability';
 import { getEmployee, listPositions } from '@/server/staff/employees';
@@ -11,7 +11,14 @@ import { ProfileForm } from './ProfileForm';
 
 export const dynamic = 'force-dynamic';
 
-/** Me: contact details I own, positions and location a manager owns, and the doors to everything else. */
+/**
+ * Me.
+ *
+ * Contact details I own, positions and location a manager owns, and the few
+ * doors that belong here rather than in the navigation. Deliberately not an
+ * HR record: nothing about pay, nothing about anyone else, and the only
+ * numbers on it are my own.
+ */
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const page = await staffPage('staff.view_self');
   if (isDenied(page)) return page.denied;
@@ -22,7 +29,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     return (
       <StaffShell context={context} unread={unread}>
         <Screen title={context.staff.name || 'Profile'}>
-          <Empty title="No employee profile yet." detail="You have a manager sign-in without an employee record. Add yourself from Team if you also work shifts." />
+          <Empty title="No employee profile yet." detail="You have a manager sign-in without an employee record. Add yourself from Team if you also work shifts." action={<Button href="/staff/team/new">Add yourself</Button>} />
         </Screen>
       </StaffShell>
     );
@@ -62,13 +69,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 { label: 'Employment', value: EMPLOYMENT_TYPE_LABEL[employee.employmentType] },
                 { label: 'Location', value: context.location.name },
                 { label: 'Started', value: employee.startDate ?? employee.hireDate ?? '—' },
-                { label: 'Emergency contact', value: employee.emergencyContactName ? `${employee.emergencyContactName}${employee.emergencyContactRelationship ? ` (${employee.emergencyContactRelationship})` : ''} · ${employee.emergencyContactPhone ?? ''}` : 'Not set' },
+                { label: 'Emergency contact', value: employee.emergencyContactName ? `${employee.emergencyContactName}${employee.emergencyContactRelationship ? ` (${employee.emergencyContactRelationship})` : ''} · ${employee.emergencyContactPhone ?? ''}` : 'Not set — worth adding' },
                 { label: 'Shirt size', value: employee.shirtSize ?? 'Not set' },
               ]}
             />
             <Section title="Availability" action={<a href="/staff/availability" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">Change</a>}>
               {availability.rules.length === 0 ? (
-                <p className="text-[0.875rem] text-brown-soft">Not set yet. Managers assume you are open until you say otherwise.</p>
+                <p className="text-[0.875rem] text-brown-soft">Not set yet — managers will assume you’re open until you say otherwise.</p>
               ) : (
                 <div className="staff-panel grid grid-cols-7 gap-1 px-3 py-3 text-center">
                   {[0, 1, 2, 3, 4, 5, 6].map((weekday) => {
@@ -88,9 +95,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               <div className="staff-panel px-4">
                 <Row href="/staff/documents" title="Documents & certifications" detail={docsMissing ? `${docsMissing} need attention` : 'All in order'} icon="documents" trailing={docsMissing ? <Pill tone="warn">{docsMissing}</Pill> : null} />
                 <Row href="/staff/training" title="Training" detail={trainingTodo ? `${trainingTodo} to do` : 'All caught up'} icon="training" trailing={trainingTodo ? <Pill tone="accent">{trainingTodo}</Pill> : null} />
-                <Row href="/staff/time-off" title="Time off" detail="Requests and decisions" icon="calendar" />
-                <Row href="/staff/schedule?view=month" title="Schedule history" detail="Past and future shifts, by month" icon="schedule" />
-                {!employee.onboardingCompletedAt ? <Row href="/staff/onboarding" title="Onboarding" detail="Finish before your first shift" icon="check" /> : null}
+                <Row href="/staff/time-off" title="Time off" detail="Ask for a day, and see what was decided" icon="calendar" />
+                <Row href="/staff/tasks" title="Your list" detail="Everything assigned to you" icon="tasks" />
+                <Row href="/staff/incidents/new" title="Report something" detail="A guest issue, an injury, damage. Goes to the managers." icon="incidents" />
+                {!employee.onboardingCompletedAt ? <Row href="/staff/onboarding" title="Onboarding" detail="Finish it before your first shift" icon="check" /> : null}
               </div>
             </Section>
           </>

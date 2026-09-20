@@ -102,6 +102,7 @@ export const PRIMARY_KEY: Record<string, string> = {
   training_attempts: 'id',
   shifts: 'id',
   shift_history: 'id',
+  schedule_periods: 'id',
   availability_rules: 'id',
   availability_exceptions: 'id',
   time_off_requests: 'id',
@@ -121,6 +122,8 @@ export const PRIMARY_KEY: Record<string, string> = {
   incidents: 'id',
   incident_employees: 'id',
   ops_audit_log: 'id',
+  // The schedule week and the night brief (migration 0025).
+  event_briefs: 'event_id',
   // Link Hubs (migration 0023).
   link_hub_locations: 'id',
   link_hubs: 'id',

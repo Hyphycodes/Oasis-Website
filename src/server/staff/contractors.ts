@@ -24,6 +24,7 @@ function contractorFromRow(row: Row, upcoming: number, past: number): Contractor
     w9Status: (row.w9_status as Contractor['w9Status']) ?? 'missing',
     notes: (row.notes as string | null) ?? null,
     active: row.active !== false && !row.archived_at,
+    hasSignIn: Boolean(row.user_id),
     upcomingBookings: upcoming,
     pastBookings: past,
   };
@@ -45,6 +46,21 @@ export async function listContractors(db: Db, options: { includeInactive?: boole
 
 export async function getContractor(db: Db, id: string): Promise<Contractor | null> {
   return (await listContractors(db, { includeInactive: true })).find((contractor) => contractor.id === id) ?? null;
+}
+
+/**
+ * The contractor an account belongs to, for the stripped-down experience a
+ * DJ or an instructor signs in to. A contractor account with no row — or an
+ * archived one — resolves to null and sees nothing.
+ */
+export async function findContractorByUser(db: Db, userId: string): Promise<Contractor | null> {
+  try {
+    const rows = await db.list<Row>('contractors', { where: { user_id: userId } });
+    const row = rows.find((entry) => !entry.archived_at && entry.active !== false);
+    return row ? (await getContractor(db, String(row.id))) : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface ContractorInput {
@@ -85,6 +101,7 @@ export async function bookingsFromRows(db: Db, rows: Row[]): Promise<ContractorB
       id: String(row.id),
       contractorId: String(row.contractor_id),
       contractorName: names.get(String(row.contractor_id)) ?? 'Contractor',
+      locationId: (row.location_id as string | null) ?? null,
       eventId: (row.event_id as string | null) ?? null,
       eventTitle: event?.title ?? null,
       eventStartsAt: event?.startsAt ?? null,
@@ -99,6 +116,7 @@ export async function bookingsFromRows(db: Db, rows: Row[]): Promise<ContractorB
       paymentNote: (row.payment_note as string | null) ?? null,
       paidOn: (row.paid_on as string | null) ?? null,
       note: (row.note as string | null) ?? null,
+      arrivalNote: (row.arrival_note as string | null) ?? null,
     };
   });
 }
@@ -126,6 +144,7 @@ export interface BookingInput {
   paymentNote: string | null;
   paidOn: string | null;
   note: string | null;
+  arrivalNote: string | null;
 }
 
 export function paymentStatusFor(agreed: number, paid: number): BookingPaymentStatus {
@@ -149,6 +168,7 @@ export async function saveBooking(db: Db, id: string | null, input: BookingInput
     payment_note: input.paymentNote,
     paid_on: input.paidCents > 0 ? (input.paidOn ?? new Date().toISOString().slice(0, 10)) : null,
     note: input.note,
+    arrival_note: input.arrivalNote,
   };
   if (id) {
     const before = await db.get<Row>('contractor_bookings', id);

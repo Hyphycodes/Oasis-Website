@@ -105,6 +105,20 @@ export async function listEmployees(db: Db, filter: EmployeeFilter = {}): Promis
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
+/**
+ * Who to tell when something needs a manager.
+ *
+ * Resolved from the account tier on the employee row rather than from the
+ * position, so an Owner or Manager sign-in is reached whether or not anyone
+ * remembered to give them the `manager` position.
+ */
+export async function managersToNotify(db: Db, locationId: string | null = null): Promise<EmployeeSummary[]> {
+  const everyone = await listEmployees(db, locationId ? { locationId } : {});
+  const managers = everyone.filter((employee) => employee.accessRole === 'owner' || employee.accessRole === 'admin' || employee.positionIds.includes('manager'));
+  // A location with no manager of its own still needs someone to hear it.
+  return managers.length > 0 || !locationId ? managers : managersToNotify(db, null);
+}
+
 export async function employeeMap(db: Db): Promise<Map<string, EmployeeSummary>> {
   const list = await listEmployees(db, { includeInactive: true, includeArchived: true });
   return new Map(list.map((employee) => [employee.id, employee]));

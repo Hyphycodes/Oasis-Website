@@ -226,7 +226,10 @@ export function BookingForm({ booking, contractors, events, defaultContractorId,
       <Field id="paymentNote" label="Payment note">
         <TextInput id="paymentNote" name="paymentNote" defaultValue={booking?.paymentNote ?? ''} maxLength={200} />
       </Field>
-      <Field id="note" label="Note">
+      <Field id="arrivalNote" label="Arrival instructions" hint="The contractor reads this: which door, where to park, who to ask for.">
+        <TextInput id="arrivalNote" name="arrivalNote" defaultValue={booking?.arrivalNote ?? ''} maxLength={300} />
+      </Field>
+      <Field id="note" label="Internal note" hint="Managers only. The contractor never sees this.">
         <TextInput id="note" name="note" defaultValue={booking?.note ?? ''} maxLength={300} />
       </Field>
       <div className="sm:col-span-2">
@@ -341,10 +344,18 @@ export function AnnouncementForm({ announcement, locations, positions, events }:
   );
 }
 
-export function IncidentForm({ incident, employees, locations, events, defaultLocationId }: { incident: Incident | null; employees: EmployeeSummary[]; locations: LocationSummary[]; events: EventOption[]; defaultLocationId: string }) {
+/**
+ * One form, two audiences.
+ *
+ * `review` is off for an employee reporting something: the fields a manager
+ * owns — location, event, who else was involved, what was done about it,
+ * follow-up state — are not rendered, and the action ignores them even if
+ * they arrive anyway.
+ */
+export function IncidentForm({ incident, employees, locations, events, defaultLocationId, review = true }: { incident: Incident | null; employees: EmployeeSummary[]; locations: LocationSummary[]; events: EventOption[]; defaultLocationId: string; review?: boolean }) {
   return (
     <ActionForm action={saveIncidentAction} className="grid gap-4 sm:grid-cols-2">
-      {incident ? <input type="hidden" name="id" value={incident.id} /> : null}
+      {incident && review ? <input type="hidden" name="id" value={incident.id} /> : null}
       <div className="sm:col-span-2">
         <Field id="summary" label="What happened, in one line">
           <TextInput id="summary" name="summary" defaultValue={incident?.summary ?? ''} required maxLength={200} />
@@ -362,51 +373,59 @@ export function IncidentForm({ incident, employees, locations, events, defaultLo
       <Field id="occurredAt" label="When">
         <TextInput id="occurredAt" name="occurredAt" type="datetime-local" defaultValue={incident ? new Date(incident.occurredAt).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16)} />
       </Field>
-      <Field id="locationId" label="Location">
-        <Select id="locationId" name="locationId" defaultValue={incident?.locationId ?? defaultLocationId}>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {location.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field id="eventId" label="Event" hint="Optional.">
-        <Select id="eventId" name="eventId" defaultValue={incident?.eventId ?? ''}>
-          <option value="">None</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.label}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      {review ? (
+        <>
+          <Field id="locationId" label="Location">
+            <Select id="locationId" name="locationId" defaultValue={incident?.locationId ?? defaultLocationId}>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field id="eventId" label="Event" hint="Optional.">
+            <Select id="eventId" name="eventId" defaultValue={incident?.eventId ?? ''}>
+              <option value="">None</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </>
+      ) : null}
       <div className="sm:col-span-2">
-        <Field id="description" label="Details">
+        <Field id="description" label={review ? 'Details' : 'What happened'} hint={review ? undefined : 'As much as you remember, in order. A manager reads this — not your coworkers.'}>
           <TextArea id="description" name="description" rows={5} defaultValue={incident?.description ?? ''} maxLength={8000} />
         </Field>
       </div>
-      <div className="sm:col-span-2">
-        <Field id="actionsTaken" label="Actions taken">
-          <TextArea id="actionsTaken" name="actionsTaken" rows={3} defaultValue={incident?.actionsTaken ?? ''} maxLength={4000} />
-        </Field>
-      </div>
-      <div className="sm:col-span-2">
-        <p className="mb-1 text-[0.875rem] font-semibold text-brown">Employees involved</p>
-        <CheckGroup name="employeeIds" options={employees.map((employee) => ({ id: employee.id, label: employee.displayName }))} selected={incident?.employees.map((entry) => entry.employeeId) ?? []} />
-      </div>
-      <Field id="followUpStatus" label="Follow-up">
-        <Select id="followUpStatus" name="followUpStatus" defaultValue={incident?.followUpStatus ?? 'open'}>
-          <option value="open">Open</option>
-          <option value="monitoring">Monitoring</option>
-          <option value="closed">Closed</option>
-        </Select>
-      </Field>
+      {review ? (
+        <>
+          <div className="sm:col-span-2">
+            <Field id="actionsTaken" label="Actions taken">
+              <TextArea id="actionsTaken" name="actionsTaken" rows={3} defaultValue={incident?.actionsTaken ?? ''} maxLength={4000} />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <p className="mb-1 text-[0.875rem] font-semibold text-brown">Employees involved</p>
+            <CheckGroup name="employeeIds" options={employees.map((employee) => ({ id: employee.id, label: employee.displayName }))} selected={incident?.employees.map((entry) => entry.employeeId) ?? []} />
+          </div>
+          <Field id="followUpStatus" label="Follow-up">
+            <Select id="followUpStatus" name="followUpStatus" defaultValue={incident?.followUpStatus ?? 'open'}>
+              <option value="open">Open</option>
+              <option value="monitoring">Monitoring</option>
+              <option value="closed">Closed</option>
+            </Select>
+          </Field>
+        </>
+      ) : null}
       <Field id="attachments" label="Attachments" hint="Photos or PDFs. Stored privately.">
         <input id="attachments" name="attachments" type="file" multiple accept="image/*,application/pdf" className="mt-1.5 block w-full text-[0.9375rem] text-brown file:mr-3 file:rounded-(--radius-sm) file:border file:border-brown/30 file:bg-transparent file:px-3 file:py-2 file:text-brown" />
       </Field>
       <div className="sm:col-span-2">
-        <SubmitButton>{incident ? 'Save incident' : 'Record incident'}</SubmitButton>
+        <SubmitButton>{!review ? 'Send to a manager' : incident ? 'Save incident' : 'Record incident'}</SubmitButton>
       </div>
     </ActionForm>
   );

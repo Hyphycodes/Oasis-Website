@@ -53,8 +53,17 @@ function employeeInputFrom(form: FormData, fallbackLocation: string): { input: E
   };
 }
 
-/** Creates the sign-in for an employee and emails the invitation. Returns a sentence about what happened. */
-async function inviteSignIn(email: string, name: string, invitedBy: string): Promise<{ userId: string | null; note: string }> {
+/**
+ * Creates a sign-in and emails the invitation. Returns a sentence about what
+ * happened, because "invited" and "they already had an account" and "the
+ * email bounced" are three different things a manager needs to know.
+ *
+ * `role` is the account tier the new profile gets: `staff` for an employee,
+ * `contractor` for a DJ or an instructor. A contractor profile carries no
+ * content capability and, in the operational matrix, only their own
+ * bookings — so an invitation cannot accidentally open the restaurant.
+ */
+export async function inviteSignIn(email: string, name: string, invitedBy: string, role: 'staff' | 'contractor' = 'staff'): Promise<{ userId: string | null; note: string }> {
   if (!isSupabaseConfigured()) return { userId: null, note: 'No sign-in was created: this is the local development copy.' };
   const service = getServiceClient();
   if (!service) return { userId: null, note: 'No sign-in was created: the account service is not connected.' };
@@ -68,7 +77,7 @@ async function inviteSignIn(email: string, name: string, invitedBy: string): Pro
   if (!user) return { userId: null, note: 'No sign-in was created.' };
   const { data: profile } = await service.from('profiles').select('role').eq('user_id', user.id).maybeSingle();
   if (!profile) {
-    const { error } = await service.from('profiles').upsert({ user_id: user.id, name, role: 'staff', active: true, sections: [] }, { onConflict: 'user_id' });
+    const { error } = await service.from('profiles').upsert({ user_id: user.id, name, role, active: true, sections: [] }, { onConflict: 'user_id' });
     if (error) return { userId: user.id, note: `Sign-in exists but the staff profile could not be saved (${error.message}).` };
   }
   if (user.email_confirmed_at) return { userId: user.id, note: 'They already had a verified sign-in, so they can open the staff app straight away.' };

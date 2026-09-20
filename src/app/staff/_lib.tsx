@@ -22,6 +22,10 @@ export interface StaffPage {
 export async function staffPage(capability: OpsCapability = 'staff.view_self'): Promise<StaffPage | { denied: ReactNode }> {
   const context = await getStaffContext();
   if (!context) redirect('/admin/login?next=/staff');
+  // A contractor is not a small employee — they have their own app, which is
+  // one screen. Sending them there beats showing them an employee shell with
+  // everything greyed out.
+  if (context.opsRole === 'contractor') redirect('/staff/bookings');
   const db = opsReadDb();
   const unread = context.employee && db ? await unreadCount(db, context.employee.id).catch(() => 0) : 0;
   if (!db) {
@@ -42,7 +46,13 @@ export async function staffPage(capability: OpsCapability = 'staff.view_self'): 
           <Screen title={context.opsRole === 'none' ? 'Almost there' : 'Not for your account'}>
             <Empty
               title={context.opsRole === 'none' ? 'Your account is not set up as an employee yet.' : 'Your account cannot open this.'}
-              detail={context.opsRole === 'none' ? 'Ask a manager to add you to the team, and this becomes your schedule, training and tasks.' : 'If you need it, ask a manager.'}
+              detail={
+                context.opsRole === 'none'
+                  ? 'Ask a manager to add you to the team, and this becomes your schedule, training and shifts.'
+                  : context.previewing
+                    ? 'You are previewing a role that cannot open this — which is the point. Exit the preview to carry on.'
+                    : 'If you need it, ask a manager.'
+              }
             />
           </Screen>
         </StaffShell>

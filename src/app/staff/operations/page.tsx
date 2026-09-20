@@ -1,20 +1,30 @@
 import Link from 'next/link';
 import { OneTap } from '@/components/staff/forms';
+import { NightBrief } from '@/components/staff/NightBrief';
+import { RolePreview } from '@/components/staff/RolePreview';
 import { ShiftRow } from '@/components/staff/ShiftCard';
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Button, Chips, Empty, Pill, Row, Screen, Section, Stat } from '@/components/staff/ui';
 import { STAFFING_ROLE_LABEL } from '@/content/staff-types';
-import { formatClockShort, formatDate, formatDateRange, formatDayShort, formatRelative, formatShiftRange } from '@/lib/staff/time';
+import { formatDate, formatDateRange, formatDayShort, formatRelative, formatShiftRange } from '@/lib/staff/time';
 import { decideCoverage } from '@/server/actions/staff/coverage';
 import { decideTimeOffRequest } from '@/server/actions/staff/timeoff';
+import { briefsFor } from '@/server/staff/briefs';
 import { managerDashboard } from '@/server/staff/dashboard';
+import { contextCan } from '@/server/staff/session';
 import { isDenied, staffPage } from '../_lib';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Today, for a manager. The owner sees every location; a manager their own.
- * Each number is a thing to do, and each is a link to where it is done.
+ * Operations: tonight, then everything else.
+ *
+ * This replaced a "Manage" dropdown with ten entries in it. A menu can only
+ * list; a screen can say how many documents are expiring and which two
+ * people are waiting on a decision, which is the difference between a
+ * manager hunting and a manager working. The top half is the night; the
+ * bottom half is the index — and the index is the only place the deeper
+ * modules are advertised, so the nav bar stays five items wide.
  */
 export default async function OperationsPage({ searchParams }: { searchParams: Promise<{ location?: string }> }) {
   const page = await staffPage('schedule.view_team');
@@ -26,10 +36,18 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const locations = all ? context.locations : [chosen ?? context.location];
   const dashboard = await managerDashboard(db, locations);
   const multi = context.locations.length > 1;
+  const briefs = await briefsFor(db, dashboard.days.flatMap((day) => day.events.map((event) => event.id)));
+  const decisions = dashboard.pendingTimeOff.length + dashboard.coverage.filter((request) => request.claimedBy || request.kind === 'give_up').length;
+  const documents = dashboard.documentsExpired.length + dashboard.documentsExpiring.length + dashboard.documentsSubmitted.length;
 
   return (
     <StaffShell context={context} unread={unread} wide>
-      <Screen title={all ? 'All locations' : locations[0]!.name} eyebrow="Operations" lead={formatDate(dashboard.today)} actions={<Button href="/staff/operations/schedule" variant="primary">Build schedule</Button>}>
+      <Screen
+        title="Operations"
+        eyebrow={all ? 'Every location' : locations[0]!.name}
+        lead={formatDate(dashboard.today)}
+        actions={<Button href="/staff/schedule" variant="primary">Schedule</Button>}
+      >
         {multi ? (
           <Chips
             items={[
@@ -42,60 +60,60 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         {dashboard.days.map((day) => (
           <div key={day.location.id} className="grid gap-5">
             {all ? <h2 className="display text-[1.5rem] leading-none text-brown">{day.location.name}</h2> : null}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              <Stat value={day.scheduled.length} label="scheduled today" href={`/staff/operations/schedule?location=${day.location.slug}`} />
-              <Stat value={day.events.length} label={day.events.length === 1 ? 'event' : 'events'} href="/staff/events" />
-              <Stat value={day.openShifts.length} label="open shifts" href={`/staff/operations/schedule?location=${day.location.slug}`} tone={day.openShifts.length ? 'warn' : undefined} />
-              <Stat value={day.callOffs.length} label={day.callOffs.length === 1 ? 'call-off' : 'call-offs'} href="/staff/operations/coverage" tone={day.callOffs.length ? 'bad' : undefined} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              <Stat value={day.scheduled.length} label="on tonight" href={`/staff/schedule?location=${day.location.slug}`} />
+              <Stat value={day.openShifts.length} label="open shifts" href="/staff/schedule/coverage" tone={day.openShifts.length ? 'warn' : undefined} />
+              <Stat value={decisions} label="waiting on you" href="/staff/schedule/coverage" tone={decisions ? 'warn' : undefined} />
               <Stat value={day.overdueTasks.length} label="overdue tasks" href="/staff/operations/tasks" tone={day.overdueTasks.length ? 'warn' : undefined} />
-              <Stat value={day.draftCount} label="unpublished shifts" href={`/staff/operations/schedule?location=${day.location.slug}`} tone={day.draftCount ? 'warn' : undefined} />
+              <Stat value={day.draftCount} label="unpublished shifts" href={`/staff/schedule?location=${day.location.slug}`} tone={day.draftCount ? 'warn' : undefined} />
             </div>
 
             {day.events.length > 0 ? (
               <Section title="Tonight">
                 <div className="grid gap-2">
                   {day.events.map((event) => (
-                    <Link key={event.id} href={`/staff/events/${encodeURIComponent(event.id)}`} className="staff-panel block px-4 py-3.5 active:bg-brown/6">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[1.0625rem] font-semibold text-brown">{event.title}</p>
-                          <p className="mt-0.5 text-[0.875rem] text-brown-soft">
-                            {event.doorsAt ? `Doors ${formatClockShort(event.doorsAt, day.location.timezone)}` : `Starts ${formatClockShort(event.startsAt, day.location.timezone)}`}
-                            {event.ticketsSold !== null ? ` · ${event.ticketsSold} tickets sold` : ''}
-                          </p>
-                        </div>
-                        {event.gaps.length > 0 ? <Pill tone="warn">{event.gaps.length} unfilled</Pill> : <Pill tone="good">Staffed</Pill>}
-                      </div>
-                      <ul className="mt-2 grid gap-0.5 text-[0.875rem] sm:grid-cols-2">
+                    <div key={event.id}>
+                      <NightBrief
+                        title={event.title}
+                        href={`/staff/events/${encodeURIComponent(event.id)}`}
+                        startsAt={event.startsAt}
+                        doorsAt={event.doorsAt}
+                        timezone={day.location.timezone}
+                        crowd={briefs.get(event.id)?.expectedGuests ?? event.ticketsSold}
+                        crowdLabel={briefs.get(event.id)?.expectedGuests != null ? 'expected' : 'tickets out'}
+                        brief={briefs.get(event.id) ?? null}
+                        myRole={null}
+                      />
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[0.8125rem]">
                         {event.staffing.map((entry, index) => (
-                          <li key={index} className="text-brown">
+                          <span key={index} className="text-brown-soft">
                             <span className="text-success">✓</span> {STAFFING_ROLE_LABEL[entry.role]}: {entry.name}
-                          </li>
+                          </span>
                         ))}
                         {event.gaps.map((role) => (
-                          <li key={role} className="text-warning">
-                            ⚠ {STAFFING_ROLE_LABEL[role]} unassigned
-                          </li>
+                          <Link key={role} href={`/staff/events/${encodeURIComponent(event.id)}`} className="font-semibold text-warning underline underline-offset-4">
+                            {STAFFING_ROLE_LABEL[role]} unassigned
+                          </Link>
                         ))}
-                      </ul>
-                    </Link>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </Section>
             ) : null}
 
             {day.scheduleIssues.length > 0 ? (
-              <Section title="Schedule issues" count={day.scheduleIssues.length}>
+              <Section title="Worth a look" count={day.scheduleIssues.length}>
                 <div className="staff-panel px-4">
                   {day.scheduleIssues.map((shift) => (
-                    <ShiftRow key={shift.id} shift={shift} href={`/staff/operations/schedule/shift/${shift.id}`} showEmployee showDate={false} />
+                    <ShiftRow key={shift.id} shift={shift} href={`/staff/schedule?edit=${shift.id}`} showEmployee showDate={false} />
                   ))}
                 </div>
               </Section>
             ) : null}
 
             {day.checklists.length > 0 ? (
-              <Section title="Checklists today">
+              <Section title="Checklists today" action={<Link href="/staff/operations/checklists" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
                 <div className="staff-panel px-4">
                   {day.checklists.map((run) => (
                     <Row key={run.id} href={`/staff/checklists/${run.id}`} title={run.title} detail={`${run.done} of ${run.total}${run.assignedEmployeeName ? ` · ${run.assignedEmployeeName}` : ''}`} trailing={run.status === 'verified' ? <Pill tone="good">Verified</Pill> : run.status === 'complete' ? <Pill tone="accent">Verify</Pill> : null} />
@@ -106,16 +124,19 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           </div>
         ))}
 
+        {/* ------------------------------------------------ decisions to make */}
         {dashboard.pendingTimeOff.length > 0 ? (
-          <Section title="Time-off requests" count={dashboard.pendingTimeOff.length} action={<Link href="/staff/operations/time-off" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
+          <Section title="Time off" count={dashboard.pendingTimeOff.length} action={<Link href="/staff/operations/time-off" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
             <div className="staff-panel px-4">
               {dashboard.pendingTimeOff.slice(0, 4).map((request) => (
-                <div key={request.id} className="staff-row flex-wrap">
+                <div key={request.id} className="staff-row flex-wrap gap-y-2">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[0.9375rem] font-semibold text-brown">
                       {request.employeeName} · {formatDateRange(request.startsOn, request.endsOn)}
                     </span>
-                    <span className="block text-[0.8125rem] text-brown-soft">{request.reason ?? 'No reason given'} · {formatRelative(request.createdAt)}</span>
+                    <span className="block text-[0.8125rem] text-brown-soft">
+                      {request.reason ?? 'No reason given'} · asked {formatRelative(request.createdAt)}
+                    </span>
                   </span>
                   {request.employeeId !== context.employee?.id ? (
                     <span className="flex gap-2">
@@ -136,15 +157,17 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
         ) : null}
 
         {dashboard.coverage.length > 0 ? (
-          <Section title="Shift requests" count={dashboard.coverage.length} action={<Link href="/staff/operations/coverage" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
+          <Section title="Shift requests" count={dashboard.coverage.length} action={<Link href="/staff/schedule/coverage" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
             <div className="staff-panel px-4">
               {dashboard.coverage.slice(0, 4).map((request) => (
-                <div key={request.id} className="staff-row flex-wrap">
+                <div key={request.id} className="staff-row flex-wrap gap-y-2">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[0.9375rem] font-semibold text-brown">
-                      {request.requestedByName} · {formatDayShort(request.shift.startsAt, request.shift.locationTimezone)} {formatShiftRange(request.shift.startsAt, request.shift.endsAt, request.shift.locationTimezone)} · {request.shift.positionName}
+                      {request.requestedByName} · {formatDayShort(request.shift.startsAt, request.shift.locationTimezone)} {formatShiftRange(request.shift.startsAt, request.shift.endsAt, request.shift.locationTimezone)}
                     </span>
-                    <span className="block text-[0.8125rem] text-brown-soft">{request.claimedByName ? `${request.claimedByName} wants it` : 'Nobody has claimed it yet'}</span>
+                    <span className="block text-[0.8125rem] text-brown-soft">
+                      {request.shift.positionName} · {request.claimedByName ? `${request.claimedByName} wants it` : 'nobody has claimed it yet'}
+                    </span>
                   </span>
                   {request.claimedBy || request.kind === 'give_up' ? (
                     <span className="flex gap-2">
@@ -162,62 +185,33 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
           </Section>
         ) : null}
 
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Section title="Training" action={<Link href="/staff/operations/training" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">Academy</Link>}>
-            {dashboard.trainingOverdue.length === 0 ? (
-              <p className="text-[0.875rem] text-brown-soft">{dashboard.trainingOutstanding ? `${dashboard.trainingOutstanding} in progress, none overdue.` : 'Everyone is caught up.'}</p>
-            ) : (
-              <div className="staff-panel px-4">
-                {dashboard.trainingOverdue.slice(0, 5).map((assignment) => (
-                  <Row key={assignment.id} href={`/staff/team/${assignment.employeeId}?tab=training`} title={`${assignment.employeeName} · ${assignment.module.title}`} detail={`Due ${assignment.dueOn}`} trailing={<Pill tone="bad">Overdue</Pill>} />
-                ))}
-              </div>
-            )}
-          </Section>
-          <Section title="Documents" action={<Link href="/staff/operations/documents" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
-            {dashboard.documentsExpired.length + dashboard.documentsExpiring.length + dashboard.documentsSubmitted.length === 0 ? (
-              <p className="text-[0.875rem] text-brown-soft">Nothing expiring, nothing waiting.</p>
-            ) : (
-              <div className="staff-panel px-4">
-                {dashboard.documentsSubmitted.slice(0, 3).map((item) => (
-                  <Row key={`${item.employeeId}-${item.type.id}`} href={`/staff/team/${item.employeeId}?tab=documents`} title={`${dashboard.employees.find((employee) => employee.id === item.employeeId)?.displayName ?? 'Employee'} · ${item.type.title}`} detail="Uploaded, needs verifying" trailing={<Pill tone="accent">Verify</Pill>} />
-                ))}
-                {dashboard.documentsExpired.slice(0, 3).map((item) => (
-                  <Row key={`${item.employeeId}-${item.type.id}`} href={`/staff/team/${item.employeeId}?tab=documents`} title={`${dashboard.employees.find((employee) => employee.id === item.employeeId)?.displayName ?? 'Employee'} · ${item.type.title}`} detail={`Expired ${item.expiresOn}`} trailing={<Pill tone="bad">Expired</Pill>} />
-                ))}
-                {dashboard.documentsExpiring.slice(0, 3).map((item) => (
-                  <Row key={`${item.employeeId}-${item.type.id}`} href={`/staff/team/${item.employeeId}?tab=documents`} title={`${dashboard.employees.find((employee) => employee.id === item.employeeId)?.displayName ?? 'Employee'} · ${item.type.title}`} detail={`Expires ${item.expiresOn}`} trailing={<Pill tone="warn">Expiring</Pill>} />
-                ))}
-              </div>
-            )}
-          </Section>
-          <Section title="Onboarding" action={<Link href="/staff/operations/onboarding" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
-            {dashboard.onboarding.length === 0 ? (
-              <p className="text-[0.875rem] text-brown-soft">No new hires in progress.</p>
-            ) : (
-              <div className="staff-panel px-4">
-                {dashboard.onboarding.map((entry) => (
-                  <Row key={entry.employee.id} href={`/staff/team/${entry.employee.id}?tab=onboarding`} title={entry.employee.displayName} detail={`${entry.complete} of ${entry.total} complete`} trailing={<Pill tone={entry.stage === 'ready' ? 'good' : entry.stage === 'in_progress' ? 'accent' : 'neutral'}>{entry.stage === 'ready' ? 'Ready' : entry.stage === 'in_progress' ? 'In progress' : 'Not started'}</Pill>} />
-                ))}
-              </div>
-            )}
-          </Section>
-          <Section title="Contractors" action={<Link href="/staff/contractors" className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">All</Link>}>
-            {dashboard.contractorsUnpaid.length === 0 && dashboard.contractorsUpcoming.length === 0 ? (
-              <p className="text-[0.875rem] text-brown-soft">No bookings coming up.</p>
-            ) : (
-              <div className="staff-panel px-4">
-                {dashboard.contractorsUnpaid.slice(0, 3).map((booking) => (
-                  <Row key={booking.id} href={`/staff/contractors/${booking.contractorId}`} title={`${booking.contractorName} · ${booking.eventTitle ?? booking.role}`} detail="Past booking, not fully paid" trailing={<Pill tone="warn">Unpaid</Pill>} />
-                ))}
-                {dashboard.contractorsUpcoming.slice(0, 4).map((booking) => (
-                  <Row key={booking.id} href={`/staff/contractors/${booking.contractorId}`} title={`${booking.contractorName} · ${booking.eventTitle ?? booking.role}`} detail={booking.startsAt ? formatDayShort(booking.startsAt, context.location.timezone) : undefined} trailing={<Pill tone={booking.status === 'confirmed' ? 'good' : 'neutral'}>{booking.status}</Pill>} />
-                ))}
-              </div>
-            )}
-          </Section>
-        </div>
-        {dashboard.days.every((day) => day.events.length === 0 && day.scheduled.length === 0) ? <Empty title="A quiet day." detail="Nothing scheduled and no events. The schedule builder is one tap away." /> : null}
+        {/* ------------------------------------------------------- the index */}
+        <Section title="Everything else">
+          <div className="grid gap-2 lg:grid-cols-2">
+            <div className="staff-panel px-4">
+              <Row href="/staff/events" title="Events" detail="Staffing, briefs and who is on each night" icon="events" />
+              <Row href="/staff/operations/checklists" title="Checklists" detail="Opening, closing, event setup" icon="check" />
+              <Row href="/staff/operations/tasks" title="Tasks" detail="Assign and follow up" icon="tasks" trailing={dashboard.days[0]?.overdueTasks.length ? <Pill tone="warn">{dashboard.days[0].overdueTasks.length} overdue</Pill> : null} />
+              <Row href="/staff/announcements/manage" title="Announcements" detail="Post, and see who has read it" icon="announcements" />
+              <Row href="/staff/incidents" title="Incidents" detail="Reviewed by managers only" icon="incidents" />
+            </div>
+            <div className="staff-panel px-4">
+              <Row href="/staff/operations/training" title="Training" detail="Modules, assignments, who is cleared" icon="training" trailing={dashboard.trainingOverdue.length ? <Pill tone="bad">{dashboard.trainingOverdue.length} overdue</Pill> : null} />
+              <Row href="/staff/operations/documents" title="Documents" detail="Missing, expiring, waiting to be verified" icon="documents" trailing={documents ? <Pill tone="warn">{documents}</Pill> : null} />
+              <Row href="/staff/operations/onboarding" title="Onboarding" detail="New hires and where they are up to" icon="profile" trailing={dashboard.onboarding.length ? <Pill tone="accent">{dashboard.onboarding.length}</Pill> : null} />
+              <Row href="/staff/contractors" title="Contractors" detail="DJs, instructors, photographers and their bookings" icon="contractors" trailing={dashboard.contractorsUnpaid.length ? <Pill tone="warn">{dashboard.contractorsUnpaid.length} unpaid</Pill> : null} />
+              <Row href="/staff/search" title="Search" detail="People, phone numbers, events" icon="search" />
+              {contextCan(context, 'locations.manage') ? <Row href="/staff/locations" title="Locations" detail="Lockport, and the next one" icon="locations" /> : null}
+              <Row href="/staff/profile" title="Your profile" detail="Your own details, availability and notifications" icon="profile" />
+            </div>
+          </div>
+        </Section>
+
+        {contextCan(context, 'system.preview_role') ? <RolePreview current={context.previewing} /> : null}
+
+        {dashboard.days.every((day) => day.events.length === 0 && day.scheduled.length === 0) && decisions === 0 ? (
+          <Empty title="A quiet day." detail="Nothing scheduled and no events. The week is one tap away." action={<Button href="/staff/schedule">Open the schedule</Button>} />
+        ) : null}
       </Screen>
     </StaffShell>
   );

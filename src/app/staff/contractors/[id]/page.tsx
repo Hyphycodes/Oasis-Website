@@ -6,7 +6,7 @@ import { Back, Chips, Facts, Pill, Screen, Section } from '@/components/staff/ui
 import { CONTRACTOR_SERVICE_LABEL } from '@/content/staff-types';
 import { formatPrice } from '@/lib/format';
 import { formatDayShort } from '@/lib/staff/time';
-import { markPaid } from '@/server/actions/staff/contractors';
+import { inviteContractor, markPaid } from '@/server/actions/staff/contractors';
 import { getContractor, listBookings, listContractors } from '@/server/staff/contractors';
 import { eventOptionsFor, isDenied, staffPage } from '../../_lib';
 
@@ -45,6 +45,22 @@ export default async function ContractorPage({ params, searchParams }: { params:
               ]}
             />
             {contractor.notes ? <p className="whitespace-pre-line text-[0.9375rem] text-brown">{contractor.notes}</p> : null}
+            <Section title="Their own view">
+              <div className="staff-panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5">
+                <p className="min-w-0 flex-1 text-[0.9375rem] leading-relaxed text-brown-soft">
+                  {contractor.hasSignIn
+                    ? 'They can sign in and see their bookings, arrival notes and payment status — nothing else of the restaurant.'
+                    : 'Give them a sign-in and they can look up their own bookings, when to arrive and whether they have been paid. They see nothing else.'}
+                </p>
+                {contractor.hasSignIn ? (
+                  <Pill tone="good">Has a sign-in</Pill>
+                ) : (
+                  <OneTap action={inviteContractor} fields={{ id }} variant="secondary" confirm={`Email ${contractor.email ?? 'them'} a sign-in for their own bookings?`}>
+                    Invite them
+                  </OneTap>
+                )}
+              </div>
+            </Section>
             <Section title={editing ? 'Edit booking' : 'New booking'} action={editing ? <a href={`/staff/contractors/${id}`} className="text-[0.8125rem] font-semibold text-brown-soft underline underline-offset-4">New instead</a> : undefined}>
               <div className="staff-panel px-4 py-3">
                 <BookingForm key={editing?.id ?? 'new'} booking={editing} contractors={all} events={events} defaultContractorId={id} />

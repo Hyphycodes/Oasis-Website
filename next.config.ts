@@ -43,6 +43,14 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       { source: '/event-details/:slug', destination: '/events/:slug', permanent: true },
+      // The staff app's schedule used to be two destinations — "Schedule" for
+      // your own shifts and "Build schedule" under a Manage menu for everyone
+      // else's. It is one route now, which decides what to show from what the
+      // account may do. These keep every bookmark and old notification working.
+      { source: '/staff/operations/schedule', destination: '/staff/schedule', permanent: false },
+      { source: '/staff/operations/schedule/new', destination: '/staff/schedule', permanent: false },
+      { source: '/staff/operations/schedule/shift/:id', destination: '/staff/schedule?edit=:id', permanent: false },
+      { source: '/staff/operations/coverage', destination: '/staff/schedule/coverage', permanent: false },
       // Emails became its own admin section; these were its addresses for a day.
       { source: '/admin/communications', destination: '/admin/emails/sending', permanent: false },
       { source: '/admin/communications/gallery', destination: '/admin/emails', permanent: false },

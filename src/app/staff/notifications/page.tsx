@@ -27,7 +27,7 @@ export default async function NotificationsPage() {
         }
       >
         {notifications.length === 0 ? (
-          <Empty title="Nothing yet." detail="Schedule changes, decisions and assignments show up here." />
+          <Empty title="Nothing yet." detail="A published schedule, a shift change, a decision on time off — they all land here." />
         ) : (
           <div className="staff-panel px-4">
             {notifications.map((notification) => {

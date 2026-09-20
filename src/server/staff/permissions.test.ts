@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveOpsRole, OPS_DENIED_MESSAGE, opsCan, type OpsCapability, type OpsRole } from './permissions';
+import { clampPreview, deriveOpsRole, isPreviewableRole, OPS_DENIED_MESSAGE, opsCan, type OpsCapability, type OpsRole } from './permissions';
 
 /**
  * The operational matrix, cell by cell, the same way the content matrix is
@@ -11,12 +11,14 @@ const ROLES: OpsRole[] = ['owner', 'manager', 'employee', 'contractor', 'none'];
 
 const EXPECTED: Record<OpsCapability, OpsRole[]> = {
   'staff.view_self': ['owner', 'manager', 'employee'],
+  'staff.view_roster': ['owner', 'manager', 'employee'],
   'staff.view_team': ['owner', 'manager'],
   'staff.manage_team': ['owner', 'manager'],
   'staff.manage_access': ['owner'],
   'schedule.view_self': ['owner', 'manager', 'employee'],
   'schedule.view_team': ['owner', 'manager'],
   'schedule.manage': ['owner', 'manager'],
+  'schedule.publish': ['owner', 'manager'],
   'availability.manage_self': ['owner', 'manager', 'employee'],
   'timeoff.request': ['owner', 'manager', 'employee'],
   'timeoff.approve': ['owner', 'manager'],
@@ -30,13 +32,18 @@ const EXPECTED: Record<OpsCapability, OpsRole[]> = {
   'tasks.manage': ['owner', 'manager'],
   'checklists.complete': ['owner', 'manager', 'employee'],
   'checklists.manage': ['owner', 'manager'],
+  'events.view_brief': ['owner', 'manager', 'employee'],
   'events.staff': ['owner', 'manager'],
-  'contractors.manage': ['owner', 'manager'],
-  'announcements.manage': ['owner', 'manager'],
+  'events.view_money': ['owner', 'manager'],
+  'incidents.report': ['owner', 'manager', 'employee'],
   'incidents.manage': ['owner', 'manager'],
+  'contractors.manage': ['owner', 'manager'],
+  'contractors.view_self': ['contractor'],
+  'announcements.manage': ['owner', 'manager'],
   'notes.manage': ['owner', 'manager'],
   'locations.view_all': ['owner'],
   'locations.manage': ['owner'],
+  'system.preview_role': ['owner'],
 };
 
 describe('operational permission matrix', () => {
@@ -48,6 +55,13 @@ describe('operational permission matrix', () => {
       });
     }
   }
+
+  it('an employee sees the night but not the money, and reports an incident without browsing them', () => {
+    expect(opsCan({ role: 'employee' }, 'events.view_brief')).toBe(true);
+    expect(opsCan({ role: 'employee' }, 'events.view_money')).toBe(false);
+    expect(opsCan({ role: 'employee' }, 'incidents.report')).toBe(true);
+    expect(opsCan({ role: 'employee' }, 'incidents.manage')).toBe(false);
+  });
 
   it('refuses everything for an inactive account, whatever its role', () => {
     for (const capability of Object.keys(EXPECTED) as OpsCapability[]) {
@@ -61,8 +75,9 @@ describe('operational permission matrix', () => {
     }
   });
 
-  it('a contractor cannot read employee data, schedules, documents or notes', () => {
-    for (const capability of ['staff.view_team', 'staff.view_self', 'documents.view_self', 'documents.manage', 'schedule.view_team', 'notes.manage'] as OpsCapability[]) {
+  it('a contractor sees their own bookings and nothing else of the restaurant', () => {
+    expect(opsCan({ role: 'contractor' }, 'contractors.view_self')).toBe(true);
+    for (const capability of ['staff.view_team', 'staff.view_self', 'staff.view_roster', 'documents.view_self', 'documents.manage', 'schedule.view_team', 'schedule.view_self', 'notes.manage', 'events.view_brief', 'contractors.manage'] as OpsCapability[]) {
       expect(opsCan({ role: 'contractor' }, capability)).toBe(false);
     }
   });
@@ -95,5 +110,34 @@ describe('deriving the operational role', () => {
 
   it('a deactivated account gives nothing regardless of role', () => {
     expect(deriveOpsRole({ role: 'owner', active: false, hasEmployee: true, employeeActive: true })).toBe('none');
+  });
+});
+
+describe('previewing as another role', () => {
+  it('only offers the three roles worth previewing', () => {
+    expect(isPreviewableRole('employee')).toBe(true);
+    expect(isPreviewableRole('manager')).toBe(true);
+    expect(isPreviewableRole('contractor')).toBe(true);
+    expect(isPreviewableRole('owner')).toBe(false);
+    expect(isPreviewableRole('none')).toBe(false);
+    expect(isPreviewableRole('nonsense')).toBe(false);
+  });
+
+  it('narrows, and can never widen — a forged cookie buys nothing', () => {
+    expect(clampPreview('owner', 'manager')).toBe('manager');
+    expect(clampPreview('owner', 'employee')).toBe('employee');
+    expect(clampPreview('owner', 'contractor')).toBe('contractor');
+    // An employee asking to preview as a manager stays an employee.
+    expect(clampPreview('employee', 'manager')).toBe('employee');
+    expect(clampPreview('contractor', 'manager')).toBe('contractor');
+    expect(clampPreview('none', 'employee')).toBe('none');
+    expect(clampPreview('manager', null)).toBe('manager');
+  });
+
+  it('a previewed role really loses the capabilities it is previewing without', () => {
+    const previewed = clampPreview('owner', 'employee');
+    expect(opsCan({ role: previewed }, 'schedule.manage')).toBe(false);
+    expect(opsCan({ role: previewed }, 'staff.view_team')).toBe(false);
+    expect(opsCan({ role: previewed }, 'schedule.view_self')).toBe(true);
   });
 });

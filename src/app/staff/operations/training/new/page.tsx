@@ -13,7 +13,7 @@ export default async function NewModulePage() {
   const positions = await listPositions(db);
   return (
     <StaffShell context={context} unread={unread} wide>
-      <Back href="/staff/operations/training" label="Academy" />
+      <Back href="/staff/operations/training" label="Training" />
       <Screen title="New module" lead="Sections in order, then an optional quiz. Save as a draft until it reads right.">
         <ModuleForm id={null} initial={null} positions={positions.filter((position) => position.active)} locations={context.locations} />
       </Screen>

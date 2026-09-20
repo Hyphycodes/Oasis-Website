@@ -35,6 +35,7 @@ export type NotificationKind =
   | 'task_mentioned'
   | 'announcement'
   | 'event_assignment'
+  | 'incident_reported'
   | 'welcome';
 
 export interface NotificationInput {

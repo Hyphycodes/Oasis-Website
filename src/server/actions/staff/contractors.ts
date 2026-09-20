@@ -2,7 +2,7 @@
 
 import type { ContractorService } from '@/content/staff-types';
 import { recordOpsAudit } from '@/server/staff/audit';
-import { markBookingPaid, saveBooking, saveContractor } from '@/server/staff/contractors';
+import { getContractor, markBookingPaid, saveBooking, saveContractor } from '@/server/staff/contractors';
 import { bool, cents, fail, isoDate, optional, runOps, savedOps, text, type ActionState } from './shared';
 
 const SERVICES: ContractorService[] = ['dj', 'instructor', 'painter', 'band', 'performer', 'photographer', 'security', 'other'];
@@ -55,9 +55,34 @@ export async function saveBookingAction(_prev: ActionState, form: FormData): Pro
       paymentNote: optional(form, 'paymentNote'),
       paidOn: isoDate(optional(form, 'paidOn')),
       note: optional(form, 'note'),
+      arrivalNote: optional(form, 'arrivalNote'),
     }, context.staff);
     await recordOpsAudit(context.staff, id ? 'booking.edited' : 'booking.created', 'contractor_booking', String(after.id), { before, after });
     return savedOps(id ? 'Booking saved.' : 'Booked.', after.event_id ? [`/admin/events/one/${encodeURIComponent(String(after.event_id))}`] : []);
+  });
+}
+
+/**
+ * Gives a contractor a way in.
+ *
+ * Creates a `contractor` sign-in and links it to their row, which is the
+ * only thing that makes /staff/bookings show them anything. It is a
+ * deliberately separate action from adding the contractor: most DJs never
+ * need a login, and an account nobody asked for is an account nobody
+ * closes.
+ */
+export async function inviteContractor(_prev: ActionState, form: FormData): Promise<ActionState> {
+  return runOps('contractors.manage', async ({ db, elevated, context }) => {
+    const id = text(form, 'id');
+    const contractor = await getContractor(db, id);
+    if (!contractor) return fail('That contractor no longer exists.');
+    if (!contractor.email) return fail('Add an email address first — it is how they sign in.');
+    const { inviteSignIn } = await import('./team');
+    const invite = await inviteSignIn(contractor.email, contractor.name, context.staff.name || context.staff.email, 'contractor');
+    if (!invite.userId) return fail(invite.note);
+    await elevated.update('contractors', id, { user_id: invite.userId });
+    await recordOpsAudit(context.staff, 'contractor.invited', 'contractor', id, { after: { email: contractor.email } });
+    return savedOps(`${contractor.name} can now see their own bookings, and nothing else. ${invite.note}`);
   });
 }
 

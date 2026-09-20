@@ -24,7 +24,7 @@ export default async function ManageModulePage({ params }: { params: Promise<{ i
   const never = applicable.filter((employee) => !assigned.has(employee.id));
   return (
     <StaffShell context={context} unread={unread} wide>
-      <Back href="/staff/operations/training" label="Academy" />
+      <Back href="/staff/operations/training" label="Training" />
       <Screen
         title={lesson.title}
         eyebrow={`v${lesson.version} · ${lesson.status}`}

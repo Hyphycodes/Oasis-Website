@@ -37,7 +37,7 @@ export default async function LoginPage({searchParams}: {searchParams: Promise<{
               account to see what each role can do. This screen does not exist in production.
             </p>
             <div className="mt-5 grid gap-2">
-              {(Object.keys(LOCAL_STAFF) as Role[]).filter((role) => role !== 'contractor').map((role) => (
+              {(Object.keys(LOCAL_STAFF) as Role[]).map((role) => (
                 <LocalSignIn
                   key={role}
                   role={role}

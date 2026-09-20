@@ -23,7 +23,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
 
   return (
     <StaffShell context={context} unread={unread}>
-      <Screen title="Training" actions={context.isManager ? <Button href="/staff/operations/training">Manage academy</Button> : undefined}>
+      <Screen title="Training" actions={context.isManager ? <Button href="/staff/operations/training">Manage training</Button> : undefined}>
         <Chips
           items={[
             { href: '/staff/training', label: 'To do', active: !show, count: todo.length },
@@ -52,7 +52,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
             })
           )
         ) : list.length === 0 ? (
-          <Empty title={show === 'done' ? 'Nothing completed yet.' : 'No required training.'} detail={show === 'done' ? undefined : 'You’re all caught up.'} />
+          <Empty title={show === 'done' ? 'Nothing completed yet.' : 'You’re all caught up.'} detail={show === 'done' ? 'Finish something and it shows up here.' : 'Nothing to do right now. The library has everything else.'} />
         ) : (
           <Section title={show === 'done' ? 'Completed' : 'To do'}>
             <div className="staff-panel px-4">

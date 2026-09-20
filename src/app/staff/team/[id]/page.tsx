@@ -6,7 +6,7 @@ import { ShiftRow } from '@/components/staff/ShiftCard';
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Avatar, Back, Button, Chips, Empty, Facts, Pill, Progress, Row, Screen, Section } from '@/components/staff/ui';
 import { EMPLOYEE_STATUS_LABEL, EMPLOYMENT_TYPE_LABEL } from '@/content/staff-types';
-import { WEEKDAY_SHORT, formatDate, formatDateRange, formatRelative } from '@/lib/staff/time';
+import { WEEKDAY_SHORT, formatDate, formatDateRange, formatRelative, zonedDate } from '@/lib/staff/time';
 import { removeManagerNote } from '@/server/actions/staff/notes';
 import { completeOnboarding } from '@/server/actions/staff/requirements';
 import { sendInvitation } from '@/server/actions/staff/team';
@@ -39,6 +39,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
   const positions = await listPositions(db);
   const positionName = (positionId: string) => positions.find((position) => position.id === positionId)?.name ?? positionId;
   const now = new Date();
+  const today = zonedDate(now, context.location.timezone);
   const canNotes = contextCan(context, 'notes.manage');
 
   const tabs: { id: Tab; label: string }[] = [
@@ -61,7 +62,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
         actions={
           <div className="flex flex-wrap gap-2">
             <Button href={`/staff/team/${employee.id}/edit`}>Edit</Button>
-            <Button href={`/staff/operations/schedule/new?employee=${employee.id}`} variant="primary">
+            <Button href={`/staff/schedule?add=${today}&who=${employee.id}`} variant="primary">
               Add shift
             </Button>
           </div>
@@ -142,10 +143,10 @@ async function ScheduleTab({ employeeId, db, now }: { employeeId: string; db: Db
   return (
     <>
       <Section title="Coming up" count={upcoming.length}>
-        {upcoming.length === 0 ? <Empty title="Not scheduled in the next four weeks." /> : <div className="staff-panel px-4">{upcoming.map((shift) => <ShiftRow key={shift.id} shift={shift} href={`/staff/operations/schedule/shift/${shift.id}`} />)}</div>}
+        {upcoming.length === 0 ? <Empty title="Not scheduled in the next four weeks." /> : <div className="staff-panel px-4">{upcoming.map((shift) => <ShiftRow key={shift.id} shift={shift} href={`/staff/schedule?edit=${shift.id}`} />)}</div>}
       </Section>
       <Section title="Last four weeks" count={past.length}>
-        {past.length === 0 ? <p className="text-[0.875rem] text-brown-soft">No shifts.</p> : <div className="staff-panel px-4">{past.reverse().map((shift) => <ShiftRow key={shift.id} shift={shift} href={`/staff/operations/schedule/shift/${shift.id}`} />)}</div>}
+        {past.length === 0 ? <p className="text-[0.875rem] text-brown-soft">No shifts.</p> : <div className="staff-panel px-4">{past.reverse().map((shift) => <ShiftRow key={shift.id} shift={shift} href={`/staff/schedule?edit=${shift.id}`} />)}</div>}
       </Section>
       <Section title="Time off" count={timeOff.length}>
         {timeOff.length === 0 ? <p className="text-[0.875rem] text-brown-soft">No requests.</p> : (

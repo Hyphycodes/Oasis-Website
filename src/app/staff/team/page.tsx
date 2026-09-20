@@ -24,7 +24,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   ]);
   const shown = params.status === 'inactive' ? employees.filter((employee) => employee.status === 'inactive') : employees;
   const now = new Date();
-  const upcoming = await listShifts(db, { from: now.toISOString(), to: new Date(now.getTime() + 14 * 86_400_000).toISOString() });
+  // Drafts are included here on purpose: a manager asking "is Carlos on next
+  // week" wants the answer they are building, not the answer staff can see.
+  // The card says which it is.
+  const upcoming = await listShifts(db, { from: now.toISOString(), to: new Date(now.getTime() + 14 * 86_400_000).toISOString(), includeDrafts: true });
   const overview = await requirementOverview(db, shown.map((employee) => employee.id));
   const positionName = (id: string) => positions.find((position) => position.id === id)?.name ?? id;
 
@@ -43,11 +46,11 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           ]}
         />
         {shown.length === 0 ? (
-          <Empty title="Nobody matches." detail={params.q ? 'Try a shorter search.' : 'Add the first employee to get started.'} />
+          <Empty title="Nobody matches." detail={params.q ? 'Try part of a name, or a position.' : 'Add the first person and the rest of the app fills in around them.'} />
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((employee) => {
-              const next = upcoming.filter((shift) => shift.employeeId === employee.id && shift.status === 'published').sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null;
+              const next = upcoming.filter((shift) => shift.employeeId === employee.id).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null;
               const todo = outstanding(training.filter((assignment) => assignment.employeeId === employee.id)).length;
               const docs = overview.get(employee.id);
               const docIssues = (docs?.missing.length ?? 0) + (docs?.expired.length ?? 0);
@@ -61,7 +64,11 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                     </span>
                     <span className="block truncate text-[0.8125rem] text-brown-soft">{employee.positionIds.map(positionName).join(', ') || 'No position yet'}</span>
                     <span className="block truncate text-[0.8125rem] text-brown-soft">{employee.phone ?? employee.email}</span>
-                    <span className="mt-1 block text-[0.8125rem] text-brown">{next ? `Next: ${formatDayShort(next.startsAt, context.location.timezone)} ${formatShiftRange(next.startsAt, next.endsAt, context.location.timezone)}` : 'Not scheduled'}</span>
+                    <span className="mt-1 block text-[0.8125rem] text-brown">
+                      {next
+                        ? `Next: ${formatDayShort(next.startsAt, context.location.timezone)} ${formatShiftRange(next.startsAt, next.endsAt, context.location.timezone)}${next.status === 'draft' ? ' · draft' : ''}`
+                        : 'Not scheduled'}
+                    </span>
                     <span className="mt-1 flex flex-wrap gap-1">
                       {todo ? <Pill tone="accent">{todo} training</Pill> : null}
                       {docIssues ? <Pill tone="warn">{docIssues} docs</Pill> : null}

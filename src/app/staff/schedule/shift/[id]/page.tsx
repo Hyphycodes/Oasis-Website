@@ -5,7 +5,7 @@ import { ShiftHero } from '@/components/staff/ShiftCard';
 import { StaffShell } from '@/components/staff/StaffShell';
 import { Back, Facts, Pill, Screen, Section } from '@/components/staff/ui';
 import { ATTENDANCE_LABEL } from '@/content/staff-types';
-import { formatClock, formatDayLong, formatDayShort, formatRelative, formatShiftRange } from '@/lib/staff/time';
+import { formatClock, formatDayLong, formatDayShort, formatRelative, formatShiftRange, zonedDate } from '@/lib/staff/time';
 import { clockShift, confirmFirstShift } from '@/server/actions/staff/schedule';
 import { withdrawOffer } from '@/server/actions/staff/coverage';
 import { listComments } from '@/server/staff/comments';
@@ -44,7 +44,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
 
   return (
     <StaffShell context={context} unread={unread}>
-      <Back href={context.isManager && !mine ? '/staff/operations/schedule' : '/staff/schedule'} label="Schedule" />
+      <Back href="/staff/schedule" label="Schedule" />
       <Screen title={formatDayLong(shift.startsAt, shift.locationTimezone)}>
         <ShiftHero shift={shift} label={shift.employeeName ? (mine ? 'Your shift' : shift.employeeName) : 'Open shift'} />
         {shift.warnings.length > 0 ? (
@@ -133,7 +133,7 @@ export default async function ShiftPage({ params }: { params: Promise<{ id: stri
         {context.isManager ? (
           <Section title="Manage">
             <div className="flex flex-wrap gap-2">
-              <a href={`/staff/operations/schedule/shift/${shift.id}`} className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown">Edit shift</a>
+              <a href={`/staff/schedule?week=${zonedDate(shift.startsAt, shift.locationTimezone)}&edit=${shift.id}`} className="inline-flex min-h-11 items-center rounded-(--radius-sm) border border-brown/30 px-4 text-[0.9375rem] font-semibold text-brown">Edit shift</a>
             </div>
           </Section>
         ) : null}

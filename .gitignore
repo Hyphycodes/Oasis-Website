@@ -19,7 +19,10 @@ yarn-error.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
-coverage/
+# Test-coverage output, at the repository root only. Unanchored, this also
+# swallowed src/app/staff/schedule/coverage — the shift-coverage screen — which
+# is a genuinely hard bug to spot, because the files are simply never staged.
+/coverage/
 
 # Local development content database (see docs/ADR-001-ADMIN-BACKEND.md).
 # Never used in production; seeded from src/content/.

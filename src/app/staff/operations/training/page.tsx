@@ -7,7 +7,7 @@ import { isDenied, staffPage } from '../../_lib';
 export const dynamic = 'force-dynamic';
 
 /** The academy, for management: every module, how many are cleared, who is behind. */
-export default async function AcademyPage() {
+export default async function TrainingLibraryPage() {
   const page = await staffPage('training.manage');
   if (isDenied(page)) return page.denied;
   const { context, db, unread } = page;
@@ -16,7 +16,7 @@ export default async function AcademyPage() {
   return (
     <StaffShell context={context} unread={unread} wide>
       <Back href="/staff/operations" label="Operations" />
-      <Screen title="Academy" lead={`${modules.filter((lesson) => lesson.status === 'published').length} published modules.`} actions={<Button href="/staff/operations/training/new" variant="primary">New module</Button>}>
+      <Screen title="Training" eyebrow="Operations" lead={`${modules.filter((lesson) => lesson.status === 'published').length} published modules.`} actions={<Button href="/staff/operations/training/new" variant="primary">New module</Button>}>
         {overdue.length > 0 ? (
           <Section title="Overdue" count={overdue.length}>
             <div className="staff-panel px-4">

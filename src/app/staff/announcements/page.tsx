@@ -17,7 +17,7 @@ export default async function AnnouncementsPage() {
     <StaffShell context={context} unread={unread}>
       <Screen title="Announcements" actions={context.isManager ? <Button href="/staff/announcements/manage" small>Manage</Button> : undefined}>
         {feed.length === 0 ? (
-          <Empty title="No announcements." detail="When a manager posts one, it lands here." />
+          <Empty title="Nothing new." detail="When a manager posts something, it lands here and on your home screen." />
         ) : (
           <div className="grid gap-3">
             {feed.map((entry) => {
