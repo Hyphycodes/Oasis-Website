@@ -11,8 +11,8 @@ const TAB_LABEL: Record<MenuSlug, string> = {
 
 /**
  * Each mode carries an accent, so the visitor can see which menu they are in
- * without reading the label. One system, three accents — the page is not
- * rebuilt per mode.
+ * without reading the label. One system, one accent per mode — the page is
+ * not rebuilt per mode.
  *
  * Contrast, on the ivory reading surface, verified per pair:
  *   food      chile/coral fill with the near-black label — 4.72:1
@@ -24,11 +24,11 @@ const MODE: Record<MenuSlug, { fill: string; rule: string; link: string }> = {
 };
 
 /**
- * One menu experience, three views.
+ * One menu experience, two views.
  *
- * Food, Cocktails & Bar and Brunch used to be three separate routes, each with
- * its own full-page introduction — so comparing a taco to a margarita meant two
- * page loads and reading two intros. They are one page with three modes.
+ * Food and Cocktails & Bar used to be separate routes, each with its own
+ * full-page introduction — so comparing a taco to a margarita meant two
+ * page loads and reading two intros. They are one page with two modes.
  *
  * Behaviour that matters:
  *  - The hash is the state. `/menu#cocktails` selects a mode; `/menu#shareables`
@@ -143,7 +143,8 @@ export function MenuExperience({
             role="tablist"
             aria-label="Menu"
             onKeyDown={onKeyDown}
-            className="grid grid-cols-3 gap-1 rounded-(--radius-md) border border-brown/20 p-1 sm:max-w-lg"
+            className="grid gap-1 rounded-(--radius-md) border border-brown/20 p-1 sm:max-w-lg"
+            style={{ gridTemplateColumns: `repeat(${menus.length}, minmax(0, 1fr))` }}
           >
             {menus.map((menu) => {
               const selected = active === menu.slug;
